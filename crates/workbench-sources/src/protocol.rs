@@ -14,7 +14,12 @@ use crate::{
     SourceItemIssue, SourceItemIssueCode, SourcePage, SourceResult, SourceWork,
 };
 
-pub(crate) const JM_HOST: &str = "www.cdnhth.cc";
+// 2026-11-01 hotfix: www.cdnhth.cc is now a parked-domain lander (POST /login
+// answers 405, GET answers 200 HTML), so every JM account request failed:
+// this crate talks to exactly one host. www.cdnhth.net is still in the pinned
+// set and serves the same encrypted API, so pointing the single live host at
+// it is the smallest change that restores sign-in.
+pub(crate) const JM_HOST: &str = "www.cdnhth.net";
 pub(crate) const JM_API_HOSTS: &[&str] = &[
     "www.cdnhth.cc",
     "www.cdnzack.cc",

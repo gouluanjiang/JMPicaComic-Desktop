@@ -25,7 +25,11 @@ use std::{
 
 pub const UPSTREAM_COMMIT: &str = "f0cdd724af6892002f2fb7be883b88832cebe7e9";
 pub const CRAWLER_RELIABILITY_COMMIT: &str = "9fddb0494caf0cdc812ac6cbfc1c62f4f845b058";
-pub const DEFAULT_DOMAIN: &str = "www.cdnhth.cc";
+// 2026-11-01 hotfix: the previous primary www.cdnhth.cc is a parked-domain
+// lander. www.cdnhth.net is already in BASELINE_DOMAINS below and still serves
+// the encrypted API, so reader/download metadata keeps working without
+// changing the pinned trust set.
+pub const DEFAULT_DOMAIN: &str = "www.cdnhth.net";
 pub const BASELINE_DOMAINS: &[&str] = &[
     "www.cdnhth.cc",
     "www.cdnzack.cc",
