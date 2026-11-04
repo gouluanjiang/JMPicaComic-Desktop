@@ -232,10 +232,13 @@ struct HostCall {
     carries_credentials: bool,
 }
 
+#[cfg(test)]
+type HostResponder = dyn Fn(&str, &str) -> SourceResult<Value> + Send + Sync;
+
 /// Replaces only the physical host calls, so the real failover and probe logic runs.
 #[cfg(test)]
 struct HostScript {
-    respond: Box<dyn Fn(&str, &str) -> SourceResult<Value> + Send + Sync>,
+    respond: Box<HostResponder>,
     calls: Mutex<Vec<HostCall>>,
 }
 
