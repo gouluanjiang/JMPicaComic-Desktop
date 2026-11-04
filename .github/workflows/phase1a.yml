@@ -10,8 +10,8 @@ on:
       jm_domain:
         description: Pinned upstream API domain
         type: choice
-        options: [www.cdnhth.cc, www.cdnzack.cc, www.cdnhth.net, www.cdnbea.net, www.cdn-mspjmapiproxy.xyz]
-        default: www.cdnhth.cc
+        options: [www.cdnhjk.net, www.cdnutc.cc, www.cdngwc.net, www.cdngwc.cc, www.cdngwc.club, www.cdnhth.net, www.cdnbea.net]
+        default: www.cdnhjk.net
 permissions:
   contents: read
 concurrency:

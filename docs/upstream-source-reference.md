@@ -18,7 +18,7 @@ The MIT notices above must remain preserved when substantial upstream code is re
 - `/chapter_view_template` is special: upstream uses the distinct token secret `18comicAPPContent`. This distinction must not be collapsed into the normal API token path.
 - API response `data` is Base64 + AES-256-ECB using the MD5-derived `timestamp + 185Hcomic3PAPP7R` key.
 - Search can return either a paged search payload or a direct `redirect_aid`; redirect must be treated as an exact detail lookup rather than an empty search page.
-- The five lanyeeee API domains currently pinned by this project are all valid upstream choices: `www.cdnzack.cc`, `www.cdnhth.cc`, `www.cdnhth.net`, `www.cdnbea.net`, `www.cdn-mspjmapiproxy.xyz`.
+- The pinned API domain set is maintained manually and must be refreshed when JM rotates hostnames. Refreshed 2026-11-01: `www.cdnhjk.net`, `www.cdnutc.cc`, `www.cdngwc.net`, `www.cdngwc.cc`, `www.cdngwc.club`, plus the still-live legacy `www.cdnhth.net` and `www.cdnbea.net`. The September 2026 set (`www.cdnhth.cc`, `www.cdnzack.cc`, `www.cdn-mspjmapiproxy.xyz`) is retired: those hosts now answer with parked-domain landers or no TLS. `www.cdnutc.me` is announced by JM as line 5 but did not connect during the 2026-11-01 check, so it is not pinned. JM's announcement (`newsvr-2025.txt`) is an input for manual review only: it is encrypted with a fixed key rather than signed, so it must not expand the pinned set automatically.
 - Scramble/block-number logic and the chapter/image metadata shapes are already pinned in the adapter and remain fail-closed where the upstream GUI uses permissive fallbacks.
 
 ### Reliability pattern adopted from JMComic-Crawler-Python
@@ -27,7 +27,7 @@ JMComic-Crawler-Python treats domain rotation and retry as first-class client be
 
 - retry/fail over only inside the already-pinned domain allowlist;
 - primary configured domain stays first;
-- failover is allowed for transport failures and domain-level transient HTTP responses only;
+- failover is allowed for transport failures, domain-level transient HTTP responses (including 405 from a parked lander) and "the body was not JSON at all" (also a lander), but never for a non-idempotent favorite toggle;
 - protocol/schema/decryption/API-code failures remain fatal and are never hidden by domain rotation;
 - every physical attempt is appended to `RequestTrace`, so the cloud request budget counts failover attempts instead of under-reporting them.
 

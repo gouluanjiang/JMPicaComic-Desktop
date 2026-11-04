@@ -654,7 +654,7 @@ fn ids_and_links_do_not_accept_arbitrary_destinations() {
         "123"
     );
     assert_eq!(
-        parse_work_id(Source::Jm, "https://www.cdnhth.cc/album?id=123").unwrap(),
+        parse_work_id(Source::Jm, "https://www.cdngwc.cc/album?id=123").unwrap(),
         "123"
     );
     assert_eq!(
@@ -3088,4 +3088,326 @@ fn jm_blocked_category_evidence_survives_exact_metadata_byte_boundary() {
         assert!(parsed.tags.iter().any(|tag| tag == label));
         assert!(serde_json::to_vec(&parsed).unwrap().len() <= protocol::MAX_WORK_JSON_BYTES);
     }
+}
+
+#[test]
+fn jm_host_failover_is_pinned_and_never_replays_a_favorite_toggle() {
+    let sources = WorkbenchSources::new().unwrap();
+    let read = sources.candidate_hosts(Source::Jm, &reqwest::Method::GET, "/album", false);
+    assert_eq!(read.len(), protocol::JM_API_HOSTS.len());
+    assert_eq!(read[0], protocol::JM_HOST);
+    assert_eq!(
+        read.iter().collect::<std::collections::BTreeSet<_>>().len(),
+        read.len()
+    );
+    let profile = sources.candidate_hosts(Source::Jm, &reqwest::Method::POST, "/login", false);
+    assert_eq!(profile.len(), protocol::JM_API_HOSTS.len());
+    let toggle = sources.candidate_hosts(Source::Jm, &reqwest::Method::POST, "/favorite", false);
+    assert_eq!(toggle, vec![protocol::JM_HOST.to_owned()]);
+    let pica = sources.candidate_hosts(Source::Pica, &reqwest::Method::GET, "comics/abc", false);
+    assert_eq!(pica, vec![protocol::PICA_HOST.to_owned()]);
+    // A parked lander answers 405 or non-JSON; both must move to the next host.
+    for code in [
+        "SOURCE_TIMEOUT",
+        "SOURCE_CONNECTION_FAILED",
+        "SOURCE_REQUEST_FAILED",
+        "SOURCE_RESPONSE_INVALID",
+        "SOURCE_REDIRECT_REFUSED",
+    ] {
+        assert!(host_failover_error(code), "{code}");
+    }
+    for code in ["LOGIN_REJECTED", "SESSION_EXPIRED", "SOURCE_ACCESS_DENIED"] {
+        assert!(!host_failover_error(code), "{code}");
+    }
+}
+
+fn host_scripted(
+    respond: impl Fn(&str, &str) -> SourceResult<Value> + Send + Sync + 'static,
+) -> WorkbenchSources {
+    let mut sources = WorkbenchSources::new().unwrap();
+    sources.host_script = Some(HostScript {
+        respond: Box::new(respond),
+        calls: Mutex::new(vec![]),
+    });
+    sources
+}
+
+fn host_calls(sources: &WorkbenchSources) -> Vec<HostCall> {
+    sources
+        .host_script
+        .as_ref()
+        .unwrap()
+        .calls
+        .lock()
+        .unwrap()
+        .clone()
+}
+
+fn probe_call(host: &str) -> HostCall {
+    HostCall {
+        host: host.to_owned(),
+        route: protocol::JM_PROBE_ROUTE.to_owned(),
+        carries_credentials: false,
+    }
+}
+
+fn credential_call(host: &str, route: &str) -> HostCall {
+    HostCall {
+        host: host.to_owned(),
+        route: route.to_owned(),
+        carries_credentials: true,
+    }
+}
+
+async fn jm_login(sources: &WorkbenchSources) -> SourceResult<Value> {
+    sources
+        .request(
+            Source::Jm,
+            None,
+            Method::POST,
+            "/login",
+            Some(json!({"username":"fixture","password":"fixture-password"})),
+            true,
+        )
+        .await
+}
+
+#[tokio::test]
+async fn jm_password_never_reaches_a_host_that_fails_the_anonymous_probe() {
+    let parked = protocol::JM_API_HOSTS[0];
+    let serving = protocol::JM_API_HOSTS[1];
+    let sources = host_scripted(move |host, _route| {
+        if host == parked {
+            Err(error("SOURCE_RESPONSE_INVALID"))
+        } else {
+            Ok(json!({"s":"fixture-session"}))
+        }
+    });
+    assert_eq!(jm_login(&sources).await.unwrap()["s"], "fixture-session");
+    assert_eq!(
+        host_calls(&sources),
+        vec![
+            probe_call(parked),
+            probe_call(serving),
+            credential_call(serving, "/login"),
+        ]
+    );
+    assert_eq!(
+        sources.candidate_hosts(Source::Jm, &Method::GET, "/album", false)[0],
+        serving
+    );
+}
+
+#[tokio::test]
+async fn jm_session_cookie_requests_also_require_a_verified_host() {
+    let parked = protocol::JM_API_HOSTS[0];
+    let serving = protocol::JM_API_HOSTS[1];
+    let sources = host_scripted(move |host, _route| {
+        if host == parked {
+            Err(error("SOURCE_REQUEST_FAILED"))
+        } else {
+            Ok(json!({"ok":true}))
+        }
+    });
+    let session = session(Source::Jm);
+    sources
+        .request(
+            Source::Jm,
+            Some(&session),
+            Method::GET,
+            "/album?id=1",
+            None,
+            false,
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        host_calls(&sources),
+        vec![
+            probe_call(parked),
+            probe_call(serving),
+            credential_call(serving, "/album?id=1"),
+        ]
+    );
+}
+
+#[tokio::test]
+async fn jm_no_credentials_leave_when_every_pinned_host_fails_its_probe() {
+    let sources = host_scripted(|_host, _route| Err(error("SOURCE_CONNECTION_FAILED")));
+    let problem = jm_login(&sources).await.err().unwrap();
+    assert_eq!(problem.code, "SOURCE_CONNECTION_FAILED");
+    let calls = host_calls(&sources);
+    assert_eq!(calls.len(), protocol::JM_API_HOSTS.len());
+    assert!(calls.iter().all(|call| !call.carries_credentials));
+}
+
+#[tokio::test]
+async fn jm_verified_host_is_reused_until_it_expires_or_fails() {
+    let primary = protocol::JM_API_HOSTS[0];
+    let fallback = protocol::JM_API_HOSTS[1];
+    let fail_primary = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let fail = std::sync::Arc::clone(&fail_primary);
+    let mut sources = host_scripted(move |host, route| {
+        let failing = fail.load(std::sync::atomic::Ordering::SeqCst);
+        if failing && host == primary && route != protocol::JM_PROBE_ROUTE {
+            Err(error("SOURCE_REQUEST_FAILED"))
+        } else {
+            Ok(json!({"s":"fixture-session"}))
+        }
+    });
+    jm_login(&sources).await.unwrap();
+    jm_login(&sources).await.unwrap();
+    assert_eq!(
+        host_calls(&sources),
+        vec![
+            probe_call(primary),
+            credential_call(primary, "/login"),
+            credential_call(primary, "/login"),
+        ]
+    );
+
+    // A pass does not outlive its window, even for the host that earned it.
+    sources.jm_verification_ttl = Duration::ZERO;
+    jm_login(&sources).await.unwrap();
+    assert_eq!(
+        host_calls(&sources)[3..],
+        [probe_call(primary), credential_call(primary, "/login")]
+    );
+    sources.jm_verification_ttl = JM_HOST_VERIFICATION_TTL;
+
+    // A host-level failure after a pass moves on and re-proves the next host.
+    fail_primary.store(true, std::sync::atomic::Ordering::SeqCst);
+    jm_login(&sources).await.unwrap();
+    assert_eq!(
+        host_calls(&sources)[5..],
+        [
+            credential_call(primary, "/login"),
+            probe_call(fallback),
+            credential_call(fallback, "/login"),
+        ]
+    );
+    assert!(!sources.jm_host_is_verified(primary));
+    assert!(sources.jm_host_is_verified(fallback));
+}
+
+#[tokio::test]
+async fn jm_account_level_refusals_do_not_walk_the_host_list() {
+    let primary = protocol::JM_API_HOSTS[0];
+    for code in [
+        "LOGIN_REJECTED",
+        "SOURCE_ACCESS_DENIED",
+        "SOURCE_RATE_LIMITED",
+    ] {
+        let sources = host_scripted(move |_host, route| {
+            if route == protocol::JM_PROBE_ROUTE {
+                Ok(json!({}))
+            } else {
+                Err(error(code))
+            }
+        });
+        assert_eq!(jm_login(&sources).await.err().unwrap().code, code);
+        assert_eq!(
+            host_calls(&sources),
+            vec![probe_call(primary), credential_call(primary, "/login")]
+        );
+    }
+}
+
+#[tokio::test]
+async fn jm_favorite_toggle_is_sent_at_most_once_and_only_to_a_verified_host() {
+    let primary = protocol::JM_API_HOSTS[0];
+    let session = session(Source::Jm);
+    let toggle = |sources: WorkbenchSources| {
+        let session = &session;
+        async move {
+            let result = sources
+                .request(
+                    Source::Jm,
+                    Some(session),
+                    Method::POST,
+                    "/favorite",
+                    Some(json!({"aid":"1"})),
+                    false,
+                )
+                .await;
+            (result.is_ok(), host_calls(&sources))
+        }
+    };
+    let (ok, calls) = toggle(host_scripted(|_host, route| {
+        if route == protocol::JM_PROBE_ROUTE {
+            Ok(json!({}))
+        } else {
+            Err(error("SOURCE_REQUEST_FAILED"))
+        }
+    }))
+    .await;
+    assert!(!ok);
+    assert_eq!(
+        calls,
+        vec![probe_call(primary), credential_call(primary, "/favorite")]
+    );
+    let (ok, calls) = toggle(host_scripted(|_host, _route| {
+        Err(error("SOURCE_RESPONSE_INVALID"))
+    }))
+    .await;
+    assert!(!ok);
+    assert_eq!(calls, vec![probe_call(primary)]);
+}
+
+#[tokio::test]
+async fn pica_requests_skip_the_jm_host_probe() {
+    let sources = host_scripted(|_host, _route| Ok(json!({"ok":true})));
+    let session = session(Source::Pica);
+    sources
+        .request(
+            Source::Pica,
+            Some(&session),
+            Method::GET,
+            "users/profile",
+            None,
+            false,
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        host_calls(&sources),
+        vec![credential_call(protocol::PICA_HOST, "users/profile")]
+    );
+}
+
+#[test]
+fn jm_probe_accepts_only_the_jm_api_response_shapes() {
+    let timestamp = 1_700_000_000;
+    let mut encrypted = br#"{"id":1}"#.to_vec();
+    let padding = 16 - encrypted.len() % 16;
+    encrypted.extend(std::iter::repeat_n(padding as u8, padding));
+    let key = format!("{:x}", md5::compute(format!("{timestamp}185Hcomic3PAPP7R")));
+    let cipher = Aes256::new_from_slice(key.as_bytes()).unwrap();
+    for block in encrypted.as_chunks_mut::<16>().0 {
+        cipher.encrypt_block(GenericArray::from_mut_slice(block));
+    }
+    let served = json!({"code":200,"data":STANDARD.encode(&encrypted)}).to_string();
+    protocol::validate_jm_probe(timestamp, served.as_bytes()).unwrap();
+    // A removed probe work must not lock every account out.
+    protocol::validate_jm_probe(timestamp, br#"{"code":500,"errorMsg":"missing"}"#).unwrap();
+
+    let wrong_key = json!({"code":200,"data":STANDARD.encode(&encrypted)}).to_string();
+    let rejected: [&[u8]; 6] = [
+        b"<html><script>window._trfd=[{ap:'parking'}]</script></html>",
+        b"",
+        b"{}",
+        br#"{"code":500}"#,
+        br#"{"code":200,"data":"not-base64"}"#,
+        br#"{"code":200}"#,
+    ];
+    for body in rejected {
+        assert_eq!(
+            protocol::validate_jm_probe(timestamp, body)
+                .err()
+                .unwrap()
+                .code,
+            "SOURCE_RESPONSE_INVALID"
+        );
+    }
+    assert!(protocol::validate_jm_probe(timestamp + 1, wrong_key.as_bytes()).is_err());
 }
