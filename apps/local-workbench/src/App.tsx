@@ -2509,6 +2509,12 @@ export default function App() {
             !embeddedSourceDetail &&
             (page === "author-search" ||
               (page === "discovery" && discoveryPane === "search")) && (
+              <h1 className="unified-search-title">搜索</h1>
+            )}
+          {persistence.native &&
+            !embeddedSourceDetail &&
+            (page === "author-search" ||
+              (page === "discovery" && discoveryPane === "search")) && (
               <div
                 className="source-tabs unified-search-modes"
                 role="group"

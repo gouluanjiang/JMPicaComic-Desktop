@@ -553,3 +553,29 @@ test("scope details can be disclosed without starting a check and narrow pages k
   await mkdir("visual-evidence", { recursive: true });
   await page.screenshot({ path: "visual-evidence/refined-library-narrow.png" });
 });
+
+test("cover pages hide only an unknown language and search has a title", async ({
+  page,
+}) => {
+  await installWorkflow(page);
+  await page.getByTestId("nav-favorites").click();
+  const badge = page
+    .locator('.source-card:visible [data-language-kind="unknown"]')
+    .first();
+  await expect(badge).toHaveText("未知");
+  await expect(badge).toHaveAttribute("aria-label", /未知/);
+  expect((await badge.boundingBox())!.width).toBeLessThanOrEqual(1);
+
+  await page.locator(".source-card:visible h3 button").first().click();
+  const detailBadge = page
+    .getByTestId("source-detail")
+    .getByTestId("source-language-badge")
+    .first();
+  await expect(detailBadge).toBeVisible();
+  expect((await detailBadge.boundingBox())!.width).toBeGreaterThan(1);
+
+  await page.getByTestId("nav-discovery").click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "搜索", exact: true }),
+  ).toBeVisible();
+});
