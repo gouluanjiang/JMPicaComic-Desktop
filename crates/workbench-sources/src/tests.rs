@@ -390,6 +390,62 @@ async fn weekly_issues_with_empty_titles_keep_their_date_and_query_identity() {
 }
 
 #[tokio::test]
+async fn weekly_types_with_empty_titles_keep_their_query_identity() {
+    let sources = scripted(vec![
+        Ok(json!({
+            "categories":[{"id":"264","title":"","time":"2026第263期10.30 - 10.23"}],
+            "type":[
+                {"id":"manga","title":"日漫"},
+                {"id":"another","title":"其他"},
+                {"id":"hanman","title":""},
+                {"id":"future_type","title":" \u{3000}"},
+                {"id":"untitled","title":null}
+            ]
+        })),
+        Ok(json!({"total":0,"list":[]})),
+    ]);
+    let jm = session(Source::Jm);
+    let options = sources.ranking_options(&jm).await.unwrap();
+    assert_eq!(
+        options
+            .periods
+            .iter()
+            .map(|row| (row.id.as_str(), row.label.as_str()))
+            .collect::<Vec<_>>(),
+        [
+            ("manga", "日漫"),
+            ("another", "其他"),
+            ("hanman", "韩漫"),
+            ("future_type", "类型 future_type"),
+            ("untitled", "类型 untitled")
+        ]
+    );
+    sources.ranking(&jm, Some("264"), "hanman").await.unwrap();
+    assert_eq!(
+        sources.recorded.lock().unwrap()[1].2,
+        "/week/filter?id=264&type=hanman"
+    );
+}
+
+#[tokio::test]
+async fn weekly_type_labels_still_reject_invalid_shapes_and_oversized_values() {
+    for title in [json!({}), json!(1), json!(" ".repeat(2001))] {
+        let sources = scripted(vec![Ok(json!({
+            "categories":[{"id":"42","title":"","time":"Date"}],
+            "type":[{"id":"manga","title":title}]
+        }))]);
+        assert_eq!(
+            sources
+                .ranking_options(&session(Source::Jm))
+                .await
+                .unwrap_err()
+                .code,
+            "SOURCE_RESPONSE_INVALID"
+        );
+    }
+}
+
+#[tokio::test]
 async fn weekly_optional_labels_still_reject_invalid_shapes_and_oversized_values() {
     for row in [
         json!({"id":"42","title":{},"time":"Date"}),

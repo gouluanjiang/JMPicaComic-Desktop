@@ -80,6 +80,11 @@ The desktop code reuses existing authenticated source clients, response parsers 
 
 The 2026-09-14 acceptance diagnostic found 174 blank `categories[].title` values among 256 issues, including the latest issue. At the same pinned revision, `jmcomic-downloader/src/panes/WeeklyPane.vue:15-19` uses `category.time` as the issue label, and line 32 selects the final type (`manga` in the observed response). The workbench now accepts blank optional issue labels, falls back to date or a literal issue identifier, and prefers the advertised `manga` type. Type labels, identifiers, duplicate IDs and text limits retain validation. Four anonymous public GETs established options and both an empty `hanman` list and a 20/20 `manga` list; no account, images or private library were used. See [the scoped diagnostic and repair](JM_WEEKLY_FIX_2026-09-14.md); this is not blanket live acceptance of all periods or account workflows.
 
+On 2026-11-05 an anonymous `/week` read showed the same for types: `hanman` has an
+empty `type[].title` while `manga` and `another` keep theirs, and `/week/filter`
+still serves it. A blank type title therefore falls back to a local label and keeps
+its `id`. Shape and length validation still reject malformed titles.
+
 The 2026-09-12 batch queue review reopened all three pinned download implementations. Their bounded scheduling and all-image completion requirements remain references; desktop cross-work scheduling now wraps the existing verified single-work path and waits through PC registration before dispatching the next explicitly confirmed work. No source pins, media transport, retry policy, output layout or production flags change. See `BATCH_QUEUE_AND_MATCHING_2026-09-12.md`.
 
 The live six-author JM+Pica validation established that real source traffic is substantial. For hundreds of authors, retain these upstream-inspired principles:
