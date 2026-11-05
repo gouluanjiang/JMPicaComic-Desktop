@@ -5,7 +5,7 @@
 The user requested an independent **draft** repair for the post-merge UI failure
 on main `5f74c6731c0fcb7d80fd507710952202e40832ea`, tracked in
 [PR #33](https://github.com/gouluanjiang/MangaMonitor-AI/pull/33).
-Keep this PR draft and do not merge automatically. Its body records the exact
+The user approved it for 1.1.0 on 2026-11-05, after a bound was added to its restore wait. Its body records the exact
 reproduction and repair revisions, CI runs and geometry evidence.
 
 [UI run 37621645636](https://github.com/gouluanjiang/MangaMonitor-AI/actions/runs/37621645636)

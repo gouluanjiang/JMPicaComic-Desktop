@@ -1304,3 +1304,42 @@ test("library context menu exposes five actions and recycle cancellation/failure
   expect(await commands(page, "reader_window_open")).toHaveLength(0);
   expect(await commands(page, "reader_open")).toHaveLength(0);
 });
+
+test("a restore that can never measure its extent stops waiting", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1672, height: 941 });
+  await installMock(page, { pcCount: 586 });
+  await expect(
+    page.getByTestId("library-grid").locator("article").first(),
+  ).toBeVisible();
+  const main = page.getByRole("main");
+  await main.evaluate((element) => {
+    element.scrollTop = 4000;
+  });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const original = window.requestAnimationFrame.bind(window);
+    const state = window as unknown as { frameRequests: number };
+    state.frameRequests = 0;
+    window.requestAnimationFrame = (callback) => {
+      state.frameRequests += 1;
+      return original(callback);
+    };
+  });
+  await page.getByTestId("nav-settings").click();
+  // The grid can never match its computed extent, so the restore cannot settle.
+  await page.addStyleTag({
+    content: ".source-virtual-grid { height: 1234px !important; }",
+  });
+  await page.getByTestId("nav-library").click();
+  await page.waitForTimeout(6000);
+  const before = await page.evaluate(
+    () => (window as unknown as { frameRequests: number }).frameRequests,
+  );
+  await page.waitForTimeout(1000);
+  const after = await page.evaluate(
+    () => (window as unknown as { frameRequests: number }).frameRequests,
+  );
+  expect(after - before).toBeLessThan(10);
+});

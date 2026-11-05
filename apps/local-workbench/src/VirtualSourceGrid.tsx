@@ -25,6 +25,8 @@ interface Props<T> {
   renderItem(item: T): ReactNode;
   testId?: string;
 }
+// About four seconds at 60 Hz, well past any real row measurement.
+const maxRestoreFrames = 240;
 function Grid<T>(
   { items, density, itemKey, renderItem, testId = "source-grid" }: Props<T>,
   forwarded: ForwardedRef<SourceGridHandle>,
@@ -88,6 +90,7 @@ function Grid<T>(
     pending.current = anchor;
     cancelAnimationFrame(restoreFrame.current);
     let attempts = 0;
+    let frames = 0;
     const settle = () => {
       if (!pending.current) return;
       measure.current();
@@ -95,7 +98,9 @@ function Grid<T>(
       // A browser-clamped scroll on the old extent is not a restored anchor.
       attempts = applyAnchor(pending.current) ? attempts + 1 : 0;
       if (!pending.current) return;
-      if (attempts >= 4) pending.current = null;
+      // An extent that never settles must not spin forever or keep blocking
+      // position capture: keep the closest scroll and let the reader continue.
+      if (attempts >= 4 || ++frames >= maxRestoreFrames) pending.current = null;
       else restoreFrame.current = requestAnimationFrame(settle);
     };
     applyAnchor(anchor);
