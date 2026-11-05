@@ -173,7 +173,9 @@ impl JmTransport {
     /// different URL and an additional fetch without a fresh generation check.
     pub(crate) async fn fetch_exact(&self, url: &str) -> Result<Vec<u8>, String> {
         let request = self.build_request(url)?;
-        execute_exact("JM", &self.client, request, url, self.maximum).await
+        let result = execute_exact("JM", &self.client, request, url, self.maximum).await;
+        jm_adapter::record_media_host_result(result.as_ref().map(|_| ()).map_err(String::as_str));
+        result
     }
 }
 

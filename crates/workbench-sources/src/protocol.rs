@@ -14,14 +14,9 @@ use crate::{
     SourceItemIssue, SourceItemIssueCode, SourcePage, SourceResult, SourceWork,
 };
 
-pub(crate) const JM_HOST: &str = "www.cdnhth.cc";
-pub(crate) const JM_API_HOSTS: &[&str] = &[
-    "www.cdnhth.cc",
-    "www.cdnzack.cc",
-    "www.cdnhth.net",
-    "www.cdnbea.net",
-    "www.cdn-mspjmapiproxy.xyz",
-];
+pub(crate) use source_network::{JM_API_HOSTS, JM_DEFAULT_API_HOST as JM_HOST};
+/// Anonymous read that a real JM API host answered during the 2026-11-01 check.
+pub(crate) const JM_PROBE_ROUTE: &str = "/album?id=422866";
 pub(crate) const PICA_HOST: &str = "picaapi.picacomic.com";
 pub(crate) const PICA_KEY: &str = "C69BAF41DA5ABD1FFEDC6D2FEA56B";
 pub(crate) const PICA_NONCE: &str = "ptxdhmjzqtnrtwndhbxcpkjamb33w837";
@@ -32,11 +27,7 @@ const PICA_DIGEST: &str = r"~d}$Q7$eIni=V)9\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pdd
 // src/jmcomic/jm_config.py:184-192 and jm_toolkit.py:404-421. The legacy
 // lanyeeee ComicCard.vue:54 endpoint remains the final candidate. API hosts,
 // account headers, and the separate real-download adapters are unchanged.
-pub(crate) const JM_COVER_HOSTS: &[&str] = &[
-    "cdn-msp.jmapiproxy1.cc",
-    "cdn-msp.jmapiproxy2.cc",
-    "cdn-msp3.18comic.vip",
-];
+pub(crate) use source_network::JM_COVER_HOSTS;
 // Exact CDN identities only. storage-b is used by the pinned upstream UI:
 // lanyeeee/picacomic-downloader@77c8b62ede42b3afc074506d092313816af8092d,
 // src/AppContent.vue:109. Transformed paths and img redirects are evidenced in
@@ -871,6 +862,25 @@ pub(crate) fn pica_signature(route: &str, method: &str, timestamp: u64) -> Sourc
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect())
+}
+
+/// A host passes by decrypting with the request's timestamp key, or by refusing in
+/// JM's own error shape so a removed probe work cannot lock every account out.
+/// A parked lander's HTML or arbitrary JSON passes neither.
+pub(crate) fn validate_jm_probe(timestamp: u64, body: &[u8]) -> SourceResult<()> {
+    let value: Value =
+        serde_json::from_slice(body).map_err(|_| error("SOURCE_RESPONSE_INVALID"))?;
+    match count(&value["code"])? {
+        Some(200) => decode_jm(
+            timestamp,
+            value["data"]
+                .as_str()
+                .ok_or(error("SOURCE_RESPONSE_INVALID"))?,
+        )
+        .map(|_| ()),
+        Some(_) if value["errorMsg"].is_string() => Ok(()),
+        _ => Err(error("SOURCE_RESPONSE_INVALID")),
+    }
 }
 
 pub(crate) fn decode_jm(timestamp: u64, encoded: &str) -> SourceResult<Value> {

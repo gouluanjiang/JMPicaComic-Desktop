@@ -1,0 +1,754 @@
+/*
+ * Cover-first direction, chosen 2026-11-05. Loaded last on purpose so the change
+ * can be reviewed and reverted as one layer while pages move over one at a time.
+ * Reader trees stay out of scope. Grid columns, cover ratios and virtual rows stay
+ * owned by the layout styles and VirtualSourceGrid measurements.
+ */
+.app-shell.ui-refined {
+  --accent: #a48cf8;
+  --line: #ffffff14;
+  --muted: #b7b5c1;
+  --subtle: #8f909c;
+  --text: #f3f3f6;
+  --canvas: #0c0c0f;
+  --sidebar-width: 212px;
+  --background-fallback:
+    radial-gradient(
+      ellipse 70% 90% at 82% -10%,
+      #5a4597 0%,
+      #2a2145 42%,
+      transparent 72%
+    ),
+    radial-gradient(ellipse 50% 70% at 18% -20%, #2d3560 0%, transparent 70%);
+  background: var(--canvas);
+}
+.app-shell.ui-refined.sidebar-collapsed {
+  --sidebar-width: 72px;
+}
+.app-shell.ui-refined[data-background-tone="forest"] {
+  --background-fallback: radial-gradient(
+    ellipse 70% 90% at 82% -10%,
+    #2f7a7c 0%,
+    #16393c 45%,
+    transparent 74%
+  );
+}
+.app-shell.ui-refined[data-background-tone="dusk"] {
+  --background-fallback: radial-gradient(
+    ellipse 70% 90% at 82% -10%,
+    #b56a80 0%,
+    #4a2a4a 45%,
+    transparent 74%
+  );
+}
+
+/* Your background is the banner: the shade setting still decides how dark it gets,
+ * but the top of the page stays lighter so the picture can actually be seen. */
+.app-shell.ui-refined .workbench-background {
+  background-color: var(--canvas);
+}
+.app-shell.ui-refined[data-background-mode="B"] .workbench-background {
+  height: min(560px, 72dvh);
+  mask-image: linear-gradient(#000 0%, #000 45%, transparent 100%);
+}
+.app-shell.ui-refined[data-background-mode="B"] .workbench-background::after {
+  background:
+    linear-gradient(90deg, rgb(12 12 15 / 0.6) 0%, rgb(12 12 15 / 0) 58%),
+    linear-gradient(
+      180deg,
+      rgb(12 12 15 / calc(var(--background-shade) * 0.45)) 0%,
+      rgb(12 12 15 / var(--background-shade)) 82%
+    );
+}
+
+/* Narrow icon rail. Expanding it for labels stays available. */
+.app-shell.ui-refined .ui-sidebar {
+  padding: 16px 10px 12px;
+  background: #08080ad9;
+  border-right-color: #ffffff0d;
+}
+.app-shell.ui-refined .ui-sidebar .brand {
+  min-height: 40px;
+  margin-bottom: 16px;
+  padding: 0 6px;
+}
+.app-shell.ui-refined .ui-sidebar .brand-mark {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #2f2559;
+  color: #dcd2ff;
+  font:
+    800 18px "Segoe UI",
+    "Microsoft YaHei",
+    sans-serif;
+}
+.app-shell.ui-refined .ui-brand-name small {
+  display: none;
+}
+.app-shell.ui-refined .ui-nav-group {
+  margin-bottom: 8px;
+}
+.app-shell.ui-refined.sidebar-collapsed .ui-nav-heading {
+  min-height: 0;
+  height: 1px;
+  margin: 0 12px 8px;
+  padding: 0;
+  background: var(--line);
+  opacity: 1;
+  visibility: visible;
+  color: transparent;
+  overflow: hidden;
+}
+.app-shell.ui-refined.sidebar-collapsed
+  .ui-nav-group:first-child
+  .ui-nav-heading {
+  display: none;
+}
+.app-shell.ui-refined .ui-nav-item {
+  height: 42px;
+  min-height: 42px;
+  margin: 2px 0;
+  padding: 11px 15px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  position: relative;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+.app-shell.ui-refined .ui-nav-item:hover {
+  color: var(--text);
+  background: #ffffff0f;
+}
+.app-shell.ui-refined .ui-nav-item > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+.app-shell.ui-refined .ui-nav-item:is(.active, [aria-current="page"]) {
+  color: var(--accent);
+  background: #ffffff14;
+}
+.app-shell.ui-refined .ui-nav-item.active::before {
+  display: none;
+}
+.app-shell.ui-refined.sidebar-collapsed .ui-nav-count {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #0c0c0f;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  opacity: 1;
+  visibility: visible;
+}
+.app-shell.ui-refined .ui-sidebar .ui-connection {
+  margin: 0 0 4px;
+  padding: 10px 19px;
+  border-bottom: 0;
+  font-size: 12px;
+}
+.app-shell.ui-refined.sidebar-collapsed .ui-connection {
+  opacity: 1;
+  visibility: visible;
+}
+.app-shell.ui-refined.sidebar-collapsed .ui-connection .ui-nav-label {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* One quiet top row. The breadcrumb and status footer repeated what the rail and
+ * page title already say; both stay in the DOM for assistive tech and scripts. */
+.app-shell.ui-refined .topbar {
+  min-height: 48px;
+  height: 48px;
+  margin: 0 32px;
+  border-bottom: 0;
+}
+.app-shell.ui-refined .breadcrumb {
+  visibility: hidden;
+}
+.app-shell.ui-refined .demo-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.app-shell.ui-refined .demo-label[data-native="true"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.app-shell.ui-refined .statusbar {
+  height: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+}
+.app-shell.ui-refined .content {
+  padding: 0 32px 48px;
+}
+
+/* Library page */
+.app-shell.ui-refined h1 {
+  font-size: 40px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.app-shell.ui-refined .product-name {
+  color: #ffffffd9;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.app-shell.ui-refined .library-heading {
+  margin: 0 0 22px;
+  min-height: 72px;
+}
+.app-shell.ui-refined .library-heading p {
+  display: none;
+}
+/* Search and density share the title's row, as in the accepted layout. */
+.app-shell.ui-refined .library-workbench .library-toolbar {
+  justify-content: flex-end;
+  gap: 18px;
+  width: fit-content;
+  max-width: 100%;
+  top: 0;
+  margin: -88px 0 46px auto;
+  border-bottom: 0;
+  border-radius: 12px;
+  background: transparent;
+}
+/* Once it sticks above the covers it must stay opaque and readable. */
+.app-shell.ui-refined .library-workbench .library-toolbar.is-stuck {
+  padding-inline: 8px;
+  background: #141419f2;
+}
+.app-shell.ui-refined .library-toolbar .search-box {
+  flex: 0 1 380px;
+  width: 380px;
+  height: 42px;
+  min-height: 42px;
+  border-radius: 21px;
+  border-color: #ffffff33;
+  background: #0c0c0fc7;
+  backdrop-filter: blur(10px);
+}
+.app-shell.ui-refined .library-toolbar .search-box input {
+  font-size: 14px;
+}
+.app-shell.ui-refined .library-recent {
+  margin: 0 0 22px;
+}
+.app-shell.ui-refined .library-recent h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.app-shell.ui-refined
+  .library-workbench
+  .source-card
+  .source-card-date:not(.is-added-date) {
+  display: none;
+}
+.app-shell.ui-refined .library-workbench > .source-actions,
+.app-shell.ui-refined .library-workbench .library-path {
+  font-size: 12px;
+}
+.app-shell.ui-refined .source-density {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #0c0c0fc7;
+  color: var(--muted);
+  font-size: 13px;
+}
+.app-shell.ui-refined .source-density button {
+  border-radius: 6px;
+  color: var(--muted);
+}
+.app-shell.ui-refined .source-density button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--canvas);
+  font-weight: 700;
+}
+.app-shell.ui-refined .library-workbench .result-filters {
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.app-shell.ui-refined .library-workbench .result-filters button {
+  padding: 8px 2px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+}
+.app-shell.ui-refined
+  .library-workbench
+  .result-filters
+  button[aria-pressed="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+  background: transparent;
+}
+.app-shell.ui-refined .library-list-heading {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Covers lead; text stays short beneath them. */
+.app-shell.ui-refined .library-workbench .source-card-cover {
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px #0000008c;
+  transition: transform 0.16s ease;
+}
+.app-shell.ui-refined .library-workbench .source-card:hover .source-card-cover {
+  transform: translateY(-3px);
+}
+.app-shell.ui-refined .library-workbench .source-card h3 {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.app-shell.ui-refined .library-workbench .source-card > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.app-shell.ui-refined .library-workbench .source-card > .source-card-state {
+  color: var(--subtle);
+  margin-top: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.ui-refined
+    .library-workbench
+    .source-card:hover
+    .source-card-cover {
+    transform: none;
+  }
+}
+.app-shell.ui-refined[data-reduced-motion="true"]
+  .library-workbench
+  .source-card:hover
+  .source-card-cover {
+  transform: none;
+}
+@media (max-width: 760px) {
+  .app-shell.ui-refined .topbar {
+    margin: 0 16px;
+  }
+  .app-shell.ui-refined .content {
+    padding: 0 16px 32px;
+  }
+  .app-shell.ui-refined h1 {
+    font-size: 32px;
+  }
+  .app-shell.ui-refined .library-workbench .library-toolbar {
+    width: 100%;
+    margin: 0 0 16px;
+  }
+  .app-shell.ui-refined .library-toolbar .search-box {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+/* Everything here is in the library, so only an exception needs a line of its own. */
+.app-shell.ui-refined
+  .library-workbench
+  .source-card
+  > .source-card-state.is-ordinary {
+  display: none;
+}
+.app-shell.ui-refined .library-workbench .source-card > p {
+  margin-top: 2px;
+}
+.app-shell.ui-refined .library-list-heading {
+  margin: 10px 0;
+}
+.app-shell.ui-refined .library-workbench > p.source-muted,
+.app-shell.ui-refined .library-workbench > .source-muted {
+  color: var(--subtle);
+  font-size: 12px;
+}
+/* The theme offsets these by the old content padding, which is gone. */
+.app-shell.ui-refined .content .library-toolbar {
+  top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Every other page follows the library: one quiet heading, covers first, and
+ * explanations that stay readable without competing with the works.
+ * ------------------------------------------------------------------------- */
+.app-shell.ui-refined[data-background-mode="B"] .content {
+  text-shadow: 0 1px 3px #00000080;
+}
+.app-shell.ui-refined .content .eyebrow {
+  display: none;
+}
+.app-shell.ui-refined .content .page-heading {
+  margin: 0 0 18px;
+}
+.app-shell.ui-refined .content .page-heading p,
+.app-shell.ui-refined .completion-panel.source-workbench > h1 + p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.app-shell.ui-refined .unified-search-title {
+  margin: 0 0 18px;
+}
+
+/* On a cover, a language badge only earns its place when the source states a
+ * language. Detail pages keep the value and assistive tech keeps the explanation. */
+.app-shell.ui-refined
+  .content
+  .source-card
+  .source-language-badge[data-language-kind="unknown"] {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  box-shadow: none;
+}
+
+/* Cards */
+.app-shell.ui-refined
+  .content
+  .source-card:not(.is-selected)
+  .source-card-cover {
+  border: 0;
+}
+.app-shell.ui-refined .content .source-card-cover {
+  border-radius: 6px;
+  box-shadow: 0 6px 18px #0000008c;
+  transition: transform 0.16s ease;
+}
+.app-shell.ui-refined .content .source-card:hover .source-card-cover {
+  transform: translateY(-3px);
+}
+.app-shell.ui-refined .content .source-card h3 {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.app-shell.ui-refined .content .source-card > p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.app-shell.ui-refined .content .source-card > .source-card-state,
+.app-shell.ui-refined .content .source-card > .source-card-date {
+  color: var(--subtle);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.ui-refined .content .source-card:hover .source-card-cover {
+    transform: none;
+  }
+}
+.app-shell.ui-refined[data-reduced-motion="true"]
+  .content
+  .source-card:hover
+  .source-card-cover {
+  transform: none;
+}
+
+/* Fields stay legible on any wallpaper. */
+.app-shell.ui-refined .content :is(select, textarea),
+.app-shell.ui-refined .content .source-search,
+.app-shell.ui-refined .content .search-box,
+.app-shell.ui-refined .content .source-actions > input,
+.app-shell.ui-refined .content .source-toolbar > input,
+.app-shell.ui-refined .content .source-toolbar-leading > input,
+.app-shell.ui-refined .content .completion-controls > input,
+.app-shell.ui-refined .content .author-workspace-tools form input,
+.app-shell.ui-refined .content .download-history-toolbar > input {
+  border: 1px solid #ffffff24;
+  border-radius: 8px;
+  background: #0c0c0fd1;
+  color: var(--text);
+}
+
+/* Controls */
+.app-shell.ui-refined .content .button.secondary,
+.app-shell.ui-refined .content .source-actions > button:not(.text-button),
+.app-shell.ui-refined
+  .content
+  .completion-controls
+  > button:not(.primary-button) {
+  border: 1px solid #ffffff1f;
+  border-radius: 8px;
+  background: #1a1a20d9;
+  color: var(--text);
+}
+.app-shell.ui-refined .content .button.secondary:hover:not(:disabled),
+.app-shell.ui-refined
+  .content
+  .source-actions
+  > button:not(.text-button):hover:not(:disabled),
+.app-shell.ui-refined
+  .content
+  .completion-controls
+  > button:not(.primary-button):hover:not(:disabled) {
+  background: #26262ee6;
+}
+.app-shell.ui-refined .content .button.primary,
+.app-shell.ui-refined .completion-panel .primary-button {
+  border-color: transparent;
+  border-radius: 8px;
+  background: var(--accent) !important;
+  color: var(--canvas);
+  font-weight: 600;
+  text-shadow: none;
+}
+.app-shell.ui-refined .content .button.primary:disabled,
+.app-shell.ui-refined .completion-panel .primary-button:disabled {
+  background: #a48cf866 !important;
+}
+
+/* Filters read as tabs. The JM / Pica switch stays a small segmented control. */
+.app-shell.ui-refined .content .result-filters,
+.app-shell.ui-refined
+  .content
+  .source-tabs:not(.source-page-tools > .source-tabs),
+.app-shell.ui-refined .content .queue-tabs {
+  gap: 22px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.app-shell.ui-refined .content .result-filters button,
+.app-shell.ui-refined
+  .content
+  .source-tabs:not(.source-page-tools > .source-tabs)
+  > button {
+  min-height: 0;
+  padding: 8px 2px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+}
+.app-shell.ui-refined .content .result-filters button[aria-pressed="true"],
+.app-shell.ui-refined
+  .content
+  .source-tabs:not(.source-page-tools > .source-tabs)
+  > button:is(.active, [aria-pressed="true"]) {
+  border-bottom-color: var(--accent);
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+}
+.app-shell.ui-refined .content .source-page-tools > .source-tabs > button {
+  border-radius: 8px;
+  background: #0c0c0fd1;
+}
+
+/* Explanations */
+.app-shell.ui-refined .content .page-summary {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+.app-shell.ui-refined .content p.source-muted,
+.app-shell.ui-refined .content p.quiet {
+  margin: 4px 0;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.app-shell.ui-refined[data-background-mode="B"]
+  .content
+  :is(p.source-muted, p.quiet) {
+  color: var(--muted);
+}
+.app-shell.ui-refined .content details.page-scope-details,
+.app-shell.ui-refined .content details.source-notice {
+  margin: 6px 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--subtle);
+  font-size: 12px;
+}
+.app-shell.ui-refined .content .source-toolbar {
+  border-bottom: 0;
+}
+.app-shell.ui-refined .content .completion-change-summary {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #15151bcc;
+}
+
+/* Selection stays off the covers, and now only as tall as its one button. */
+.app-shell.ui-refined .floating-selection-host {
+  padding: 6px 32px;
+  border-top-color: #ffffff0d;
+}
+
+/* Download queue: still a row list, with the add form on two compact columns. */
+.app-shell.ui-refined .native-download-add {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0 0 8px;
+}
+.app-shell.ui-refined .native-download-add > label {
+  margin: 0;
+  font-size: 13px;
+}
+.app-shell.ui-refined .native-download-add > label:first-of-type {
+  grid-area: 1 / 1;
+}
+.app-shell.ui-refined .native-download-add > select {
+  grid-area: 2 / 1;
+  align-self: start;
+  width: 100%;
+}
+.app-shell.ui-refined .native-download-add > label:nth-of-type(2) {
+  grid-area: 1 / 2;
+}
+.app-shell.ui-refined .native-download-add > .source-actions {
+  grid-area: 2 / 2;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+.app-shell.ui-refined .native-download-add textarea {
+  min-height: 62px;
+  height: 62px;
+}
+.app-shell.ui-refined .native-downloads .queue-overview {
+  margin: 14px 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.app-shell.ui-refined .native-downloads .task-card {
+  border-color: transparent;
+  border-radius: 10px;
+  background: #ffffff0a;
+}
+.app-shell.ui-refined .native-downloads .task-card:hover {
+  background: #ffffff10;
+}
+.app-shell.ui-refined .native-downloads .task-card.task-error {
+  border-color: #d3b88b33;
+  background: #d3b88b0f;
+}
+
+/* Author rows stay names only, on one quiet surface. */
+.app-shell.ui-refined .content .source-authors {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #15151bcc;
+  overflow: hidden;
+}
+.app-shell.ui-refined .content .source-author-head {
+  color: var(--subtle);
+  font-size: 12px;
+}
+
+/* Pages built as a plain stack need the same rhythm as the rest. */
+.app-shell.ui-refined .completion-panel.source-workbench > h1 {
+  margin-bottom: 4px;
+}
+.app-shell.ui-refined .content .source-workbench > .source-actions {
+  margin: 12px 0;
+}
+.app-shell.ui-refined .content .source-workbench > p:not(.source-muted) {
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Settings */
+.app-shell.ui-refined .content .page-search-box {
+  height: 38px;
+  min-height: 38px;
+  margin-bottom: 18px;
+}
+.app-shell.ui-refined .content .settings-navigation button {
+  border-radius: 8px;
+  color: var(--muted);
+}
+.app-shell.ui-refined
+  .content
+  .settings-navigation
+  button[aria-current="page"] {
+  border-left: 0;
+  background: #ffffff14;
+  color: var(--accent);
+}
+.app-shell.ui-refined .content .settings-panel .settings-card,
+.app-shell.ui-refined .content .source-accounts > article,
+.app-shell.ui-refined .content .source-accounts > div {
+  border-color: var(--line);
+  border-radius: 12px;
+  background: #15151bcc;
+}
+
+@media (max-width: 760px) {
+  .app-shell.ui-refined .floating-selection-host {
+    padding-inline: 16px;
+  }
+  .app-shell.ui-refined .native-download-add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell.ui-refined
+    .native-download-add
+    > :is(label, select, .source-actions) {
+    grid-area: auto;
+  }
+}
+
+/* The select keeps its own column; the base style sizes it wider than that. */
+.app-shell.ui-refined .content .native-download-add > select {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+/* An action sharing the tab row is still an action, not a tab. */
+.app-shell.ui-refined .content .source-tabs > button.text-button {
+  margin-left: auto;
+  border-bottom-color: transparent;
+  color: var(--accent);
+  font-size: 13px;
+}
+.app-shell.ui-refined .content .button.primary:disabled,
+.app-shell.ui-refined .completion-panel .primary-button:disabled {
+  color: #ffffffa6;
+}
+
+/* Rows breathe, without the empty band under the last line. */
+.app-shell.ui-refined .native-downloads .task-list {
+  gap: 8px;
+}
+.app-shell.ui-refined .native-downloads .task-card {
+  padding: 14px 16px;
+}

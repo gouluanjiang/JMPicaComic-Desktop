@@ -14,7 +14,7 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
-pub const IMAGE_DOMAIN: &str = "cdn-msp2.jmapiproxy2.cc";
+pub const IMAGE_DOMAIN: &str = source_network::JM_IMAGE_HOST;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct JmMediaItem {

@@ -1069,7 +1069,8 @@ mod tests {
     #[test]
     fn request_budget_reservation_is_fail_closed_and_releases_unused_attempts() {
         assert_eq!(JM_SEARCH_MAX_ATTEMPTS, jm_adapter::BASELINE_DOMAINS.len() * 2);
-        let budget = RequestBudget::new(12).unwrap();
+        let limit = JM_SEARCH_MAX_ATTEMPTS + 2;
+        let budget = RequestBudget::new(limit).unwrap();
         let search = budget.reserve(JM_SEARCH_MAX_ATTEMPTS).unwrap();
         assert!(budget.reserve(JM_DETAIL_MAX_ATTEMPTS).is_none());
         search.commit(2).unwrap();
@@ -1077,7 +1078,7 @@ mod tests {
         let detail = budget.reserve(JM_DETAIL_MAX_ATTEMPTS).unwrap();
         detail.commit(1).unwrap();
         assert_eq!(budget.used(), 3);
-        assert!(budget.used() <= 12);
+        assert!(budget.used() <= limit);
     }
 
     #[test]

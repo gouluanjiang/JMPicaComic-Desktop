@@ -1774,7 +1774,8 @@ test("both source lists show tag-only language badges without detail requests an
       page.getByRole("toolbar", { name: "批量下载操作", exact: true }),
     ).toContainText("已选 2 本");
     await page.getByTestId(`source-card-${source}:1`).scrollIntoViewIfNeeded();
-    for (const workId of ["1", "2", "3", "4", "5"]) {
+    // An unknown language stays in the DOM but no longer takes space on a cover.
+    for (const workId of ["1", "2", "5"]) {
       await expect(
         page
           .getByTestId(`source-card-${source}:${workId}`)

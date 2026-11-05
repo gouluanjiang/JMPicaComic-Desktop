@@ -105,9 +105,19 @@ retain their existing sanitization path.
 
 All metadata responses are limited to 8 MiB and each request has a 30-second
 timeout. Metadata redirects are rejected. There are no implicit retries or whole-list
-pagination loops. JM requests use the pinned primary `www.cdnhth.cc`; this crate
-does not rotate a logged-in account's cookie between domains. The five existing
-cloud-domain pins are unchanged and may also identify pasted API detail links.
+pagination loops. JM requests start from the last hostname that answered and fall
+back through the pinned `JM_API_HOSTS` list only for transport failures, redirects,
+405, server errors and non-JSON bodies (parked-domain landers); a favorite toggle is
+never replayed on another host. A refusal from a live host (400, 404, 409, 410, 422)
+stays on that host. Connections time out after 10 seconds, no new host is tried once
+45 seconds have passed, and after every host fails other requests fail fast for 30
+seconds; signing in always gets a real attempt. Pins live in `source-network`. Before a JM host receives a password or session cookie it must pass
+an anonymous probe: the response decrypts with the request's timestamp key, or
+refuses in JM's own error shape. A pass lasts 15 minutes and ends early on a host-level
+failure. This rejects parked hostnames but is not authentication, because the key is
+public. Pinned hosts were reviewed by hand on 2026-11-01 against JM's domain
+announcement, which is encrypted but not signed and never expands the list
+automatically; the same exact-match set identifies pasted API detail links.
 
 JM: POST `/login` uses form fields `username/password`; subsequent POST `/login`
 uses `Cookie: AVS=<session>` with no password. GET `/favorite` uses page, `o=mr`,

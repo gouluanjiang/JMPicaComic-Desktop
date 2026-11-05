@@ -25,6 +25,7 @@ workbench-library = { path = "../../../crates/workbench-library" }
 workbench-downloads = { path = "../../../crates/workbench-downloads" }
 workbench-accounts = { path = "../../../crates/workbench-accounts" }
 workbench-sources = { path = "../../../crates/workbench-sources" }
+source-network = { path = "../../../crates/source-network" }
 workbench-credentials = { path = "../../../crates/workbench-credentials" }
 zeroize = "=1.9.0"
 serde = { version = "1", features = ["derive"] }

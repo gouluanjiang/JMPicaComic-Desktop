@@ -18,7 +18,7 @@ The MIT notices above must remain preserved when substantial upstream code is re
 - `/chapter_view_template` is special: upstream uses the distinct token secret `18comicAPPContent`. This distinction must not be collapsed into the normal API token path.
 - API response `data` is Base64 + AES-256-ECB using the MD5-derived `timestamp + 185Hcomic3PAPP7R` key.
 - Search can return either a paged search payload or a direct `redirect_aid`; redirect must be treated as an exact detail lookup rather than an empty search page.
-- The five lanyeeee API domains currently pinned by this project are all valid upstream choices: `www.cdnzack.cc`, `www.cdnhth.cc`, `www.cdnhth.net`, `www.cdnbea.net`, `www.cdn-mspjmapiproxy.xyz`.
+- The pinned API domain set is maintained manually and must be refreshed when JM rotates hostnames. Refreshed 2026-11-01: `www.cdnhjk.net`, `www.cdnutc.cc`, `www.cdngwc.net`, `www.cdngwc.cc`, `www.cdngwc.club`, plus the still-live legacy `www.cdnhth.net` and `www.cdnbea.net`. The September 2026 set (`www.cdnhth.cc`, `www.cdnzack.cc`, `www.cdn-mspjmapiproxy.xyz`) is retired: those hosts now answer with parked-domain landers or no TLS. `www.cdnutc.me` is announced by JM as line 5 but did not connect during the 2026-11-01 check, so it is not pinned. JM's announcement (`newsvr-2025.txt`) is an input for manual review only: it is encrypted with a fixed key rather than signed, so it must not expand the pinned set automatically.
 - Scramble/block-number logic and the chapter/image metadata shapes are already pinned in the adapter and remain fail-closed where the upstream GUI uses permissive fallbacks.
 
 ### Reliability pattern adopted from JMComic-Crawler-Python
@@ -26,8 +26,8 @@ The MIT notices above must remain preserved when substantial upstream code is re
 JMComic-Crawler-Python treats domain rotation and retry as first-class client behavior. MangaMonitor-AI adopts only a narrower version:
 
 - retry/fail over only inside the already-pinned domain allowlist;
-- primary configured domain stays first;
-- failover is allowed for transport failures and domain-level transient HTTP responses only;
+- the configured primary stays first; interactive and download clients configured with the default start from the last pinned host that answered in this process, and the monitor keeps the default;
+- failover is allowed for transport failures, domain-level transient HTTP responses (including 405 from a parked lander) and "the body was not JSON at all" (also a lander), but never for a non-idempotent favorite toggle;
 - protocol/schema/decryption/API-code failures remain fatal and are never hidden by domain rotation;
 - every physical attempt is appended to `RequestTrace`, so the cloud request budget counts failover attempts instead of under-reporting them.
 
@@ -79,6 +79,11 @@ The read-only desktop ranking routes were checked against the existing local sou
 The desktop code reuses existing authenticated source clients, response parsers and runtime-only cover descriptors. No new host, credential destination, download transform or media-transfer behavior is introduced. Synthetic tests cover endpoint selection, ordering, short lists, malformed options, sessions and renderer boundaries. Live source acceptance of these new routes remains a separate user step.
 
 The 2026-09-14 acceptance diagnostic found 174 blank `categories[].title` values among 256 issues, including the latest issue. At the same pinned revision, `jmcomic-downloader/src/panes/WeeklyPane.vue:15-19` uses `category.time` as the issue label, and line 32 selects the final type (`manga` in the observed response). The workbench now accepts blank optional issue labels, falls back to date or a literal issue identifier, and prefers the advertised `manga` type. Type labels, identifiers, duplicate IDs and text limits retain validation. Four anonymous public GETs established options and both an empty `hanman` list and a 20/20 `manga` list; no account, images or private library were used. See [the scoped diagnostic and repair](JM_WEEKLY_FIX_2026-09-14.md); this is not blanket live acceptance of all periods or account workflows.
+
+On 2026-11-05 an anonymous `/week` read showed the same for types: `hanman` has an
+empty `type[].title` while `manga` and `another` keep theirs, and `/week/filter`
+still serves it. A blank type title therefore falls back to a local label and keeps
+its `id`. Shape and length validation still reject malformed titles.
 
 The 2026-09-12 batch queue review reopened all three pinned download implementations. Their bounded scheduling and all-image completion requirements remain references; desktop cross-work scheduling now wraps the existing verified single-work path and waits through PC registration before dispatching the next explicitly confirmed work. No source pins, media transport, retry policy, output layout or production flags change. See `BATCH_QUEUE_AND_MATCHING_2026-09-12.md`.
 

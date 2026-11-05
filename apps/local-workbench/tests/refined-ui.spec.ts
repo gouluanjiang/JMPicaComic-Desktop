@@ -162,8 +162,14 @@ test("sidebar collapse is reversible by pointer and keyboard without losing acti
 }) => {
   const toggle = page.getByTestId("sidebar-toggle");
   const sidebar = page.locator(".sidebar");
-  const expanded = (await sidebar.boundingBox())!.width;
+  // The narrow rail is the default; labels are one click away.
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect
+    .poll(async () => (await sidebar.boundingBox())!.width)
+    .toBeGreaterThan(150);
+  const expanded = (await sidebar.boundingBox())!.width;
   await openUnifiedSearch(page);
   await page
     .getByRole("textbox", { name: "搜索作者名" })
@@ -318,7 +324,7 @@ test("deep library browsing keeps its book and usable opaque toolbar after both 
     await page.getByTestId("library-grid").locator("article").count(),
   ).toBeLessThan(100);
   const anchor = await firstVisible();
-  for (const expanded of ["false", "true"]) {
+  for (const expanded of ["true", "false"]) {
     await page.getByTestId("sidebar-toggle").click();
     await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute(
       "aria-expanded",
@@ -546,4 +552,37 @@ test("scope details can be disclosed without starting a check and narrow pages k
   ).toBe(true);
   await mkdir("visual-evidence", { recursive: true });
   await page.screenshot({ path: "visual-evidence/refined-library-narrow.png" });
+});
+
+test("cover pages hide only an unknown language and search has a title", async ({
+  page,
+}) => {
+  await installWorkflow(page);
+  await expect(page.locator(".library-toolbar:visible")).not.toHaveClass(
+    /is-stuck/,
+  );
+  const card = page.locator(".library-workbench .source-card:visible").first();
+  await expect(card.locator(".is-added-date")).toBeVisible();
+  await expect(card.locator(".is-added-date")).toContainText("入库时间：");
+  await expect(card.locator(".source-card-date").first()).toBeHidden();
+  await page.getByTestId("nav-favorites").click();
+  const badge = page
+    .locator('.source-card:visible [data-language-kind="unknown"]')
+    .first();
+  await expect(badge).toHaveText("未知");
+  await expect(badge).toHaveAttribute("aria-label", /未知/);
+  expect((await badge.boundingBox())!.width).toBeLessThanOrEqual(1);
+
+  await page.locator(".source-card:visible h3 button").first().click();
+  const detailBadge = page
+    .getByTestId("source-detail")
+    .getByTestId("source-language-badge")
+    .first();
+  await expect(detailBadge).toBeVisible();
+  expect((await detailBadge.boundingBox())!.width).toBeGreaterThan(1);
+
+  await page.getByTestId("nav-discovery").click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "搜索", exact: true }),
+  ).toBeVisible();
 });

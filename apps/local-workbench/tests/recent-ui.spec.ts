@@ -1312,6 +1312,18 @@ test("the page origin survives delayed header and row measurement without losing
     main.scrollTop = 1000;
   });
   await settle();
+  // Rest a row just below the top edge. A fixed offset would depend on the
+  // page header: when the next row does not fit, the grid deliberately pins
+  // the clipped row above it, which is not the card captured here.
+  await grid.evaluate((element) => {
+    const main = element.closest("main")!;
+    const top = main.getBoundingClientRect().top;
+    const row = [
+      ...element.querySelectorAll<HTMLElement>(".source-virtual-row"),
+    ].find((item) => item.getBoundingClientRect().top >= top)!;
+    main.scrollTop += row.getBoundingClientRect().top - top - 8;
+  });
+  await settle();
   const anchor = await captureRecentAnchor(page);
   await grid.evaluate((element) => {
     const panel = element.closest("section")!;

@@ -5,9 +5,15 @@ import {
   diagnosticSummary,
   diagnosticProblemLines,
   libraryPhaseLabels,
+  sourceNetworkLines,
+  validateSourceNetworkHealth,
   validateWorkbenchInfo,
 } from "./diagnostics.ts";
-import type { DiagnosticState, WorkbenchInfo } from "./diagnostics.ts";
+import type {
+  DiagnosticState,
+  SourceNetworkHealth,
+  WorkbenchInfo,
+} from "./diagnostics.ts";
 import type { SettingsPage } from "./settings-navigation.ts";
 
 export function DiagnosticsPanel({
@@ -23,6 +29,8 @@ export function DiagnosticsPanel({
 }) {
   const [info, setInfo] = useState<WorkbenchInfo | null>(null);
   const [infoFailed, setInfoFailed] = useState(false);
+  const [sourceNetwork, setSourceNetwork] =
+    useState<SourceNetworkHealth | null>(null);
   const [retry, setRetry] = useState(0);
   const [copyReceipt, setCopyReceipt] = useState<{
     text: string;
@@ -48,7 +56,23 @@ export function DiagnosticsPanel({
       active = false;
     };
   }, [retry]);
-  const report = diagnosticSummary({ ...state, info });
+  useEffect(() => {
+    if (state.accountsLoading) return;
+    let active = true;
+    void invokeDesktop("source_network_health")
+      .then(validateSourceNetworkHealth)
+      .then((value) => {
+        if (active) setSourceNetwork(value);
+      })
+      .catch(() => {
+        // Optional detail: the rest of the panel stays useful without it.
+        if (active) setSourceNetwork(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [state.accountsLoading]);
+  const report = diagnosticSummary({ ...state, info, sourceNetwork });
   const problemLines = diagnosticProblemLines(state.problems);
   const displayedReport =
     copyReceipt && !copyReceipt.success ? copyReceipt.text : report;
@@ -133,6 +157,13 @@ export function DiagnosticsPanel({
       <p className="settings-help">
         这里显示账号会话状态。实际来源能否读取，以收藏、搜索或下载时的结果为准。
       </p>
+      {sourceNetwork && (
+        <ul className="settings-help" data-testid="diagnostics-source-network">
+          {sourceNetworkLines(sourceNetwork).map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
       <div className="source-actions">
         <button
           className="button secondary"

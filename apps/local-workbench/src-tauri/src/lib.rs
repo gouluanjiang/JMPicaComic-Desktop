@@ -174,6 +174,44 @@ fn workbench_info<R: Runtime>(window: WebviewWindow<R>) -> Result<WorkbenchInfo,
     })
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceHostHealth {
+    host: String,
+    last_success_ms: Option<u64>,
+    last_failure_ms: Option<u64>,
+    last_failure_code: Option<String>,
+    consecutive_failures: u64,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceNetworkHealth {
+    preferred_jm_host: &'static str,
+    hosts: Vec<SourceHostHealth>,
+}
+
+/// Hostnames and closed error codes only, from this run.
+#[tauri::command]
+fn source_network_health<R: Runtime>(
+    window: WebviewWindow<R>,
+) -> Result<SourceNetworkHealth, StoreError> {
+    require_main(window.label())?;
+    Ok(SourceNetworkHealth {
+        preferred_jm_host: source_network::preferred_jm_api_host(),
+        hosts: source_network::host_health()
+            .into_iter()
+            .map(|(host, health)| SourceHostHealth {
+                host,
+                last_success_ms: health.last_success_ms,
+                last_failure_ms: health.last_failure_ms,
+                last_failure_code: health.last_failure_code,
+                consecutive_failures: health.consecutive_failures,
+            })
+            .collect(),
+    })
+}
+
 fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
     builder
         .manage(Arc::new(library::DesktopLibrary::default()))
@@ -195,6 +233,7 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             write_booklists,
             choose_background,
             workbench_info,
+            source_network_health,
             reader::reader_open,
             reader::reader_cancel_open,
             reader::reader_chapter,
@@ -236,6 +275,7 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             downloads::jm_download_pause_all,
             downloads::jm_download_resume_many,
             downloads::jm_download_history_remove,
+            downloads::jm_download_root_verify,
             library::library_read,
             library::library_choose,
             library::library_import_paths,
@@ -282,6 +322,9 @@ pub fn run() {
             let root = app.path().app_data_dir().map_err(|_| StoreError {
                 code: "APP_DATA_UNAVAILABLE",
             });
+            if let Ok(root) = &root {
+                source_network::set_health_log(root.join("diagnostics").join("source-health.log"));
+            }
             app.manage(Arc::new(DesktopStore::new(root.clone())));
             app.manage(Arc::new(DesktopAccounts::new(root)));
             let window_config = app

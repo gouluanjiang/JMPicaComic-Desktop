@@ -4,6 +4,8 @@ import {
   diagnosticSummary,
   createDiagnosticProblem,
   diagnosticProblemLines,
+  sourceNetworkLines,
+  validateSourceNetworkHealth,
   validateWorkbenchInfo,
 } from "../src/diagnostics.ts";
 import { matchingSettingsPages } from "../src/settings-navigation.ts";
@@ -12,6 +14,19 @@ import { emptyDownloads } from "../src/download-types.ts";
 import { LibraryController } from "../src/library-runtime.ts";
 import { DownloadController } from "../src/download-runtime.ts";
 
+const failureSummaryInputs = () => ({
+  info: null,
+  accounts: [],
+  accountsLoading: false,
+  accountsFailed: false,
+  library: emptyLibrary(),
+  libraryFailed: false,
+  downloads: emptyDownloads(),
+  downloadsReady: true,
+  downloadsFailed: false,
+  preferencesReady: true,
+  preferencesFailed: false,
+});
 const failureProblem = (operation, state) =>
   createDiagnosticProblem(
     operation,
@@ -285,6 +300,73 @@ test("diagnostics report only allowed statuses and counts, even with private DTO
   );
   assert.throws(() =>
     validateWorkbenchInfo({ ...state.info, revision: "private-build-path" }),
+  );
+});
+
+test("source network health shows only hostnames and closed codes", () => {
+  const healthy = {
+    host: "www.cdnhjk.net",
+    lastSuccessMs: 5,
+    lastFailureMs: null,
+    lastFailureCode: null,
+    consecutiveFailures: 0,
+  };
+  const failing = {
+    host: "www.cdnutc.cc",
+    lastSuccessMs: null,
+    lastFailureMs: 6,
+    lastFailureCode: "SOURCE_CONNECTION_FAILED",
+    consecutiveFailures: 3,
+  };
+  const health = { preferredJmHost: "www.cdnhjk.net", hosts: [healthy] };
+  assert.deepEqual(validateSourceNetworkHealth(health), health);
+  assert.deepEqual(sourceNetworkLines(health), [
+    "JM 线路：www.cdnhjk.net",
+    "线路状态：本次运行最近的请求没有异常",
+  ]);
+  assert.deepEqual(
+    sourceNetworkLines({ preferredJmHost: "www.cdnhjk.net", hosts: [] }),
+    ["JM 线路：www.cdnhjk.net", "线路状态：本次运行尚未请求来源"],
+  );
+  assert.deepEqual(
+    sourceNetworkLines({
+      preferredJmHost: "www.cdnhjk.net",
+      hosts: [healthy, failing],
+    }),
+    [
+      "JM 线路：www.cdnhjk.net",
+      "线路异常：www.cdnutc.cc 连续失败 3 次（SOURCE_CONNECTION_FAILED）",
+    ],
+  );
+  for (const invalid of [
+    null,
+    {},
+    { preferredJmHost: "a/b", hosts: [] },
+    { preferredJmHost: "a.example", hosts: "none" },
+    { preferredJmHost: "a.example", hosts: [null] },
+    {
+      preferredJmHost: "a.example",
+      hosts: [{ ...healthy, host: "C:/private" }],
+    },
+    {
+      preferredJmHost: "a.example",
+      hosts: [{ ...failing, lastFailureCode: "private-title" }],
+    },
+    {
+      preferredJmHost: "a.example",
+      hosts: [{ ...healthy, consecutiveFailures: -1 }],
+    },
+    {
+      preferredJmHost: "a.example",
+      hosts: Array.from({ length: 33 }, () => healthy),
+    },
+  ])
+    assert.throws(() => validateSourceNetworkHealth(invalid));
+  const base = failureSummaryInputs();
+  assert.doesNotMatch(diagnosticSummary(base), /JM 线路/);
+  assert.match(
+    diagnosticSummary({ ...base, sourceNetwork: health }),
+    /JM 线路：www\.cdnhjk\.net/,
   );
 });
 

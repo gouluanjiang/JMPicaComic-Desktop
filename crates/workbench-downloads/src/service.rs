@@ -81,6 +81,15 @@ pub struct DownloadSnapshot {
     pub revision: u64,
     pub tasks: Vec<DownloadTask>,
 }
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadRootCheck {
+    pub verified: u64,
+    pub missing: u64,
+    pub changed: u64,
+    pub skipped: u64,
+    pub snapshot: DownloadSnapshot,
+}
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AwaitingIndexReceipt {
     pub task_id: String,
@@ -807,6 +816,91 @@ impl DownloadService {
             store.read_library_shared()?.as_ref(),
         ))
     }
+    /// User-started. A folder re-selected at the same path keeps its completions
+    /// bound to the old identity by design; this moves only those whose ZIP still
+    /// proves its recorded size and SHA-256 and is the file the library indexed.
+    /// Reads media and writes only the queue document. Anything else stays as it
+    /// was, and a missing file is reported rather than treated as a new download.
+    pub fn verify_moved_root(&self, store: &WorkbenchStore) -> Result<DownloadRootCheck> {
+        let library = store.read_library_shared()?;
+        let root = current_complete_root(&library.value)?;
+        let directory = crate::fs::Directory::open(std::path::Path::new(&root.path))?;
+        if directory.key()? != root.file_key {
+            return Err(error("DOWNLOAD_ROOT_CHANGED"));
+        }
+        // Digests can take minutes, so they run without blocking the queue.
+        let candidates = {
+            let _runtime = self.lock()?;
+            self.load(store)?.value.tasks
+        };
+        let (mut missing, mut changed, mut skipped) = (0, 0, 0);
+        let mut proven = Vec::new();
+        for task in candidates
+            .iter()
+            .filter(|task| moved_root_candidate(task, &root))
+        {
+            match presence::check_moved_output(task, &directory, &library.value) {
+                presence::MovedOutput::Proven(identity) => {
+                    proven.push((task.id.clone(), task.revision, identity));
+                }
+                presence::MovedOutput::Missing => missing += 1,
+                presence::MovedOutput::Changed => changed += 1,
+                presence::MovedOutput::Unverifiable => skipped += 1,
+            }
+        }
+        let mut runtime = self.lock()?;
+        let mut document = self.load(store)?;
+        let current = store.read_library_shared()?;
+        if current_complete_root(&current.value)? != root || directory.key()? != root.file_key {
+            return Err(error("DOWNLOAD_ROOT_CHANGED"));
+        }
+        let workspace = store.open_download_workspace()?;
+        let mut verified = 0;
+        for (task_id, revision, identity) in proven {
+            let active = runtime.active.as_ref().is_some_and(|a| a.task_id == task_id);
+            let task = document
+                .value
+                .tasks
+                .iter_mut()
+                .find(|task| task.id == task_id)
+                .filter(|task| {
+                    !active && task.revision == revision && moved_root_candidate(task, &root)
+                });
+            let Some(task) = task else {
+                skipped += 1;
+                continue;
+            };
+            // The command directory is derived from the binding replaced below,
+            // so leftover staging must be cleaned while it can still be found.
+            let staging_absent =
+                materialize::require_completed_staging_absent(task, workspace.path()).is_ok();
+            let same_file = directory
+                .read(&task.destination)
+                .and_then(|file| crate::fs::file_key(&file))
+                .is_ok_and(|key| key == identity);
+            if !staging_absent || !same_file {
+                skipped += 1;
+                continue;
+            }
+            task.root = root.clone();
+            task.output_identity = Some(identity);
+            task.target_hash = binding(task)?;
+            task.revision += 1;
+            verified += 1;
+        }
+        let saved = if verified > 0 {
+            store.write_downloads(document.revision, document.value)?
+        } else {
+            document
+        };
+        Ok(DownloadRootCheck {
+            verified,
+            missing,
+            changed,
+            skipped,
+            snapshot: snapshot(&saved, &mut runtime, true, current.as_ref()),
+        })
+    }
     /// Session/root errors before the executor acquired its worker still need a
     /// visible retryable result. A newer pause/resume epoch is never overwritten.
     pub fn fail_queued(
@@ -1312,6 +1406,21 @@ fn selected_task<'a>(
         return Err(error("DOWNLOAD_TASK_STALE"));
     }
     Ok(task)
+}
+fn current_complete_root(library: &LibraryDocument) -> Result<workbench_storage::LibraryRoot> {
+    library
+        .root
+        .clone()
+        .filter(|_| library.phase == LibraryPhase::Complete)
+        .ok_or(error("DOWNLOAD_ROOT_CHANGED"))
+}
+/// The same recorded folder under a new file-system identity. A different path
+/// is a different library and is never adopted.
+fn moved_root_candidate(task: &DownloadRecord, root: &workbench_storage::LibraryRoot) -> bool {
+    task.phase == DownloadPhase::Downloaded
+        && task.root.id == root.id
+        && task.root.path == root.path
+        && task.root.file_key != root.file_key
 }
 fn binding(record: &DownloadRecord) -> Result<String> {
     serde_json::to_vec(&(
