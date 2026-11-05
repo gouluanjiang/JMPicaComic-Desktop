@@ -111,6 +111,7 @@ import {
 } from "./source-types.ts";
 import "./ui-theme.css";
 import "./ui-motion.css";
+import "./ui-cover-first.css";
 import type {
   AccountSummary,
   Source,
@@ -2482,7 +2483,11 @@ export default function App() {
           >
             <Icon name="settings" size={18} />
           </button>
-          <div className="demo-label" data-testid="demo-label">
+          <div
+            className="demo-label"
+            data-testid="demo-label"
+            data-native={persistence.native}
+          >
             <span />
             {persistence.native
               ? sourceActive

@@ -34,7 +34,7 @@ const groups: { label: string; entries: Entry[] }[] = [
     label: "发现作品",
     entries: [
       { id: "favorites", label: "在线收藏", icon: "heart" },
-      { id: "recent", label: "最近更新", icon: "clock", native: true },
+      { id: "recent", label: "最近更新", icon: "refresh", native: true },
       { id: "ranking", label: "周排行榜", icon: "discover", native: true },
       { id: "discovery", label: "搜索", icon: "search" },
     ],
@@ -49,7 +49,7 @@ const groups: { label: string; entries: Entry[] }[] = [
         native: true,
       },
       { id: "authors", label: "关注作者", icon: "people" },
-      { id: "special", label: "特别关注", icon: "heart", native: true },
+      { id: "special", label: "特别关注", icon: "star", native: true },
     ],
   },
 ];

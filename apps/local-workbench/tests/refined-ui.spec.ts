@@ -162,8 +162,14 @@ test("sidebar collapse is reversible by pointer and keyboard without losing acti
 }) => {
   const toggle = page.getByTestId("sidebar-toggle");
   const sidebar = page.locator(".sidebar");
-  const expanded = (await sidebar.boundingBox())!.width;
+  // The narrow rail is the default; labels are one click away.
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect
+    .poll(async () => (await sidebar.boundingBox())!.width)
+    .toBeGreaterThan(150);
+  const expanded = (await sidebar.boundingBox())!.width;
   await openUnifiedSearch(page);
   await page
     .getByRole("textbox", { name: "搜索作者名" })
@@ -318,7 +324,7 @@ test("deep library browsing keeps its book and usable opaque toolbar after both 
     await page.getByTestId("library-grid").locator("article").count(),
   ).toBeLessThan(100);
   const anchor = await firstVisible();
-  for (const expanded of ["false", "true"]) {
+  for (const expanded of ["true", "false"]) {
     await page.getByTestId("sidebar-toggle").click();
     await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute(
       "aria-expanded",

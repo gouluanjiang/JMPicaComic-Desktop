@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { CoverInteraction, useReaderAccess } from "./reader-access.tsx";
 import { recordLibraryVisit } from "./work-visits.ts";
 import { useCoverRetry } from "./cover-retry.tsx";
@@ -744,6 +745,96 @@ export function LibraryWorkbench({
     setDetailId(null);
     requestAnimationFrame(() => grid.current?.restore(anchor.current));
   }
+  // Only worth showing once it cannot be the whole list. The dates stay in the
+  // grid's own card text and the detail page.
+  const recentItems =
+    !query && filter === "all" && visibleItems.length >= density * 2
+      ? sortLibraryItems(
+          visibleItems.filter((item) => item.addedAt != null),
+          "added-desc",
+        ).slice(0, density)
+      : [];
+  const renderCard = (item: LibraryItem, shelf = false) => (
+    <article
+      className="source-card"
+      data-testid={shelf ? undefined : "library-card-" + item.id}
+      data-library-id={shelf ? undefined : item.id}
+    >
+      <div className="source-card-cover">
+        <CoverInteraction
+          className="library-cover-open source-language-cover"
+          title={item.title}
+          testId={(shelf ? "library-recent-open-" : "library-open-") + item.id}
+          request={
+            library.snapshot.rootId
+              ? {
+                  kind: "library",
+                  rootId: library.snapshot.rootId,
+                  generation: library.snapshot.generation,
+                  entryId: item.id,
+                }
+              : null
+          }
+          onDetails={() => open(item)}
+          localActions={{
+            reveal: () => fileOperation(item, "reveal", library.snapshot),
+            recycle: () => fileOperation(item, "recycle", library.snapshot),
+            recycleDisabled:
+              library.busy ||
+              !["zip", "cbz"].includes(item.format) ||
+              ["reading", "paused"].includes(library.snapshot.phase),
+          }}
+        >
+          <LibraryCover
+            adapter={library.controller.adapter}
+            snapshot={library.snapshot}
+            item={item}
+          />
+          <SourceLanguageBadge tags={item.tags} localVersion />
+        </CoverInteraction>
+      </div>
+      <h3>
+        <button onClick={() => open(item)}>{item.title}</button>
+      </h3>
+      <AuthorLinks authors={item.authors} fallback={item.fileName} />
+      <p
+        className={`source-card-state${
+          !library.error &&
+          readableLibraryItem(item) &&
+          item.state === "indexed" &&
+          !item.errorCode
+            ? " is-ordinary"
+            : ""
+        }`}
+      >
+        {library.error ? "文件待核对" : libraryItemStatus(item)}
+        {item.state !== "indexed"
+          ? item.state === "unsupported"
+            ? " · 格式暂不支持"
+            : " · 无法读取"
+          : ""}
+        {item.errorCode === "LIBRARY_COVER_ONLY"
+          ? " · 正文未读取"
+          : item.errorCode === "LIBRARY_DOWNLOAD_INCOMPLETE"
+            ? " · 含下载中章节"
+            : ""}
+      </p>
+      <p
+        className="source-card-date"
+        title={formatWorkDate(item.versionUpdatedAt, true) ?? undefined}
+      >
+        版本更新：
+        {formatWorkDate(item.versionUpdatedAt) ?? "版本时间未知"}
+      </p>
+      <p
+        className="source-card-date"
+        title={formatTimestamp(item.addedAt, true) ?? undefined}
+      >
+        入库时间：
+        {formatTimestamp(item.addedAt) ?? "历史记录未知"}
+      </p>
+    </article>
+  );
   return (
     <div
       ref={root}
@@ -806,6 +897,19 @@ export function LibraryWorkbench({
               ))}
             </div>
           </div>
+          {recentItems.length > 0 && (
+            <section
+              className="library-recent"
+              aria-labelledby="library-recent-title"
+            >
+              <h2 id="library-recent-title">最近入库</h2>
+              <div className="source-grid" data-density={density}>
+                {recentItems.map((item) => (
+                  <Fragment key={item.id}>{renderCard(item, true)}</Fragment>
+                ))}
+              </div>
+            </section>
+          )}
           <>
             <LibraryControls library={library} compact />
             <div
@@ -899,87 +1003,7 @@ export function LibraryWorkbench({
                 density={density}
                 testId="library-grid"
                 itemKey={(item) => item.id}
-                renderItem={(item) => (
-                  <article
-                    className="source-card"
-                    data-testid={"library-card-" + item.id}
-                    data-library-id={item.id}
-                  >
-                    <div className="source-card-cover">
-                      <CoverInteraction
-                        className="library-cover-open source-language-cover"
-                        title={item.title}
-                        testId={"library-open-" + item.id}
-                        request={
-                          library.snapshot.rootId
-                            ? {
-                                kind: "library",
-                                rootId: library.snapshot.rootId,
-                                generation: library.snapshot.generation,
-                                entryId: item.id,
-                              }
-                            : null
-                        }
-                        onDetails={() => open(item)}
-                        localActions={{
-                          reveal: () =>
-                            fileOperation(item, "reveal", library.snapshot),
-                          recycle: () =>
-                            fileOperation(item, "recycle", library.snapshot),
-                          recycleDisabled:
-                            library.busy ||
-                            !["zip", "cbz"].includes(item.format) ||
-                            ["reading", "paused"].includes(
-                              library.snapshot.phase,
-                            ),
-                        }}
-                      >
-                        <LibraryCover
-                          adapter={library.controller.adapter}
-                          snapshot={library.snapshot}
-                          item={item}
-                        />
-                        <SourceLanguageBadge tags={item.tags} localVersion />
-                      </CoverInteraction>
-                    </div>
-                    <h3>
-                      <button onClick={() => open(item)}>{item.title}</button>
-                    </h3>
-                    <AuthorLinks
-                      authors={item.authors}
-                      fallback={item.fileName}
-                    />
-                    <p className="source-card-state">
-                      {library.error ? "文件待核对" : libraryItemStatus(item)}
-                      {item.state !== "indexed"
-                        ? item.state === "unsupported"
-                          ? " · 格式暂不支持"
-                          : " · 无法读取"
-                        : ""}
-                      {item.errorCode === "LIBRARY_COVER_ONLY"
-                        ? " · 正文未读取"
-                        : item.errorCode === "LIBRARY_DOWNLOAD_INCOMPLETE"
-                          ? " · 含下载中章节"
-                          : ""}
-                    </p>
-                    <p
-                      className="source-card-date"
-                      title={
-                        formatWorkDate(item.versionUpdatedAt, true) ?? undefined
-                      }
-                    >
-                      版本更新：
-                      {formatWorkDate(item.versionUpdatedAt) ?? "版本时间未知"}
-                    </p>
-                    <p
-                      className="source-card-date"
-                      title={formatTimestamp(item.addedAt, true) ?? undefined}
-                    >
-                      入库时间：
-                      {formatTimestamp(item.addedAt) ?? "历史记录未知"}
-                    </p>
-                  </article>
-                )}
+                renderItem={(item) => renderCard(item)}
               />
             )}
           </>
