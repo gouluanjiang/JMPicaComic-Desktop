@@ -592,7 +592,8 @@ test("library languages use saved version tags and leave linked historical versi
     ),
   ).toEqual([]);
   await page.getByTestId("library-card-" + id(1)).scrollIntoViewIfNeeded();
-  for (const number of [1, 2, 3, 4]) {
+  // An unknown language stays in the DOM but no longer takes space on a cover.
+  for (const number of [2, 3]) {
     await expect(
       page
         .getByTestId("library-card-" + id(number))
