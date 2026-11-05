@@ -227,6 +227,11 @@ function HistoryConfirmation({
         从队列移除以下 {tasks.length} 条完成记录。漫画文件和漫画库索引会保留。
         如仍有下载临时文件，完成记录也会保留，请先在任务详情中明确清理。
       </p>
+      {tasks.some((task) => !isDownloadPresent(task)) && (
+        <p data-testid="download-history-attention-note">
+          其中有文件状态异常的记录。文件还在的，请先取消并按文件内容核对；移除后这些作品可能显示为未入库，需要时可以重新下载。
+        </p>
+      )}
       {downloads.error && (
         <p role="alert" className="source-notice">
           {downloads.error}
@@ -413,6 +418,11 @@ export function NativeDownloads({
   const unavailableCount = visibleTasks.filter(
     (task) => task.phase === "downloaded" && task.localFiles === "unavailable",
   ).length;
+  // Failed and abandoned work keeps its own actions: only completed records
+  // can be removed, and only the ones the current filters show.
+  const abnormalHistory = tasks.filter(
+    (task) => task.phase === "downloaded" && !isDownloadPresent(task),
+  );
   const itemKeys = useMemo(() => tasks.map((task) => task.id), [tasks]);
   useBrowseSession({
     scope: browseScope("downloads", filter, queueSource, query),
@@ -777,6 +787,16 @@ export function NativeDownloads({
               {rootCheck.running
                 ? "正在核对文件内容，可能需要几分钟…"
                 : `按文件内容核对（${unavailableCount} 条）`}
+            </button>
+          )}
+          {filter === "error" && abnormalHistory.length > 0 && (
+            <button
+              className="text-button"
+              data-testid="download-attention-history-clear"
+              disabled={downloads.busy}
+              onClick={() => setHistorySelection(abnormalHistory.slice(0, 50))}
+            >
+              批量移除历史记录（{Math.min(abnormalHistory.length, 50)} 条）
             </button>
           )}
         </div>

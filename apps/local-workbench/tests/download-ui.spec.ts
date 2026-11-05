@@ -1518,6 +1518,46 @@ test("a completed record with an unconfirmed folder can be checked by file conte
   expect(await calls(page, "jm_download_control")).toEqual([]);
 });
 
+test("abnormal completed records can be removed together without touching failed work", async ({
+  page,
+}) => {
+  const queue = categorizedQueue();
+  const abnormal = queue.attention.filter(
+    (task) => task.phase === "downloaded",
+  );
+  const failed = queue.attention.filter((task) => task.phase !== "downloaded");
+  expect(abnormal.length).toBeGreaterThan(0);
+  expect(failed.length).toBeGreaterThan(0);
+  await install(page, { completed: true, initialTasks: queue.tasks });
+  await page.getByTestId("nav-queue").click();
+  await expect(
+    page.getByTestId("download-attention-history-clear"),
+  ).toHaveCount(0);
+  await page.getByTestId("download-filter-error").click();
+  const clear = page.getByTestId("download-attention-history-clear");
+  await expect(clear).toHaveText(`批量移除历史记录（${abnormal.length} 条）`);
+  await clear.click();
+  const confirmation = page.getByTestId("download-history-confirmation");
+  await expect(confirmation.locator("li")).toHaveCount(abnormal.length);
+  await expect(
+    page.getByTestId("download-history-attention-note"),
+  ).toBeVisible();
+  await confirmation.getByRole("button", { name: "取消", exact: true }).click();
+  expect(await calls(page, "jm_download_history_remove")).toEqual([]);
+  await clear.click();
+  await page.getByTestId("download-history-confirm").click();
+  await expect(confirmation).toHaveCount(0);
+  expect((await calls(page, "jm_download_history_remove"))[0].args).toEqual({
+    tasks: abnormal.map((task) => ({
+      taskId: task.id,
+      expectedRevision: task.revision,
+    })),
+  });
+  await expect(clear).toHaveCount(0);
+  for (const task of failed)
+    await expect(page.getByTestId("download-task-" + task.id)).toBeVisible();
+});
+
 test("entry and focus recheck files only while the queue is active without replaying completion", async ({
   page,
 }) => {
