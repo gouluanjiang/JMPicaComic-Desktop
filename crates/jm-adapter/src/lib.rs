@@ -25,13 +25,18 @@ use std::{
 
 pub const UPSTREAM_COMMIT: &str = "f0cdd724af6892002f2fb7be883b88832cebe7e9";
 pub const CRAWLER_RELIABILITY_COMMIT: &str = "9fddb0494caf0cdc812ac6cbfc1c62f4f845b058";
-pub const DEFAULT_DOMAIN: &str = "www.cdnhth.cc";
+pub const DEFAULT_DOMAIN: &str = "www.cdnhjk.net";
+// Reviewed by hand on 2026-11-01 against JM's unsigned domain announcement. The previous
+// www.cdnhth.cc and www.cdnzack.cc entries are now parked-domain landers and
+// www.cdn-mspjmapiproxy.xyz no longer completes TLS. Exact-match hosts only.
 pub const BASELINE_DOMAINS: &[&str] = &[
-    "www.cdnhth.cc",
-    "www.cdnzack.cc",
+    "www.cdnhjk.net",
+    "www.cdnutc.cc",
+    "www.cdngwc.net",
+    "www.cdngwc.cc",
+    "www.cdngwc.club",
     "www.cdnhth.net",
     "www.cdnbea.net",
-    "www.cdn-mspjmapiproxy.xyz",
 ];
 /// Maximum in-memory response size for encrypted JSON and metadata bodies.
 pub const MAX_METADATA_BYTES: u64 = 8 * 1024 * 1024;
@@ -199,6 +204,10 @@ impl JmClient {
             let (http_status, result) = self.request_domain(&domain, path, query).await?;
             let retryable = match (&result, http_status) {
                 (Err(code), None) => is_retryable_transport(code),
+                // A parked or retired hostname answers 200 with an HTML lander,
+                // so the next pinned domain must be tried instead of failing
+                // closed on INVALID_JSON. 405 is the same lander answering POST.
+                (Err(code), Some(200)) if code == "INVALID_JSON" => true,
                 (Err(_), Some(status)) => retryable_http_status(status),
                 _ => false,
             };
@@ -469,7 +478,9 @@ fn is_retryable_transport(code: &str) -> bool {
 }
 
 fn retryable_http_status(status: u16) -> bool {
-    status == 403 || matches!(status, 408 | 425 | 429) || (500..=599).contains(&status)
+    // 405 belongs here: a parked-domain lander refuses the API method while the
+    // pinned fallback domains still serve it.
+    matches!(status, 403 | 405 | 408 | 425 | 429) || (500..=599).contains(&status)
 }
 
 fn parse_preflight_chapters(v: &Value, work_id: &str) -> Result<Vec<JmPreflightChapter>, String> {
@@ -624,18 +635,22 @@ mod tests {
             for domain in [
                 "",
                 "example.invalid",
-                "https://www.cdnhth.cc",
-                "www.cdnhth.cc:443",
-                "WWW.CDNHTH.CC",
-                "www.cdnhth.cc/album",
+                "https://www.cdngwc.cc",
+                "www.cdngwc.cc:443",
+                "WWW.CDNGWC.CC",
+                "www.cdngwc.cc/album",
+                // Retired landers must never re-enter the pinned set.
+                "www.cdnhth.cc",
+                "www.cdnzack.cc",
+                "www.cdn-mspjmapiproxy.xyz",
             ] {
                 assert!(
                     matches!(create(domain), Err(code) if code == "DOMAIN_NOT_IN_PINNED_BASELINE")
                 );
             }
-            let client = create("www.cdnzack.cc").unwrap();
-            assert_eq!(client.domain(), "www.cdnzack.cc");
-            assert_eq!(client.domains, ordered_domains("www.cdnzack.cc"));
+            let client = create("www.cdngwc.cc").unwrap();
+            assert_eq!(client.domain(), "www.cdngwc.cc");
+            assert_eq!(client.domains, ordered_domains("www.cdngwc.cc"));
             assert!(client.traces.is_empty());
         }
     }
@@ -655,8 +670,8 @@ mod tests {
     }
     #[test]
     fn pinned_domain_failover_keeps_primary_first_and_never_expands_trust() {
-        let ordered = ordered_domains("www.cdnzack.cc");
-        assert_eq!(ordered[0], "www.cdnzack.cc");
+        let ordered = ordered_domains("www.cdngwc.cc");
+        assert_eq!(ordered[0], "www.cdngwc.cc");
         assert_eq!(ordered.len(), BASELINE_DOMAINS.len());
         assert_eq!(
             ordered.iter().collect::<BTreeSet<_>>().len(),
@@ -668,7 +683,7 @@ mod tests {
     }
     #[test]
     fn only_transient_or_domain_level_http_failures_are_failover_candidates() {
-        for status in [403, 408, 425, 429, 500, 502, 503, 599] {
+        for status in [403, 405, 408, 425, 429, 500, 502, 503, 599] {
             assert!(retryable_http_status(status), "{status}");
         }
         for status in [400, 401, 404, 409, 422] {

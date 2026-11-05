@@ -14,13 +14,28 @@ use crate::{
     SourceItemIssue, SourceItemIssueCode, SourcePage, SourceResult, SourceWork,
 };
 
-pub(crate) const JM_HOST: &str = "www.cdnhth.cc";
+// JM rotates its mobile API hostnames; the previous five (www.cdnhth.cc,
+// www.cdnzack.cc, www.cdnhth.net, www.cdnbea.net, www.cdn-mspjmapiproxy.xyz)
+// were current in September 2026. www.cdnhth.cc and www.cdnzack.cc are now
+// parked-domain landers (200 HTML / 302) and www.cdn-mspjmapiproxy.xyz no
+// longer completes TLS, so they are dropped from the trusted set instead of
+// being retried. The first five entries were reviewed by hand against JM's domain
+// announcement (newsvr-2025.txt, read 2026-11-01). It is only encrypted with a
+// fixed key, not signed, so it must never expand this list automatically. The
+// legacy www.cdnhth.net and www.cdnbea.net still serve the same encrypted API
+// and remain as fallbacks. Every host is exact-match pinned: no wildcard, port,
+// path or HTTP variant is accepted.
+pub(crate) const JM_HOST: &str = "www.cdnhjk.net";
+/// Anonymous read that a real JM API host answered during the 2026-11-01 check.
+pub(crate) const JM_PROBE_ROUTE: &str = "/album?id=422866";
 pub(crate) const JM_API_HOSTS: &[&str] = &[
-    "www.cdnhth.cc",
-    "www.cdnzack.cc",
+    "www.cdnhjk.net",
+    "www.cdnutc.cc",
+    "www.cdngwc.net",
+    "www.cdngwc.cc",
+    "www.cdngwc.club",
     "www.cdnhth.net",
     "www.cdnbea.net",
-    "www.cdn-mspjmapiproxy.xyz",
 ];
 pub(crate) const PICA_HOST: &str = "picaapi.picacomic.com";
 pub(crate) const PICA_KEY: &str = "C69BAF41DA5ABD1FFEDC6D2FEA56B";
@@ -871,6 +886,25 @@ pub(crate) fn pica_signature(route: &str, method: &str, timestamp: u64) -> Sourc
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect())
+}
+
+/// A host passes by decrypting with the request's timestamp key, or by refusing in
+/// JM's own error shape so a removed probe work cannot lock every account out.
+/// A parked lander's HTML or arbitrary JSON passes neither.
+pub(crate) fn validate_jm_probe(timestamp: u64, body: &[u8]) -> SourceResult<()> {
+    let value: Value =
+        serde_json::from_slice(body).map_err(|_| error("SOURCE_RESPONSE_INVALID"))?;
+    match count(&value["code"])? {
+        Some(200) => decode_jm(
+            timestamp,
+            value["data"]
+                .as_str()
+                .ok_or(error("SOURCE_RESPONSE_INVALID"))?,
+        )
+        .map(|_| ()),
+        Some(_) if value["errorMsg"].is_string() => Ok(()),
+        _ => Err(error("SOURCE_RESPONSE_INVALID")),
+    }
 }
 
 pub(crate) fn decode_jm(timestamp: u64, encoded: &str) -> SourceResult<Value> {

@@ -303,7 +303,7 @@ test("only supported ID/link shapes can target an existing retry; arbitrary past
     "JM123",
     "000123",
     "https://18comic.vip/album/123",
-    "https://www.cdnhth.cc/album?id=123",
+    "https://www.cdngwc.cc/album?id=123",
   ])
     assert.equal(downloadInputWorkId("JM", value), "123");
   for (const value of [

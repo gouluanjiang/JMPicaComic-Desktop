@@ -4,11 +4,13 @@ import type { DownloadSource } from "./download-types.ts";
 // already queued task. New downloads still pass the original input through the
 // native validator; no pasted URL is requested by the frontend.
 const jmApiHosts = new Set([
-  "www.cdnhth.cc",
-  "www.cdnzack.cc",
+  "www.cdnhjk.net",
+  "www.cdnutc.cc",
+  "www.cdngwc.net",
+  "www.cdngwc.cc",
+  "www.cdngwc.club",
   "www.cdnhth.net",
   "www.cdnbea.net",
-  "www.cdn-mspjmapiproxy.xyz",
 ]);
 function normalizedId(source: DownloadSource, input: string): string | null {
   if (source === "Pica")
