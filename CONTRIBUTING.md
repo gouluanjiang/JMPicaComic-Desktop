@@ -4,7 +4,7 @@ MangaMonitor 当前交付的是 Windows 桌面版。先阅读[项目状态](docs
 
 ## 报告问题
 
-在 [GitHub Issues](https://github.com/gouluanjiang/MangaMonitor-AI/issues) 说明：
+在 [GitHub Issues](https://github.com/gouluanjiang/JMPicaComic-Desktop/issues) 说明：
 
 - 程序版本与提交号、Windows 版本。
 - 操作步骤、预期结果、实际结果，以及能否重复出现。
