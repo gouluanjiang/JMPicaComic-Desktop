@@ -6,9 +6,10 @@
 
 [![最新版本](https://img.shields.io/github/v/release/gouluanjiang/MangaMonitor-AI?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest)
 ![平台](https://img.shields.io/badge/%E5%B9%B3%E5%8F%B0-Windows%20x64-blue)
+[![下载量](https://img.shields.io/github/downloads/gouluanjiang/MangaMonitor-AI/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://github.com/gouluanjiang/MangaMonitor-AI/releases)
 [![许可](https://img.shields.io/github/license/gouluanjiang/MangaMonitor-AI?label=%E8%AE%B8%E5%8F%AF)](LICENSE)
 
-[下载安装包](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [问题反馈](https://github.com/gouluanjiang/MangaMonitor-AI/issues)
+[下载安装包](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [更新日志](https://github.com/gouluanjiang/MangaMonitor-AI/releases) · [问题反馈](https://github.com/gouluanjiang/MangaMonitor-AI/issues/new/choose) · [安全策略](SECURITY.md)
 
 > [!WARNING]
 > **使用 JM 前请先看这里：** 1.0.2 内置的 JM 主域名已失效并变成停放页，JM 的登录、收藏、搜索和详情都会失败。在这个版本上登录 JM，账号密码可能已经发送到这个域名。
@@ -16,6 +17,21 @@
 > - 修复已经合入 `main`，但还没有发布新版本。在新版本发布前，**不要在 1.0.2 上登录 JM**。
 > - 作者更新和特别关注都要同时连接 JM 与哔咔，所以这两个功能也要等新版本才能正常使用。
 > - 如果 2026 年 10 月中旬之后在 1.0.2 上登录过 JM，建议修改 JM 密码；其他网站用了相同密码的，也一并修改。
+
+## 目录
+
+- [核心功能：跟进关注作者的更新](#核心功能跟进关注作者的更新)
+- [自动检查更新：特别关注](#自动检查更新特别关注)
+- [全部功能](#全部功能)：[找漫画](#找漫画) · [下载与管理](#下载与管理) · [阅读](#阅读) · [设置](#设置)
+- [快速开始](#快速开始)
+- [使用前请了解](#使用前请了解)
+- [隐私与数据](#隐私与数据)
+- [常见问题](#常见问题)
+- [正在进行](#正在进行)
+- [参与项目](#参与项目)
+- [致谢](#致谢)
+- [免责声明](#免责声明)
+- [许可](#许可)
 
 ## 核心功能：跟进关注作者的更新
 
@@ -241,7 +257,20 @@
 **能在浏览器或 Mac 上用吗？**
 不能。真实账号、漫画库和下载只有 Windows 桌面端提供；开发用的浏览器预览只显示合成数据。
 
-## 开发者
+## 正在进行
+
+- 发布包含 JM 修复的新版本。
+- 重新设计界面，让封面成为主角，并保留自定义背景。
+
+这里只列出当前在做的事，不代表发布日期。
+
+## 参与项目
+
+- **反馈问题或提建议：** 请使用 [Issue 模板](https://github.com/gouluanjiang/MangaMonitor-AI/issues/new/choose)。
+- **报告安全问题：** 请按[安全策略](SECURITY.md)私下提交，不要公开发布。
+- **提交代码：** 请先阅读[贡献说明](CONTRIBUTING.md)。
+
+### 开发者
 
 | 组成 | 位置 |
 | --- | --- |
@@ -254,6 +283,24 @@
 更多资料：[贡献说明](CONTRIBUTING.md) · [开发约束](AGENTS.md) · [文档导航](docs/README.md) · [项目进度](docs/PROJECT_STATUS.md) · [1.0.2 版本说明](docs/RELEASE_NOTES_1.0.2.md) · [历史文档](docs/archive/README.md)
 
 历史文档不代表当前路线；已取消的自动匹配、手机名单和分类书单不会因此恢复。
+
+## 致谢
+
+本项目参考或适配了以下开源项目，版本和许可信息见[第三方通知](THIRD_PARTY_NOTICES.md)：
+
+- [lanyeeee/jmcomic-downloader](https://github.com/lanyeeee/jmcomic-downloader)
+- [lanyeeee/picacomic-downloader](https://github.com/lanyeeee/picacomic-downloader)
+- [hect0x7/JMComic-Crawler-Python](https://github.com/hect0x7/JMComic-Crawler-Python)
+- [2024baibai/PicaComic-Api](https://github.com/2024baibai/PicaComic-Api)
+- [gotson/komga](https://github.com/gotson/komga)
+- [motiondivision/motion](https://github.com/motiondivision/motion)
+- [Miuzarte/PicaComic-go](https://github.com/Miuzarte/PicaComic-go)（仅查阅，未包含其代码）
+
+## 免责声明
+
+本项目是非官方的第三方工具，与 JM、哔咔及其运营方没有关联，也不提供、托管或分发任何漫画内容。所有内容都来自你自己的账号和第三方网站，版权归原作者和权利人所有。
+
+请仅在当地法律和相关网站条款允许的范围内使用。账号受限、数据丢失等使用风险由使用者自行承担。
 
 ## 许可
 
