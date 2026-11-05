@@ -22,6 +22,7 @@ import type {
   DownloadPlan,
   DownloadScope,
   DownloadSource,
+  DownloadRootCheck,
   DownloadSnapshot,
   DownloadTask,
   DownloadBatchPlan,
@@ -441,6 +442,16 @@ export function createDownloadAdapter(
           tasks: taskRevisions(tasks),
         }),
       ),
+    verifyRoot: async () => {
+      const raw = record(await call("jm_download_root_verify", {}));
+      return {
+        verified: integer(raw.verified),
+        missing: integer(raw.missing),
+        changed: integer(raw.changed),
+        skipped: integer(raw.skipped),
+        snapshot: validateDownloadSnapshot(raw.snapshot),
+      };
+    },
     control: async (current, taskId, expectedRevision, action) => {
       if (!actions.includes(action)) return invalid();
       return validateDownloadSnapshot(
@@ -1556,6 +1567,14 @@ export class DownloadController {
         return invalid();
       return next;
     });
+  }
+  async verifyRoot(): Promise<DownloadRootCheck | null> {
+    const done: { check?: DownloadRootCheck } = {};
+    const changed = await this.changeQueue(async () => {
+      done.check = await this.adapter.verifyRoot();
+      return done.check.snapshot;
+    });
+    return changed ? (done.check ?? null) : null;
   }
   async confirm(context: DownloadContext): Promise<boolean> {
     const plan = this.state.plan;

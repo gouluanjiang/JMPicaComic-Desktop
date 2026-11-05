@@ -274,3 +274,128 @@ fn explicit_zip_mapping_preserves_old_receipt_and_projects_current_history_path(
     );
     assert_eq!(f.store.read_downloads().unwrap(), before);
 }
+
+/// The same folder path under a new file-system identity, with a copied ZIP the
+/// library has indexed, as after restoring or migrating a library folder.
+fn moved_library(f: &Fixture) -> DownloadRecord {
+    let old = complete_for_presence(f, record(f));
+    let bytes = fs::read(f.library.join(&old.destination)).unwrap();
+    fs::rename(&f.library, f._temp.path().join("preserved old root")).unwrap();
+    fs::create_dir(&f.library).unwrap();
+    fs::write(f.library.join(&old.destination), bytes).unwrap();
+    let mut indexer = workbench_library::LibraryService::new();
+    indexer.choose(&f.store, &f.library).unwrap();
+    let mut library = f.store.read_library().unwrap();
+    library.value.phase = LibraryPhase::Complete;
+    let library = f
+        .store
+        .write_library(library.revision, library.value)
+        .unwrap();
+    let root = library.value.root.as_ref().unwrap();
+    assert_eq!(root.id, old.root.id);
+    assert_ne!(root.file_key, old.root.file_key);
+    workbench_library::LibraryService::new()
+        .register_completed(
+            &f.store,
+            &root.id,
+            library.value.generation,
+            &old.destination,
+            &workbench_storage::LibraryReference {
+                source: Source::Jm,
+                work_id: old.metadata.work_id.clone(),
+            },
+            2,
+        )
+        .unwrap();
+    assert_eq!(
+        f.service.read(&f.store).unwrap().tasks[0].local_files,
+        Some(LocalFiles::Unavailable)
+    );
+    old
+}
+
+#[test]
+fn a_proven_zip_follows_its_folder_to_a_new_identity() {
+    let f = zip_fixture();
+    let old = moved_library(&f);
+    let before = fs::read(f.library.join(&old.destination)).unwrap();
+    let check = f.service.verify_moved_root(&f.store).unwrap();
+    assert_eq!(
+        (check.verified, check.missing, check.changed, check.skipped),
+        (1, 0, 0, 0)
+    );
+    assert_eq!(check.snapshot.tasks[0].local_files, Some(LocalFiles::Present));
+    let saved = record(&f);
+    let root = f.store.read_library().unwrap().value.root.unwrap();
+    assert_eq!(saved.root, root);
+    assert_eq!(saved.target_hash, binding(&saved).unwrap());
+    assert_ne!(saved.target_hash, old.target_hash);
+    assert_eq!(saved.revision, old.revision + 1);
+    assert_eq!(saved.updated_at, old.updated_at);
+    assert_eq!(saved.archive_file, old.archive_file);
+    assert_eq!(saved.output_manifest_hash, old.output_manifest_hash);
+    assert_eq!(saved.library_entry_id, old.library_entry_id);
+    assert_eq!(fs::read(f.library.join(&old.destination)).unwrap(), before);
+    assert_eq!(
+        f.service.read(&f.store).unwrap().tasks[0].local_files,
+        Some(LocalFiles::Present)
+    );
+    assert_eq!(prepare_same(&f).unwrap_err().code, "DOWNLOAD_ALREADY_PRESENT");
+    let again = f.service.verify_moved_root(&f.store).unwrap();
+    assert_eq!(
+        (again.verified, again.missing, again.changed, again.skipped),
+        (0, 0, 0, 0)
+    );
+    assert_eq!(record(&f), saved);
+}
+
+#[test]
+fn a_changed_or_missing_zip_keeps_its_record_untouched() {
+    let f = zip_fixture();
+    let old = moved_library(&f);
+    let output = f.library.join(&old.destination);
+    let mut bytes = fs::read(&output).unwrap();
+    let last = bytes.len() - 1;
+    bytes[last] ^= 0xff;
+    // Same size: only the digest can tell this is no longer the recorded file.
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&output)
+        .unwrap()
+        .write_all(&bytes)
+        .unwrap();
+    let check = f.service.verify_moved_root(&f.store).unwrap();
+    assert_eq!(
+        (check.verified, check.missing, check.changed, check.skipped),
+        (0, 0, 1, 0)
+    );
+    assert_eq!(record(&f), old);
+    fs::remove_file(&output).unwrap();
+    let check = f.service.verify_moved_root(&f.store).unwrap();
+    assert_eq!(
+        (check.verified, check.missing, check.changed, check.skipped),
+        (0, 1, 0, 0)
+    );
+    assert_eq!(record(&f), old);
+}
+
+#[test]
+fn a_different_folder_path_is_never_adopted() {
+    let f = zip_fixture();
+    let old = complete_for_presence(&f, record(&f));
+    let moved = f._temp.path().join("another library");
+    fs::rename(&f.library, &moved).unwrap();
+    let mut indexer = workbench_library::LibraryService::new();
+    indexer.choose(&f.store, &moved).unwrap();
+    let mut library = f.store.read_library().unwrap();
+    library.value.phase = LibraryPhase::Complete;
+    f.store
+        .write_library(library.revision, library.value)
+        .unwrap();
+    let check = f.service.verify_moved_root(&f.store).unwrap();
+    assert_eq!(
+        (check.verified, check.missing, check.changed, check.skipped),
+        (0, 0, 0, 0)
+    );
+    assert_eq!(record(&f), old);
+}

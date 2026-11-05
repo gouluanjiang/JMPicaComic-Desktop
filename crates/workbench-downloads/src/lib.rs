@@ -16,7 +16,7 @@ mod windows_validation_support;
 pub use inventory::{DownloadInventoryItem, DownloadInventorySnapshot};
 pub use presence::LocalFiles;
 pub use service::{
-    AwaitingIndexReceipt, Control, DownloadPlan, DownloadService, DownloadSnapshot, DownloadTask,
+    AwaitingIndexReceipt, Control, DownloadPlan, DownloadRootCheck, DownloadService, DownloadSnapshot, DownloadTask,
     PreparedSelection, TaskSelection,
 };
 pub use workbench_storage::{DownloadPhase, JmDownloadMetadata, Source, StoreError};

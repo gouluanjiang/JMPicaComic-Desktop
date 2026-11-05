@@ -1,7 +1,7 @@
 //! Advisory local-file presence, never completion proof or write authority.
 use crate::{
     error,
-    fs::{Directory, EntryKind},
+    fs::{digest, file_key, Directory, EntryKind},
     materialize, Result,
 };
 use serde::Serialize;
@@ -266,4 +266,62 @@ fn check_inner(record: &DownloadRecord) -> Result<LocalFiles> {
     // that the selected root remains available at its original location.
     materialize::require_root(record)?;
     Ok(result)
+}
+
+/// What a completed record's output proves under the current library root.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) enum MovedOutput {
+    /// Exact recorded size and SHA-256, and the file the library indexed.
+    Proven(String),
+    Missing,
+    Changed,
+    Unverifiable,
+}
+
+/// Read-only. Name and size alone are not proof: only the recorded digest lets
+/// a completion follow its file to a root identity it was not created under.
+pub(crate) fn check_moved_output(
+    record: &DownloadRecord,
+    root: &Directory,
+    library: &workbench_storage::LibraryDocument,
+) -> MovedOutput {
+    let (Some(archive), Some(entry_id), true, true, false) = (
+        record.archive_file.as_ref(),
+        record.library_entry_id.as_ref(),
+        record.zip_output,
+        record.output_manifest_hash.is_some(),
+        library.relocated_path(&record.destination).is_some(),
+    ) else {
+        return MovedOutput::Unverifiable;
+    };
+    match root.probe(&record.destination) {
+        Err(_) => return MovedOutput::Unverifiable,
+        Ok(None) => return MovedOutput::Missing,
+        Ok(Some(EntryKind::File(size))) if size == archive.size_bytes => {}
+        Ok(Some(_)) => return MovedOutput::Changed,
+    }
+    let Some(identity) = library
+        .records
+        .iter()
+        .find(|row| row.item.id == *entry_id && row.item.relative_path == record.destination)
+        .and_then(|row| row.identity.as_ref())
+    else {
+        return MovedOutput::Unverifiable;
+    };
+    let Ok(mut file) = root.read(&record.destination) else {
+        return MovedOutput::Unverifiable;
+    };
+    let Ok(key) = file_key(&file) else {
+        return MovedOutput::Unverifiable;
+    };
+    if key != identity.file_key || identity.bytes != archive.size_bytes {
+        return MovedOutput::Unverifiable;
+    }
+    match digest(&mut file) {
+        Ok((size, sha256)) if size == archive.size_bytes && sha256 == archive.sha256 => {
+            MovedOutput::Proven(key)
+        }
+        Ok(_) => MovedOutput::Changed,
+        Err(_) => MovedOutput::Unverifiable,
+    }
 }

@@ -976,6 +976,20 @@ pub(crate) async fn jm_download_history_remove<R: Runtime>(
         .map_err(|_| error("DOWNLOAD_UNAVAILABLE"))?
 }
 
+#[tauri::command]
+pub(crate) async fn jm_download_root_verify<R: Runtime>(
+    window: WebviewWindow<R>,
+    downloads: State<'_, Arc<DesktopDownloads>>,
+    store: State<'_, Arc<DesktopStore>>,
+) -> Result<workbench_downloads::DownloadRootCheck, StoreError> {
+    require_main(window.label())?;
+    let downloads = Arc::clone(downloads.inner());
+    let store = open_store(Arc::clone(store.inner())).await?;
+    tauri::async_runtime::spawn_blocking(move || downloads.service.verify_moved_root(&store))
+        .await
+        .map_err(|_| error("DOWNLOAD_UNAVAILABLE"))?
+}
+
 fn require_task_scope(
     service: &DownloadService,
     store: &WorkbenchStore,

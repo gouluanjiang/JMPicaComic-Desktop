@@ -364,6 +364,20 @@ export function NativeDownloads({
     task: DownloadTask;
     action: "abandon" | "cleanup";
   } | null>(null);
+  const [rootCheck, setRootCheck] = useState<{
+    running: boolean;
+    message: string;
+  }>({ running: false, message: "" });
+  async function verifyRoot() {
+    setRootCheck({ running: true, message: "" });
+    const check = await downloads.controller.verifyRoot();
+    setRootCheck({
+      running: false,
+      message: check
+        ? `核对完成：${check.verified} 本内容一致，已恢复；${check.missing} 本文件不存在；${check.changed} 本内容已变化；${check.skipped} 本无法核对。漫画文件没有改动。`
+        : "",
+    });
+  }
   const scope = getDownloadScope(accounts, selectedSource);
   const context = contexts[selectedSource];
   useEffect(() => {
@@ -396,6 +410,9 @@ export function NativeDownloads({
     () => filterDownloadTasks(visibleTasks, filter, query, queueSource),
     [visibleTasks, filter, query, queueSource],
   );
+  const unavailableCount = visibleTasks.filter(
+    (task) => task.phase === "downloaded" && task.localFiles === "unavailable",
+  ).length;
   const itemKeys = useMemo(() => tasks.map((task) => task.id), [tasks]);
   useBrowseSession({
     scope: browseScope("downloads", filter, queueSource, query),
@@ -749,7 +766,25 @@ export function NativeDownloads({
               整理当前筛选结果（{Math.min(tasks.length, 50)} 条）
             </button>
           )}
+          {filter === "error" && unavailableCount > 0 && (
+            <button
+              className="text-button"
+              data-testid="download-root-verify"
+              title="逐本计算 SHA-256，和下载时的记录比对。只读取漫画文件，不会改动它们。"
+              disabled={downloads.busy}
+              onClick={() => void verifyRoot()}
+            >
+              {rootCheck.running
+                ? "正在核对文件内容，可能需要几分钟…"
+                : `按文件内容核对（${unavailableCount} 条）`}
+            </button>
+          )}
         </div>
+        {rootCheck.message && (
+          <p className="quiet" role="status" data-testid="download-root-result">
+            {rootCheck.message}
+          </p>
+        )}
         {downloads.ready && (
           <p className="quiet" data-testid="download-filter-summary">
             当前筛选：下载中 {counts.active} · 需处理 {counts.error} · 已下载{" "}
@@ -1054,7 +1089,7 @@ export function NativeDownloads({
                     {task.phase === "downloaded" &&
                       task.localFiles === "unavailable" && (
                         <p className="quiet">
-                          保存目录当前不可用，尚不能确认文件状态。请重新选择可访问的保存目录。
+                          保存目录当前不可用，或它的文件系统身份与这条记录不一致，尚不能确认文件状态。文件夹还在时，可以点上方的“按文件内容核对”；否则请重新选择可访问的保存目录。
                           <button
                             className="text-button"
                             data-testid={"download-select-directory-" + task.id}

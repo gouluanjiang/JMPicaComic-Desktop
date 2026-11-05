@@ -54,6 +54,7 @@ fn main() {
         "jm_download_pause_all",
         "jm_download_resume_many",
         "jm_download_history_remove",
+        "jm_download_root_verify",
         "library_read",
         "library_choose",
         "library_import_paths",
