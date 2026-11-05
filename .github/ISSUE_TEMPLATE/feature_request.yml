@@ -1,0 +1,25 @@
+name: 功能建议
+description: 提出新功能，或改进现有功能
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        自动匹配、手机名单和分类书单已经取消，不再恢复。
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 使用场景
+      description: 你想完成什么事？现在哪里不方便？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 希望怎么解决
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 目前的替代办法
