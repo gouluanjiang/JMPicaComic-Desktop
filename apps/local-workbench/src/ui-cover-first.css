@@ -10,7 +10,6 @@
   --muted: #b7b5c1;
   --subtle: #8f909c;
   --text: #f3f3f6;
-  --surface: #17171c;
   --canvas: #0c0c0f;
   --sidebar-width: 212px;
   --background-fallback:
@@ -229,9 +228,16 @@
   gap: 18px;
   width: fit-content;
   max-width: 100%;
+  top: 0;
   margin: -94px 0 52px auto;
   border-bottom: 0;
+  border-radius: 12px;
   background: transparent;
+}
+/* Once it sticks above the covers it must stay opaque and readable. */
+.app-shell.ui-refined .library-workbench .library-toolbar.is-stuck {
+  padding-inline: 8px;
+  background: #141419f2;
 }
 .app-shell.ui-refined .library-toolbar .search-box {
   flex: 0 1 380px;
@@ -379,4 +385,8 @@
 .app-shell.ui-refined .library-workbench > .source-muted {
   color: var(--subtle);
   font-size: 12px;
+}
+/* The theme offsets these by the old content padding, which is gone. */
+.app-shell.ui-refined .content .library-toolbar {
+  top: 0;
 }
