@@ -12,6 +12,7 @@ fn main() {
         "write_booklists",
         "choose_background",
         "workbench_info",
+        "source_network_health",
         "reader_open",
         "reader_cancel_open",
         "reader_chapter",

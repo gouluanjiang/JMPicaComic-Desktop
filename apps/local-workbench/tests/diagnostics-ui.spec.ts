@@ -37,6 +37,19 @@ test("metadata preparation failure remains diagnosable after navigation and queu
           revision: "a".repeat(40),
           platform: "windows",
         });
+      if (command === "source_network_health")
+        return Promise.resolve({
+          preferredJmHost: "www.cdnutc.cc",
+          hosts: [
+            {
+              host: "www.cdnhjk.net",
+              lastSuccessMs: null,
+              lastFailureMs: 5,
+              lastFailureCode: "SOURCE_CONNECTION_FAILED",
+              consecutiveFailures: 2,
+            },
+          ],
+        });
       return invoke(command, args);
     };
   });
@@ -63,6 +76,12 @@ test("metadata preparation failure remains diagnosable after navigation and queu
   await page.getByTestId("settings-network").click();
   await expect(page.getByTestId("diagnostic-summary")).toHaveValue(
     /准备下载 · JM.*DOWNLOAD_METADATA_TITLE_CONTROL/,
+  );
+  await expect(page.getByTestId("diagnostics-source-network")).toContainText(
+    "线路异常：www.cdnhjk.net 连续失败 2 次（SOURCE_CONNECTION_FAILED）",
+  );
+  await expect(page.getByTestId("diagnostic-summary")).toHaveValue(
+    /JM 线路：www\.cdnutc\.cc/,
   );
   expect(
     summary + (await page.getByTestId("diagnostic-summary").inputValue()),
@@ -112,7 +131,9 @@ test("copy receipts survive live summary changes and failed copying preserves se
             revision: "a".repeat(40),
             platform: "windows",
           })
-        : original(command, args);
+        : command === "source_network_health"
+          ? Promise.resolve({ preferredJmHost: "www.cdnhjk.net", hosts: [] })
+          : original(command, args);
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText: async () => {} },

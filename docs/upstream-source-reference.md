@@ -26,7 +26,7 @@ The MIT notices above must remain preserved when substantial upstream code is re
 JMComic-Crawler-Python treats domain rotation and retry as first-class client behavior. MangaMonitor-AI adopts only a narrower version:
 
 - retry/fail over only inside the already-pinned domain allowlist;
-- primary configured domain stays first;
+- the configured primary stays first; interactive and download clients configured with the default start from the last pinned host that answered in this process, and the monitor keeps the default;
 - failover is allowed for transport failures, domain-level transient HTTP responses (including 405 from a parked lander) and "the body was not JSON at all" (also a lander), but never for a non-idempotent favorite toggle;
 - protocol/schema/decryption/API-code failures remain fatal and are never hidden by domain rotation;
 - every physical attempt is appended to `RequestTrace`, so the cloud request budget counts failover attempts instead of under-reporting them.

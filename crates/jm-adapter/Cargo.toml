@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 [dependencies]
 state-model.workspace = true
+source-network.workspace = true
 serde_json.workspace = true
 reqwest.workspace = true
 tokio.workspace = true

@@ -14,29 +14,9 @@ use crate::{
     SourceItemIssue, SourceItemIssueCode, SourcePage, SourceResult, SourceWork,
 };
 
-// JM rotates its mobile API hostnames; the previous five (www.cdnhth.cc,
-// www.cdnzack.cc, www.cdnhth.net, www.cdnbea.net, www.cdn-mspjmapiproxy.xyz)
-// were current in September 2026. www.cdnhth.cc and www.cdnzack.cc are now
-// parked-domain landers (200 HTML / 302) and www.cdn-mspjmapiproxy.xyz no
-// longer completes TLS, so they are dropped from the trusted set instead of
-// being retried. The first five entries were reviewed by hand against JM's domain
-// announcement (newsvr-2025.txt, read 2026-11-01). It is only encrypted with a
-// fixed key, not signed, so it must never expand this list automatically. The
-// legacy www.cdnhth.net and www.cdnbea.net still serve the same encrypted API
-// and remain as fallbacks. Every host is exact-match pinned: no wildcard, port,
-// path or HTTP variant is accepted.
-pub(crate) const JM_HOST: &str = "www.cdnhjk.net";
+pub(crate) use source_network::{JM_API_HOSTS, JM_DEFAULT_API_HOST as JM_HOST};
 /// Anonymous read that a real JM API host answered during the 2026-11-01 check.
 pub(crate) const JM_PROBE_ROUTE: &str = "/album?id=422866";
-pub(crate) const JM_API_HOSTS: &[&str] = &[
-    "www.cdnhjk.net",
-    "www.cdnutc.cc",
-    "www.cdngwc.net",
-    "www.cdngwc.cc",
-    "www.cdngwc.club",
-    "www.cdnhth.net",
-    "www.cdnbea.net",
-];
 pub(crate) const PICA_HOST: &str = "picaapi.picacomic.com";
 pub(crate) const PICA_KEY: &str = "C69BAF41DA5ABD1FFEDC6D2FEA56B";
 pub(crate) const PICA_NONCE: &str = "ptxdhmjzqtnrtwndhbxcpkjamb33w837";
@@ -47,11 +27,7 @@ const PICA_DIGEST: &str = r"~d}$Q7$eIni=V)9\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pdd
 // src/jmcomic/jm_config.py:184-192 and jm_toolkit.py:404-421. The legacy
 // lanyeeee ComicCard.vue:54 endpoint remains the final candidate. API hosts,
 // account headers, and the separate real-download adapters are unchanged.
-pub(crate) const JM_COVER_HOSTS: &[&str] = &[
-    "cdn-msp.jmapiproxy1.cc",
-    "cdn-msp.jmapiproxy2.cc",
-    "cdn-msp3.18comic.vip",
-];
+pub(crate) use source_network::JM_COVER_HOSTS;
 // Exact CDN identities only. storage-b is used by the pinned upstream UI:
 // lanyeeee/picacomic-downloader@77c8b62ede42b3afc074506d092313816af8092d,
 // src/AppContent.vue:109. Transformed paths and img redirects are evidenced in
