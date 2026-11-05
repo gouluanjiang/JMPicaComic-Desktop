@@ -42,6 +42,16 @@ const MAX_RESPONSE: usize = 8 * 1024 * 1024;
 // A pinned hostname can lapse while the app is running, so a passed probe only
 // lasts this long before credentials require a new one.
 const JM_HOST_VERIFICATION_TTL: Duration = Duration::from_secs(15 * 60);
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+// Checked before moving to another host, so one logical request cannot walk the
+// whole list at the full per-request timeout while holding the session lock.
+const JM_FAILOVER_BUDGET: Duration = Duration::from_secs(45);
+// After every pinned host failed, later requests fail fast for this long so a
+// long author scan does not repeat the whole walk for each work in an outage.
+const JM_OUTAGE_COOLDOWN: Duration = Duration::from_secs(30);
+// A live host refused this one request. Internal only: `request` reports it as
+// SOURCE_REQUEST_FAILED, so callers and the UI keep their existing contract.
+const REQUEST_REFUSED_BY_HOST: &str = "SOURCE_REQUEST_REFUSED";
 const MAX_KNOWN_WORKS: usize = 20_000;
 const MAX_COVER_DESCRIPTORS: usize = 8192;
 const MAX_COVER_DESCRIPTOR_BYTES: usize = 4 * 1024 * 1024;
@@ -264,6 +274,10 @@ pub struct WorkbenchSources {
     // cookie, and when its anonymous probe passed.
     jm_verified: Mutex<Option<(String, Instant)>>,
     jm_verification_ttl: Duration,
+    jm_failover_budget: Duration,
+    jm_outage_cooldown: Duration,
+    // When every pinned JM host last failed, and how.
+    jm_outage: Mutex<Option<(Instant, &'static str)>>,
     #[cfg(test)]
     host_script: Option<HostScript>,
     #[cfg(test)]
@@ -281,6 +295,7 @@ impl WorkbenchSources {
         fn client() -> SourceResult<Client> {
             Client::builder()
                 .timeout(Duration::from_secs(30))
+                .connect_timeout(CONNECT_TIMEOUT)
                 .https_only(true)
                 .redirect(reqwest::redirect::Policy::none())
                 .build()
@@ -294,6 +309,9 @@ impl WorkbenchSources {
             jm_host: Mutex::new(None),
             jm_verified: Mutex::new(None),
             jm_verification_ttl: JM_HOST_VERIFICATION_TTL,
+            jm_failover_budget: JM_FAILOVER_BUDGET,
+            jm_outage_cooldown: JM_OUTAGE_COOLDOWN,
+            jm_outage: Mutex::new(None),
             #[cfg(test)]
             host_script: None,
             #[cfg(test)]
@@ -706,6 +724,12 @@ impl WorkbenchSources {
                 .expect("unexpected extra request");
         }
         self.check_requests_allowed()?;
+        // Signing in is an explicit user action, so it always gets a real attempt.
+        if source == Source::Jm && !login {
+            if let Some(code) = self.active_jm_outage() {
+                return Err(error(code));
+            }
+        }
         let spec = RequestSpec {
             source,
             session,
@@ -717,27 +741,69 @@ impl WorkbenchSources {
         // JM rotates API hostnames. Sign-in, profile validation and reads may
         // move to the next pinned host; a favorite toggle is never replayed.
         let candidates = self.candidate_hosts(source, &method, route, login);
+        let started = Instant::now();
         let mut last = None;
         for (index, host) in candidates.iter().enumerate() {
+            if index > 0 && started.elapsed() >= self.jm_failover_budget {
+                break;
+            }
             match self.attempt_on_host(host, spec).await {
                 Ok(value) => {
+                    source_network::record_host_result(host, Ok(()));
                     self.remember_jm_host(source, host);
+                    self.clear_jm_outage(source);
                     return Ok(value);
                 }
                 Err(problem) => {
+                    source_network::record_host_result(
+                        host,
+                        if host_answered(problem.code) {
+                            Ok(())
+                        } else {
+                            Err(problem.code)
+                        },
+                    );
                     let failover = host_failover_error(problem.code);
                     if failover {
                         self.forget_verified_jm_host(host);
                     }
-                    let retry = failover && index + 1 < candidates.len();
                     last = Some(problem);
-                    if !retry {
+                    if !failover {
                         break;
                     }
                 }
             }
         }
-        Err(last.unwrap_or_else(|| error("SOURCE_REQUEST_FAILED")))
+        let problem = last.unwrap_or_else(|| error("SOURCE_REQUEST_FAILED"));
+        if source == Source::Jm && candidates.len() > 1 && host_failover_error(problem.code) {
+            self.start_jm_outage(problem.code);
+        }
+        Err(if problem.code == REQUEST_REFUSED_BY_HOST {
+            error("SOURCE_REQUEST_FAILED")
+        } else {
+            problem
+        })
+    }
+
+    fn active_jm_outage(&self) -> Option<&'static str> {
+        let outage = *self.jm_outage.lock().ok()?;
+        outage
+            .filter(|(at, _)| at.elapsed() < self.jm_outage_cooldown)
+            .map(|(_, code)| code)
+    }
+
+    fn start_jm_outage(&self, code: &'static str) {
+        if let Ok(mut outage) = self.jm_outage.lock() {
+            *outage = Some((Instant::now(), code));
+        }
+    }
+
+    fn clear_jm_outage(&self, source: Source) {
+        if source == Source::Jm {
+            if let Ok(mut outage) = self.jm_outage.lock() {
+                *outage = None;
+            }
+        }
     }
 
     fn check_requests_allowed(&self) -> SourceResult<()> {
@@ -840,7 +906,7 @@ impl WorkbenchSources {
             .lock()
             .ok()
             .and_then(|host| host.clone())
-            .unwrap_or_else(|| JM_HOST.to_owned());
+            .unwrap_or_else(|| shared_preferred_jm_host().to_owned());
         if !(*method == Method::GET || login || route == "/login") {
             return vec![preferred];
         }
@@ -856,6 +922,7 @@ impl WorkbenchSources {
             if let Ok(mut preferred) = self.jm_host.lock() {
                 *preferred = Some(host.to_owned());
             }
+            share_preferred_jm_host(host);
         }
     }
 
@@ -933,7 +1000,7 @@ impl WorkbenchSources {
             return Err(error("SOURCE_RATE_LIMITED"));
         }
         if !status.is_success() {
-            return Err(error("SOURCE_REQUEST_FAILED"));
+            return Err(error(request_failure_code(status.as_u16())));
         }
         let bytes = bounded_bytes(response, MAX_RESPONSE).await?;
         let value: Value =
@@ -963,6 +1030,43 @@ impl WorkbenchSources {
                 .ok_or(error("SOURCE_RESPONSE_INVALID")),
         }
     }
+}
+
+// Tests keep the preference on their own instance, so parallel cases cannot
+// steer each other through this process-wide value.
+#[cfg(not(test))]
+fn shared_preferred_jm_host() -> &'static str {
+    source_network::preferred_jm_api_host()
+}
+
+#[cfg(test)]
+fn shared_preferred_jm_host() -> &'static str {
+    JM_HOST
+}
+
+#[cfg(not(test))]
+fn share_preferred_jm_host(host: &str) {
+    source_network::remember_jm_api_host(host);
+}
+
+#[cfg(test)]
+fn share_preferred_jm_host(_host: &str) {}
+
+/// A missing work or malformed request is not evidence against the hostname.
+fn request_failure_code(status: u16) -> &'static str {
+    if matches!(status, 400 | 404 | 409 | 410 | 422) {
+        REQUEST_REFUSED_BY_HOST
+    } else {
+        "SOURCE_REQUEST_FAILED"
+    }
+}
+
+/// These prove the API answered, so they do not count against the host's health.
+fn host_answered(code: &str) -> bool {
+    matches!(
+        code,
+        "LOGIN_REJECTED" | "SESSION_EXPIRED" | "SOURCE_API_REJECTED" | REQUEST_REFUSED_BY_HOST
+    )
 }
 
 fn unix_timestamp() -> SourceResult<u64> {

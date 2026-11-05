@@ -28,6 +28,62 @@ export function validateWorkbenchInfo(value: unknown): WorkbenchInfo {
     throw new Error("VERSION_UNAVAILABLE");
   return { version: v.version, revision: v.revision, platform: v.platform! };
 }
+export interface SourceHostHealth {
+  host: string;
+  lastSuccessMs: number | null;
+  lastFailureMs: number | null;
+  lastFailureCode: string | null;
+  consecutiveFailures: number;
+}
+export interface SourceNetworkHealth {
+  preferredJmHost: string;
+  hosts: SourceHostHealth[];
+}
+const validHostName = (value: unknown): value is string =>
+  typeof value === "string" && /^[A-Za-z0-9.-]{1,253}$/.test(value);
+const validOptionalTime = (value: unknown) =>
+  value === null || (Number.isSafeInteger(value) && (value as number) >= 0);
+export function validateSourceNetworkHealth(
+  value: unknown,
+): SourceNetworkHealth {
+  const v = value as Partial<SourceNetworkHealth> | null;
+  if (
+    !v ||
+    !validHostName(v.preferredJmHost) ||
+    !Array.isArray(v.hosts) ||
+    v.hosts.length > 32 ||
+    !v.hosts.every(
+      (entry: SourceHostHealth) =>
+        validHostName(entry?.host) &&
+        validOptionalTime(entry.lastSuccessMs) &&
+        validOptionalTime(entry.lastFailureMs) &&
+        (entry.lastFailureCode === null ||
+          (typeof entry.lastFailureCode === "string" &&
+            /^[A-Z0-9_]{1,48}$/.test(entry.lastFailureCode))) &&
+        Number.isSafeInteger(entry.consecutiveFailures) &&
+        entry.consecutiveFailures >= 0,
+    )
+  )
+    throw new Error("SOURCE_NETWORK_HEALTH_INVALID");
+  return { preferredJmHost: v.preferredJmHost, hosts: v.hosts };
+}
+/** Hostnames and closed error codes only; safe to show and to copy. */
+export function sourceNetworkLines(health: SourceNetworkHealth): string[] {
+  const failing = health.hosts.filter((entry) => entry.consecutiveFailures > 0);
+  return [
+    `JM 线路：${health.preferredJmHost}`,
+    ...(failing.length
+      ? failing.map(
+          (entry) =>
+            `线路异常：${entry.host} 连续失败 ${entry.consecutiveFailures} 次（${entry.lastFailureCode ?? "未知"}）`,
+        )
+      : [
+          health.hosts.length
+            ? "线路状态：本次运行最近的请求没有异常"
+            : "线路状态：本次运行尚未请求来源",
+        ]),
+  ];
+}
 export const accountStateLabels: Record<AccountSummary["state"], string> = {
   connected: "已连接",
   disconnected: "未连接",
@@ -153,6 +209,7 @@ export interface DiagnosticState {
   preferencesReady: boolean;
   preferencesFailed: boolean;
   problems?: DiagnosticProblem[];
+  sourceNetwork?: SourceNetworkHealth | null;
 }
 // Build from a small allowlist; never serialize whole account, file or task DTOs.
 export function diagnosticSummary(state: DiagnosticState): string {
@@ -170,6 +227,8 @@ export function diagnosticSummary(state: DiagnosticState): string {
       `${source} 会话：${state.accountsLoading ? "正在读取" : state.accountsFailed ? "读取未完成" : account ? accountStateLabels[account.state] : "尚未读取"}`,
     );
   }
+  if (state.sourceNetwork)
+    lines.push(...sourceNetworkLines(state.sourceNetwork));
   lines.push(
     `漫画库：${state.libraryFailed ? "读取未完成" : !library.rootId ? "未选择目录" : libraryPhaseLabels[library.phase]}`,
   );
