@@ -558,6 +558,9 @@ test("cover pages hide only an unknown language and search has a title", async (
   page,
 }) => {
   await installWorkflow(page);
+  await expect(page.locator(".library-toolbar:visible")).not.toHaveClass(
+    /is-stuck/,
+  );
   await page.getByTestId("nav-favorites").click();
   const badge = page
     .locator('.source-card:visible [data-language-kind="unknown"]')
