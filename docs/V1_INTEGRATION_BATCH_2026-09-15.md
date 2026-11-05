@@ -35,7 +35,7 @@
 
 ## 交付
 
-Dev 0.3.4 已独立保存到 `C:\Users\choumodujiang\Documents\Codex\MangaMonitor-Dev-20260915-ff05992`，同目录含报告、验收说明和路线图。关闭旧 Dev 后运行新目录中的 EXE 即可；没有覆盖旧程序或生成安装包。
+Dev 0.3.4 已独立保存到 `%USERPROFILE%\Documents\Codex\MangaMonitor-Dev-20260915-ff05992`，同目录含报告、验收说明和路线图。关闭旧 Dev 后运行新目录中的 EXE 即可；没有覆盖旧程序或生成安装包。
 
 - [GitHub Dev 工件 10397241594](https://github.com/gouluanjiang/MangaMonitor-AI/actions/runs/34969415168/artifacts/10397241594)：ZIP SHA-256 `987e445a71495293782b95725de804ba3df5c1c44adfae4c89edabef7fd0e126` 与 GitHub 相符，CRC 通过。
 - EXE 为 20,352,000 字节，产品／文件版本均为 0.3.4，包含最终提交的构建编号；SHA-256 `a563e168348cecbb8217ab164d3ded288d02104e82df9fd257c9fc3d6abc9914`。

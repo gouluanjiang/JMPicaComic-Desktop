@@ -1,13 +1,14 @@
 # 文档导航
 
-当前正式版为 **1.0.2**。本页按用途组织入口；历史计划和阶段报告不代表当前待办。
+当前正式版为 **1.1.0**。本页按用途组织入口；历史计划和阶段报告不代表当前待办。
 
-1.0.2 已正式发布并完成原桌面入口升级：[版本说明](RELEASE_NOTES_1.0.2.md)、[实际发行记录](RELEASE_1.0.2_2026-10-03.md)。
+1.1.0 的变化见[版本说明](RELEASE_NOTES_1.1.0.md)。本项目原名 MangaMonitor，已发布的历史文档保留旧名和旧链接，GitHub 会自动跳转。
 
 ## 使用与版本
 
 - [使用指南](USER_GUIDE.md)：安装、账号、浏览、下载、阅读及问题诊断，适用于当前正式版。
 - [当前项目状态](PROJECT_STATUS.md)：已交付功能、已知边界、取消项和以后讨论的范围。
+- [1.1.0 版本说明](RELEASE_NOTES_1.1.0.md)与[正式发行页](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.1.0)。
 - [1.0.2 版本说明](RELEASE_NOTES_1.0.2.md)与[正式发行页](https://github.com/gouluanjiang/MangaMonitor-AI/releases/tag/v1.0.2)。
 - [1.0.2 发行记录](RELEASE_1.0.2_2026-10-03.md)：准确源码、CI、资产哈希、桌面安装及剩余验证边界。
 - [1.0.1 版本说明](RELEASE_NOTES_1.0.1.md)与[正式发行页](https://github.com/gouluanjiang/MangaMonitor-AI/releases/tag/v1.0.1)。

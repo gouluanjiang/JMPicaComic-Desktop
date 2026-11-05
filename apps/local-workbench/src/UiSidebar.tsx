@@ -119,14 +119,14 @@ export function UiSidebar({
     >
       <button
         className="brand"
-        aria-label="MangaMonitor 首页"
+        aria-label="JMPicaComic-Desktop 首页"
         onClick={() => onNavigate("library")}
       >
         <span className="brand-mark">
-          M<span />
+          J<span />
         </span>
         <span className="ui-brand-name">
-          MangaMonitor<small>你的漫画，井然有序。</small>
+          JMPicaComic<small>你的漫画，井然有序。</small>
         </span>
       </button>
       <nav
