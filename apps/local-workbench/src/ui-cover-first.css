@@ -8,7 +8,7 @@
   --accent: #a48cf8;
   --line: #ffffff14;
   --muted: #b7b5c1;
-  --subtle: #8f909c;
+  --subtle: #a3a4b0;
   --text: #f3f3f6;
   --canvas: #0c0c0f;
   --sidebar-width: 212px;
@@ -751,4 +751,142 @@
 }
 .app-shell.ui-refined .native-downloads .task-card {
   padding: 14px 16px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Text scale. Older layers hard-code 10-12 px throughout, which is tiring to read
+ * for long sessions: nothing a reader must read goes below 13 px here. Geometry
+ * still comes from the layout styles and VirtualSourceGrid measurements. Reader
+ * trees sit outside .content and keep their own type.
+ * ------------------------------------------------------------------------- */
+.app-shell.ui-refined {
+  font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+}
+.app-shell.ui-refined
+  .content
+  :is(
+    p,
+    span,
+    label,
+    button,
+    a,
+    dt,
+    dd,
+    summary,
+    li,
+    strong,
+    input,
+    select,
+    textarea,
+    output,
+    th,
+    td
+  ) {
+  font-size: 14px;
+}
+.app-shell.ui-refined .ui-nav-item {
+  font-size: 15px;
+}
+.app-shell.ui-refined .ui-nav-heading {
+  font-size: 13px;
+}
+.app-shell.ui-refined .product-name {
+  font-size: 15px;
+}
+.app-shell.ui-refined .content h1 .heading-count {
+  font-size: 14px;
+}
+/* Cards: title first, then who made it, then quieter facts. */
+.app-shell.ui-refined .content .source-card h3,
+.app-shell.ui-refined .content .source-card h3 button {
+  font-size: 15px;
+}
+.app-shell.ui-refined .content .source-card > p.author-links,
+.app-shell.ui-refined .content .source-card > p.author-links :is(button, span) {
+  font-size: 14px;
+}
+.app-shell.ui-refined .content .source-card > p:not(.author-links),
+.app-shell.ui-refined .content .source-card > button.text-button {
+  font-size: 13px;
+}
+.app-shell.ui-refined
+  .library-workbench
+  .source-card
+  > p.source-card-date.is-added-date {
+  font-size: 13px;
+}
+.app-shell.ui-refined .content .source-language-badge[data-language-kind] {
+  font-size: 12px;
+}
+/* Tabs and supporting text. */
+.app-shell.ui-refined .content .result-filters button,
+.app-shell.ui-refined
+  .content
+  .source-tabs:not(.source-page-tools > .source-tabs)
+  > button,
+.app-shell.ui-refined .content .queue-tabs > button {
+  font-size: 15px;
+}
+.app-shell.ui-refined .content .result-filters button span,
+.app-shell.ui-refined .content .queue-tabs .download-tab-count {
+  font-size: 13px;
+}
+.app-shell.ui-refined .content p.source-muted,
+.app-shell.ui-refined .content p.quiet,
+.app-shell.ui-refined .content p.settings-help,
+.app-shell.ui-refined .content p.source-muted span,
+.app-shell.ui-refined .content details.page-scope-details summary,
+.app-shell.ui-refined .content details.source-notice summary {
+  font-size: 13px;
+}
+.app-shell.ui-refined .content .page-heading p,
+.app-shell.ui-refined .content .page-summary,
+.app-shell.ui-refined .content .page-summary span,
+.app-shell.ui-refined .completion-panel.source-workbench > h1 + p {
+  font-size: 14px;
+}
+.app-shell.ui-refined .content .source-author-head span {
+  font-size: 13px;
+}
+/* Download rows. */
+.app-shell.ui-refined .native-downloads .task-title-row h3 {
+  font-size: 15px;
+}
+.app-shell.ui-refined
+  .native-downloads
+  .task-card
+  :is(.task-bottom span, .quiet) {
+  font-size: 13px;
+}
+.app-shell.ui-refined
+  .native-downloads
+  .task-card
+  :is(.task-title-row .status, .task-bottom .text-button) {
+  font-size: 13px;
+}
+.app-shell.ui-refined .floating-selection-host .button.secondary {
+  font-size: 14px;
+}
+.app-shell.ui-refined
+  .content
+  :is(.settings-copy, .settings-save-message, .diagnostic-summary) {
+  font-size: 13px;
+}
+.app-shell.ui-refined .content .settings-segmented > button {
+  font-size: 14px;
+}
+/* Older layers size fields separately, with more specific selectors. */
+.app-shell.ui-refined
+  .content
+  :is(
+    select,
+    textarea,
+    input:not([type="checkbox"], [type="radio"], [type="range"])
+  ) {
+  font-size: 14px !important;
+}
+.app-shell.ui-refined .content .source-toolbar > input {
+  min-height: 36px;
+  padding: 0 12px;
 }
