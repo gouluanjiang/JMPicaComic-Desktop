@@ -13,8 +13,12 @@ fn app_information_and_file_reveal_keep_native_origin_and_item_boundaries() {
     let info = invoke(&main, "workbench_info", json!({})).unwrap();
     assert_eq!(info["version"], env!("CARGO_PKG_VERSION"));
     assert_eq!(info.as_object().unwrap().len(), 3);
+    let health = invoke(&main, "source_network_health", json!({})).unwrap();
+    assert!(health["preferredJmHost"].is_string());
+    assert!(health["hosts"].is_array());
     for (command, body) in [
         ("workbench_info", json!({})),
+        ("source_network_health", json!({})),
         ("history_read", json!({})),
         ("history_clear", json!({})),
         ("history_set_enabled", json!({"enabled":false})),

@@ -815,6 +815,7 @@ dependencies = [
  "rand",
  "reqwest",
  "serde_json",
+ "source-network",
  "state-model",
  "tokio",
 ]
@@ -1399,6 +1400,10 @@ dependencies = [
  "libc",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "source-network"
+version = "0.1.0"
 
 [[package]]
 name = "stable_deref_trait"
@@ -2085,6 +2090,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "source-network",
  "tokio",
  "unicode-normalization",
  "workbench-credentials",

@@ -3375,6 +3375,125 @@ async fn pica_requests_skip_the_jm_host_probe() {
     );
 }
 
+async fn jm_read(sources: &WorkbenchSources, session: &SourceSession) -> SourceResult<Value> {
+    sources
+        .request(
+            Source::Jm,
+            Some(session),
+            Method::GET,
+            "/album?id=1",
+            None,
+            false,
+        )
+        .await
+}
+
+#[tokio::test]
+async fn a_refusal_from_a_live_host_keeps_its_public_code_without_changing_host() {
+    let primary = protocol::JM_API_HOSTS[0];
+    let sources = host_scripted(|_host, route| {
+        if route == protocol::JM_PROBE_ROUTE {
+            Ok(json!({}))
+        } else {
+            Err(error(request_failure_code(404)))
+        }
+    });
+    let session = session(Source::Jm);
+    let problem = sources
+        .request(
+            Source::Jm,
+            Some(&session),
+            Method::GET,
+            "/album?id=1",
+            None,
+            false,
+        )
+        .await
+        .err()
+        .unwrap();
+    assert_eq!(problem.code, "SOURCE_REQUEST_FAILED");
+    assert_eq!(
+        host_calls(&sources),
+        vec![probe_call(primary), credential_call(primary, "/album?id=1")]
+    );
+    // A refused request proves the host is alive, so nothing trips the breaker.
+    assert_eq!(sources.active_jm_outage(), None);
+    assert!(sources.jm_host_is_verified(primary));
+}
+
+#[test]
+fn only_request_level_statuses_stay_on_the_same_host() {
+    for status in [400, 404, 409, 410, 422] {
+        assert!(
+            !host_failover_error(request_failure_code(status)),
+            "{status}"
+        );
+    }
+    for status in [405, 408, 425, 500, 502, 503, 599] {
+        assert!(
+            host_failover_error(request_failure_code(status)),
+            "{status}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn an_exhausted_failover_budget_stops_before_the_next_host() {
+    let mut sources = host_scripted(|_host, _route| Err(error("SOURCE_TIMEOUT")));
+    sources.jm_failover_budget = Duration::ZERO;
+    assert_eq!(
+        jm_login(&sources).await.err().unwrap().code,
+        "SOURCE_TIMEOUT"
+    );
+    assert_eq!(
+        host_calls(&sources),
+        vec![probe_call(protocol::JM_API_HOSTS[0])]
+    );
+}
+
+#[tokio::test]
+async fn a_full_outage_fails_fast_until_the_cooldown_or_a_sign_in_succeeds() {
+    let online = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let state = std::sync::Arc::clone(&online);
+    let mut sources = host_scripted(move |_host, _route| {
+        if state.load(std::sync::atomic::Ordering::SeqCst) {
+            Ok(json!({"s":"fixture-session"}))
+        } else {
+            Err(error("SOURCE_CONNECTION_FAILED"))
+        }
+    });
+    let hosts = protocol::JM_API_HOSTS.len();
+    let session = session(Source::Jm);
+
+    assert_eq!(
+        jm_read(&sources, &session).await.err().unwrap().code,
+        "SOURCE_CONNECTION_FAILED"
+    );
+    assert_eq!(host_calls(&sources).len(), hosts);
+    assert_eq!(
+        jm_read(&sources, &session).await.err().unwrap().code,
+        "SOURCE_CONNECTION_FAILED"
+    );
+    // Nothing is sent during the cooldown.
+    assert_eq!(host_calls(&sources).len(), hosts);
+
+    // Signing in is explicit, so it still walks the hosts during the cooldown.
+    assert!(jm_login(&sources).await.is_err());
+    assert_eq!(host_calls(&sources).len(), hosts * 2);
+
+    // Once the cooldown ends, a real attempt is allowed again.
+    sources.jm_outage_cooldown = Duration::ZERO;
+    assert!(jm_read(&sources, &session).await.is_err());
+    assert_eq!(host_calls(&sources).len(), hosts * 3);
+
+    // A success ends the outage straight away.
+    sources.jm_outage_cooldown = JM_OUTAGE_COOLDOWN;
+    online.store(true, std::sync::atomic::Ordering::SeqCst);
+    assert!(jm_login(&sources).await.is_ok());
+    assert_eq!(sources.active_jm_outage(), None);
+    assert!(jm_read(&sources, &session).await.is_ok());
+}
+
 #[test]
 fn jm_probe_accepts_only_the_jm_api_response_shapes() {
     let timestamp = 1_700_000_000;

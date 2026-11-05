@@ -113,3 +113,22 @@ Stored links/history/progress survive a recycled-file tombstone and can be reuse
 only for the same restored file identity. Uncertain operation/storage outcomes
 are explicitly reported. Synthetic CI and user-operated real acceptance remain
 different gates; production monitoring stays disabled.
+
+## 2026-11-05 source reliability review
+
+Scope: which pinned API host metadata requests start from, and how quickly they
+stop. `crates/source-network` becomes the single definition of the existing pins;
+no host is added or removed. Short-lived reader and download metadata clients may
+start from the last pinned host that answered, in this process only. Connect
+timeouts, a failover budget and a short outage cooldown in `workbench-sources`
+bound account-module requests. The JM adapter's retry classification, pacing,
+guards and physical `RequestTrace` accounting are unchanged, so existing request
+budgets still count every attempt.
+
+Media is deliberately unchanged: `IMAGE_DOMAIN` keeps its value and stays a single
+exact host because media URLs are bound into plans, manifests and proofs. Serving
+pages from another host would need its own decision and evidence. This review only
+adds a host health record for that fetch, and `scripts/check-jm-hosts.ps1` reports
+its reachability. No staging, promotion, replacement, deletion or completion path
+changes. Health holds hostnames and closed error codes only, never routes, queries,
+titles or account data. Tests are synthetic and perform no real source requests.

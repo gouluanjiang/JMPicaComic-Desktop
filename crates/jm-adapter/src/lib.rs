@@ -25,19 +25,8 @@ use std::{
 
 pub const UPSTREAM_COMMIT: &str = "f0cdd724af6892002f2fb7be883b88832cebe7e9";
 pub const CRAWLER_RELIABILITY_COMMIT: &str = "9fddb0494caf0cdc812ac6cbfc1c62f4f845b058";
-pub const DEFAULT_DOMAIN: &str = "www.cdnhjk.net";
-// Reviewed by hand on 2026-11-01 against JM's unsigned domain announcement. The previous
-// www.cdnhth.cc and www.cdnzack.cc entries are now parked-domain landers and
-// www.cdn-mspjmapiproxy.xyz no longer completes TLS. Exact-match hosts only.
-pub const BASELINE_DOMAINS: &[&str] = &[
-    "www.cdnhjk.net",
-    "www.cdnutc.cc",
-    "www.cdngwc.net",
-    "www.cdngwc.cc",
-    "www.cdngwc.club",
-    "www.cdnhth.net",
-    "www.cdnbea.net",
-];
+pub const DEFAULT_DOMAIN: &str = source_network::JM_DEFAULT_API_HOST;
+pub const BASELINE_DOMAINS: &[&str] = source_network::JM_API_HOSTS;
 /// Maximum in-memory response size for encrypted JSON and metadata bodies.
 pub const MAX_METADATA_BYTES: u64 = 8 * 1024 * 1024;
 
@@ -147,15 +136,24 @@ impl JmClient {
         if !BASELINE_DOMAINS.contains(&domain) {
             return Err("DOMAIN_NOT_IN_PINNED_BASELINE".into());
         }
+        // Interactive and download clients are short-lived, so without this each
+        // one would rediscover a dead default host. The list and its trust are
+        // unchanged; only the starting point moves to the last host that answered.
+        let primary = match pacing {
+            MetadataPacing::Monitor => domain,
+            _ if domain == DEFAULT_DOMAIN => source_network::preferred_jm_api_host(),
+            _ => domain,
+        };
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(10))
             .redirect(reqwest::redirect::Policy::none())
             .cookie_store(true)
             .build()
             .map_err(|_| "CLIENT_INIT")?;
         Ok(Self {
             client,
-            domains: ordered_domains(domain),
+            domains: ordered_domains(primary),
             pacing,
             traces: vec![],
             #[cfg(test)]
@@ -211,6 +209,7 @@ impl JmClient {
                 (Err(_), Some(status)) => retryable_http_status(status),
                 _ => false,
             };
+            record_domain_result(&domain, &result, retryable);
             self.traces.push(RequestTrace {
                 operation: path.into(),
                 page,
@@ -449,6 +448,28 @@ impl JmClient {
         }
         Ok(result)
     }
+}
+
+/// Scripted unit tests must not steer later clients in the same test binary.
+fn record_domain_result(domain: &str, result: &Result<Value, String>, retryable: bool) {
+    if cfg!(test) {
+        return;
+    }
+    match result {
+        Err(code) if retryable => {
+            source_network::record_host_result(domain, Err(code.as_str()));
+        }
+        Err(_) => source_network::record_host_result(domain, Ok(())),
+        Ok(_) => {
+            source_network::record_host_result(domain, Ok(()));
+            source_network::remember_jm_api_host(domain);
+        }
+    }
+}
+
+/// Lets the media transport report its host without another dependency edge.
+pub fn record_media_host_result(result: Result<(), &str>) {
+    source_network::record_host_result(source_network::JM_IMAGE_HOST, result);
 }
 
 fn ordered_domains(primary: &str) -> Vec<String> {
