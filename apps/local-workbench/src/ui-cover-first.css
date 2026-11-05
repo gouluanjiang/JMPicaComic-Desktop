@@ -260,7 +260,10 @@
   font-size: 18px;
   font-weight: 600;
 }
-.app-shell.ui-refined .library-workbench .source-card .source-card-date {
+.app-shell.ui-refined
+  .library-workbench
+  .source-card
+  .source-card-date:not(.is-added-date) {
   display: none;
 }
 .app-shell.ui-refined .library-workbench > .source-actions,

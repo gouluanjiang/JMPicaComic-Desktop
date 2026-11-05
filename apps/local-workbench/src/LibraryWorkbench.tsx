@@ -54,6 +54,7 @@ import {
   libraryFilterLabels,
   libraryFilterMatches,
   librarySorts,
+  libraryAddedAt,
 } from "./library-matching.ts";
 import type { LibraryFilter, LibrarySort } from "./library-matching.ts";
 
@@ -471,9 +472,9 @@ function LibraryDetail({
           </dl>
           <p className="source-muted" data-testid="library-added-at">
             入库时间：
-            {item.addedAt == null
+            {libraryAddedAt(item) == null
               ? "历史记录未知"
-              : new Date(item.addedAt).toLocaleString()}
+              : new Date(libraryAddedAt(item)!).toLocaleString()}
           </p>
           <p className="source-muted" data-testid="library-version-updated-at">
             版本更新：
@@ -750,7 +751,7 @@ export function LibraryWorkbench({
   const recentItems =
     !query && filter === "all" && visibleItems.length >= density * 2
       ? sortLibraryItems(
-          visibleItems.filter((item) => item.addedAt != null),
+          visibleItems.filter((item) => libraryAddedAt(item) != null),
           "added-desc",
         ).slice(0, density)
       : [];
@@ -796,7 +797,7 @@ export function LibraryWorkbench({
       <h3>
         <button onClick={() => open(item)}>{item.title}</button>
       </h3>
-      <AuthorLinks authors={item.authors} fallback={item.fileName} />
+      <AuthorLinks authors={item.authors} />
       <p
         className={`source-card-state${
           !library.error &&
@@ -827,11 +828,11 @@ export function LibraryWorkbench({
         {formatWorkDate(item.versionUpdatedAt) ?? "版本时间未知"}
       </p>
       <p
-        className="source-card-date"
-        title={formatTimestamp(item.addedAt, true) ?? undefined}
+        className="source-card-date is-added-date"
+        title={formatTimestamp(libraryAddedAt(item), true) ?? undefined}
       >
         入库时间：
-        {formatTimestamp(item.addedAt) ?? "历史记录未知"}
+        {formatTimestamp(libraryAddedAt(item)) ?? "历史记录未知"}
       </p>
     </article>
   );
@@ -963,7 +964,7 @@ export function LibraryWorkbench({
             </div>
             {sort.startsWith("added-") && (
               <p className="source-muted">
-                按首次成功记录到漫画库的时间排序；历史时间未知的作品排在最后。重新读取不会改变入库时间。
+                按入库时间排序，取下载入库时间和文件修改时间中较早的一个；时间未知的作品排在最后。
               </p>
             )}
             {sort.startsWith("updated-") && (

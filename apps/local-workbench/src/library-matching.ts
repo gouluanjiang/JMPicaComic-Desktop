@@ -9,6 +9,16 @@ export const fileNeedsReview = (item: LibraryItem) =>
   item.errorCode !== null ||
   !(item.pageCount && item.pageCount > 0);
 export type LibraryFilter = "all" | "owned" | "review";
+/** When a work entered the library. A re-read of a re-selected folder records
+ * its own time for every file, so the file's modified time wins when earlier. */
+export function libraryAddedAt(
+  item: Pick<LibraryItem, "addedAt" | "modifiedAt">,
+): number | null {
+  const { addedAt = null, modifiedAt } = item;
+  if (addedAt == null) return modifiedAt;
+  return modifiedAt == null ? addedAt : Math.min(addedAt, modifiedAt);
+}
+
 export const librarySorts = [
   "title",
   "modified",
@@ -24,10 +34,12 @@ export function compareAdded(
   sort: LibrarySort,
 ) {
   if (sort !== "added-asc" && sort !== "added-desc") return 0;
-  if (a.addedAt == null && b.addedAt == null) return 0;
-  if (a.addedAt == null) return 1;
-  if (b.addedAt == null) return -1;
-  return (a.addedAt - b.addedAt) * (sort === "added-asc" ? 1 : -1);
+  const first = libraryAddedAt(a);
+  const second = libraryAddedAt(b);
+  if (first == null && second == null) return 0;
+  if (first == null) return 1;
+  if (second == null) return -1;
+  return (first - second) * (sort === "added-asc" ? 1 : -1);
 }
 export function libraryFilterMatches(item: LibraryItem, filter: LibraryFilter) {
   return (

@@ -561,6 +561,10 @@ test("cover pages hide only an unknown language and search has a title", async (
   await expect(page.locator(".library-toolbar:visible")).not.toHaveClass(
     /is-stuck/,
   );
+  const card = page.locator(".library-workbench .source-card:visible").first();
+  await expect(card.locator(".is-added-date")).toBeVisible();
+  await expect(card.locator(".is-added-date")).toContainText("入库时间：");
+  await expect(card.locator(".source-card-date").first()).toBeHidden();
   await page.getByTestId("nav-favorites").click();
   const badge = page
     .locator('.source-card:visible [data-language-kind="unknown"]')

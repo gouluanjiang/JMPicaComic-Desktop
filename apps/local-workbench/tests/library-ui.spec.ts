@@ -118,7 +118,11 @@ async function installMock(page: Page, options: Options = {}) {
         description: null,
         tags: options.languageTags?.[number - 1] ?? [],
         bytes: 4096,
-        modifiedAt: 1800000000000,
+        // Later than addedAt, or absent: these specs exercise the recorded date.
+        modifiedAt:
+          options.usability && number < 3
+            ? 1800000000000 + number * 2000
+            : null,
         addedAt:
           options.usability && number < 3
             ? 1800000000000 + number * 1000
