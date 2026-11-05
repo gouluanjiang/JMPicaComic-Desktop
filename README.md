@@ -13,6 +13,8 @@
 
 [下载安装包](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [更新日志](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases) · [问题反馈](https://github.com/gouluanjiang/JMPicaComic-Desktop/issues/new/choose) · [安全策略](SECURITY.md)
 
+![功能总览：逛最近更新、关注作者、一键检查、只看新增、批量下载、直接阅读](docs/images/overview.png)
+
 ![漫画库：最近入库和全部作品的封面墙](docs/images/library.png)
 
 <sub>截图是即将发布的新界面，软件内目前仍显示旧名 MangaMonitor。图中的作品、作者和封面都是合成示例，不含真实内容。</sub>
