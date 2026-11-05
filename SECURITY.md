@@ -2,7 +2,7 @@
 
 ## 支持的版本
 
-只有[最新发行版](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest)会收到安全修复。
+只有[最新发行版](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/latest)会收到安全修复。
 
 ## 已知问题：1.0.2 的 JM 登录
 
@@ -14,7 +14,7 @@
 
 ## 报告安全问题
 
-请不要在公开 Issue 中描述安全问题。请到本仓库的 [Security 页面](https://github.com/gouluanjiang/MangaMonitor-AI/security/advisories/new)私下提交，并说明：
+请不要在公开 Issue 中描述安全问题。请到本仓库的 [Security 页面](https://github.com/gouluanjiang/JMPicaComic-Desktop/security/advisories/new)私下提交，并说明：
 
 - 受影响的版本和提交号
 - 问题的影响，以及复现步骤

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **请不要上传账号、密码、令牌、Cookie、私人书目或漫画文件。** 截图请遮挡私人内容。安全问题请按[安全策略](https://github.com/gouluanjiang/MangaMonitor-AI/blob/main/SECURITY.md)私下提交。
+        **请不要上传账号、密码、令牌、Cookie、私人书目或漫画文件。** 截图请遮挡私人内容。安全问题请按[安全策略](https://github.com/gouluanjiang/JMPicaComic-Desktop/blob/main/SECURITY.md)私下提交。
   - type: input
     id: version
     attributes:

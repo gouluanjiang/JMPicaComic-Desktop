@@ -1,15 +1,21 @@
-# MangaMonitor
+# JMPicaComic-Desktop
+
+> 原名 MangaMonitor。
 
 **只看你关注的作者更新了什么。隔一个月回来，点一下就能查出这段时间的新作，不用再翻完所有更新。**
 
 这是一个 Windows 桌面程序，支持 JM 和哔咔。除了跟进作者，它还能批量下载、管理电脑上的漫画，并直接在程序里阅读。
 
-[![最新版本](https://img.shields.io/github/v/release/gouluanjiang/MangaMonitor-AI?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest)
+[![最新版本](https://img.shields.io/github/v/release/gouluanjiang/JMPicaComic-Desktop?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/latest)
 ![平台](https://img.shields.io/badge/%E5%B9%B3%E5%8F%B0-Windows%20x64-blue)
-[![下载量](https://img.shields.io/github/downloads/gouluanjiang/MangaMonitor-AI/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://github.com/gouluanjiang/MangaMonitor-AI/releases)
-[![许可](https://img.shields.io/github/license/gouluanjiang/MangaMonitor-AI?label=%E8%AE%B8%E5%8F%AF)](LICENSE)
+[![下载量](https://img.shields.io/github/downloads/gouluanjiang/JMPicaComic-Desktop/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases)
+[![许可](https://img.shields.io/github/license/gouluanjiang/JMPicaComic-Desktop?label=%E8%AE%B8%E5%8F%AF)](LICENSE)
 
-[下载安装包](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [更新日志](https://github.com/gouluanjiang/MangaMonitor-AI/releases) · [问题反馈](https://github.com/gouluanjiang/MangaMonitor-AI/issues/new/choose) · [安全策略](SECURITY.md)
+[下载安装包](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [更新日志](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases) · [问题反馈](https://github.com/gouluanjiang/JMPicaComic-Desktop/issues/new/choose) · [安全策略](SECURITY.md)
+
+![漫画库：最近入库和全部作品的封面墙](docs/images/library.png)
+
+<sub>截图是即将发布的新界面，软件内目前仍显示旧名 MangaMonitor。图中的作品、作者和封面都是合成示例，不含真实内容。</sub>
 
 > [!WARNING]
 > **使用 JM 前请先看这里：** 1.0.2 内置的 JM 主域名已失效并变成停放页，JM 的登录、收藏、搜索和详情都会失败。在这个版本上登录 JM，账号密码可能已经发送到这个域名。
@@ -27,13 +33,15 @@
 - [使用前请了解](#使用前请了解)
 - [隐私与数据](#隐私与数据)
 - [常见问题](#常见问题)
-- [正在进行](#正在进行)
+- [未来计划](#未来计划)
 - [参与项目](#参与项目)
 - [致谢](#致谢)
 - [免责声明](#免责声明)
 - [许可](#许可)
 
 ## 核心功能：跟进关注作者的更新
+
+![作者更新：本次检查发现了多少新作品](docs/images/author-updates.png)
 
 **为什么需要它：** 如果你一个月甚至更久才看一次漫画，自己翻完这段时间的全部更新太花时间，里面还混着大量不想看的内容。其实你只想知道：**我关注的作者更新了什么？**
 
@@ -88,6 +96,8 @@
 
 #### 关注作者与作品
 
+![关注作者名单](docs/images/followed-authors.png)
+
 **使用场景：** 集中管理想长期跟进的作者，或先记下某一部还想继续看的作品。
 
 **如何使用：**
@@ -127,6 +137,8 @@
 
 #### 周排行榜
 
+![JM 每周必看榜单](docs/images/ranking.png)
+
 **使用场景：** 想知道最近大家都在看什么，发现还不认识的作者。
 
 **如何使用：**
@@ -155,6 +167,8 @@
 ### 下载与管理
 
 #### 下载队列
+
+![下载队列：进度和任务操作](docs/images/download-queue.png)
 
 **使用场景：** 一次下载很多本，中途可能要暂停，或者下载失败后要重试。
 
@@ -210,6 +224,8 @@
 
 #### 外观
 
+![使用自定义背景图的漫画库](docs/images/custom-background.png)
+
 **使用场景：** 想把界面换成自己喜欢的样子。
 
 **如何使用：** 在“设置 → 外观”选择背景预设或自定义背景图，调整背景模式、暗化、模糊和封面密度，也可以减少动态效果。
@@ -218,12 +234,12 @@
 
 **使用场景：** 遇到问题，想反馈但不想泄露隐私。
 
-**如何使用：** 在“设置 → 网络与诊断”查看版本和提交号，复制状态摘要后提交到 [Issues](https://github.com/gouluanjiang/MangaMonitor-AI/issues)。摘要不含账号、作品标题和私人路径。
+**如何使用：** 在“设置 → 网络与诊断”查看版本和提交号，复制状态摘要后提交到 [Issues](https://github.com/gouluanjiang/JMPicaComic-Desktop/issues)。摘要不含账号、作品标题和私人路径。
 
 ## 快速开始
 
-1. 从[发行页](https://github.com/gouluanjiang/MangaMonitor-AI/releases/latest)下载 `MangaMonitor.Dev_<版本>_x64-setup.exe`，可用同页的 `SHA256SUMS.txt` 核对文件。
-2. 关闭正在运行的 MangaMonitor 和阅读小窗，然后运行安装包。
+1. 从[发行页](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/latest)下载 `MangaMonitor.Dev_<版本>_x64-setup.exe`，可用同页的 `SHA256SUMS.txt` 核对文件。
+2. 关闭正在运行的程序和阅读小窗，然后运行安装包。
 3. 打开“设置 → 漫画库”，选择你的漫画文件夹。
 4. 打开“设置 → 账号与收藏”，连接 JM 和哔咔（JM 请先看上方提示）。
 5. 关注几位作者，然后到“作者更新”点击“一键检查全部关注作者”。
@@ -235,8 +251,8 @@
 - **需要你自己的账号：** 程序不附带账号、书目或漫画。
 - **内容来自第三方网站：** 这些网站可能包含成人内容，也可能随时不可用。请遵守当地法律和网站条款。
 - **安装包没有代码签名：** Windows 可能弹出安全提示，请只从本仓库发行页下载。
-- **目前没有内置更新器：** 程序不会检查自身的新版本，新版本需要手动下载安装。
-- **名称里的 Dev：** 安装后显示为 MangaMonitor Dev，只是为了沿用原有的安装记录和数据，不代表测试版。
+- **目前没有内置更新器：** 程序不会检查自身的新版本，新版本需要手动下载安装。更新器已列入[未来计划](#未来计划)。
+- **软件名称：** 本项目原名 MangaMonitor，软件内的名称会在下个版本改为 JMPicaComic-Desktop。安装名称 MangaMonitor Dev 和内部标识保持不变，只是为了沿用原有的安装记录和数据，不代表测试版。
 - **自动检查的范围：** 只有特别关注会在启动时自动检查；普通关注要手动点击。程序不会定时扫描，退出后也不会检查，任何检查都不会自动下载。
 - **不靠猜测判断同一本：** 程序不按相似标题判断，也不自动合并两个网站的同一部作品。所以有文件但没有来源记录的旧漫画，可能显示为“未入库”或“待核对”。
 
@@ -257,16 +273,22 @@
 **能在浏览器或 Mac 上用吗？**
 不能。真实账号、漫画库和下载只有 Windows 桌面端提供；开发用的浏览器预览只显示合成数据。
 
-## 正在进行
+## 未来计划
 
-- 发布包含 JM 修复的新版本。
-- 重新设计界面，让封面成为主角，并保留自定义背景。
+**正在进行**
 
-这里只列出当前在做的事，不代表发布日期。
+- 发布包含 JM 修复和新界面的版本。
+
+**想做的事**
+
+- **内置更新器：** 打开程序时自动检测新版本，选择更新后直接下载并安装，不用再到 GitHub 手动下载。
+- **更多内容类型和来源：** 不局限于漫画，计划加入 ASMR、视频等内容。
+
+这里列出的是方向，不代表发布日期。“想做的事”都还没有开始开发。
 
 ## 参与项目
 
-- **反馈问题或提建议：** 请使用 [Issue 模板](https://github.com/gouluanjiang/MangaMonitor-AI/issues/new/choose)。
+- **反馈问题或提建议：** 请使用 [Issue 模板](https://github.com/gouluanjiang/JMPicaComic-Desktop/issues/new/choose)。
 - **报告安全问题：** 请按[安全策略](SECURITY.md)私下提交，不要公开发布。
 - **提交代码：** 请先阅读[贡献说明](CONTRIBUTING.md)。
 
