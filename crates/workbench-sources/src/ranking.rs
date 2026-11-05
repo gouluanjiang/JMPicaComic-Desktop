@@ -59,7 +59,12 @@ fn options(value: &Value, time: bool) -> SourceResult<Vec<RankOption>> {
                 (None, None) => format!("期数 {id}"),
             }
         } else {
-            protocol::bounded_required_text(&row["title"], 2000)?
+            // JM also leaves type titles empty, currently `hanman`. As with issues,
+            // missing presentation text must not discard the whole weekly list.
+            optional_label(&row["title"])?.unwrap_or_else(|| match id.as_str() {
+                "hanman" => "韩漫".to_owned(),
+                _ => format!("类型 {id}"),
+            })
         };
         if result.iter().any(|option: &RankOption| option.id == id) {
             return Err(protocol::error("SOURCE_RESPONSE_INVALID"));
