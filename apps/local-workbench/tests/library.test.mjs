@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { libraryAddedAt } from "../src/library-matching.ts";
 import {
   filterLibraryItems,
   searchLibraryItems,
@@ -104,7 +105,7 @@ test("file location IPC accepts only validated library scope and item identity",
 
 test("admission sorting keeps unknown history last and keeps only actual file filters", () => {
   const entries = [
-    item(1, { addedAt: null }),
+    item(1, { addedAt: null, modifiedAt: null }),
     item(2, {
       addedAt: 200,
       sourceRef: { source: "JM", workId: "2" },
@@ -427,7 +428,12 @@ test("successful compressed covers are reused in the same run and cannot leak in
 
 test("query counts keep input order while one chosen filter is sorted, including Unicode and unknown dates", () => {
   const entries = [
-    item(3, { title: "Cafe\u0301 Z", authors: ["合成作者"], addedAt: null }),
+    item(3, {
+      title: "Cafe\u0301 Z",
+      authors: ["合成作者"],
+      addedAt: null,
+      modifiedAt: null,
+    }),
     item(1, { title: "Café A", authors: ["合成作者"], addedAt: 100 }),
     item(2, {
       title: "Café B",
@@ -523,4 +529,14 @@ test("canceling a folder change resumes only a scan that was already being drive
   } finally {
     controller.dispose();
   }
+});
+
+test("the added date falls back to the file time and survives a re-read", () => {
+  // Re-reading a re-selected folder stamps every file with the same time.
+  assert.equal(libraryAddedAt({ addedAt: 900, modifiedAt: 300 }), 300);
+  assert.equal(libraryAddedAt({ addedAt: 300, modifiedAt: 900 }), 300);
+  assert.equal(libraryAddedAt({ addedAt: null, modifiedAt: 300 }), 300);
+  assert.equal(libraryAddedAt({ modifiedAt: 300 }), 300);
+  assert.equal(libraryAddedAt({ addedAt: 300, modifiedAt: null }), 300);
+  assert.equal(libraryAddedAt({ addedAt: null, modifiedAt: null }), null);
 });

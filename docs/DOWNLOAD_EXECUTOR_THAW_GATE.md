@@ -132,3 +132,25 @@ adds a host health record for that fetch, and `scripts/check-jm-hosts.ps1` repor
 its reachability. No staging, promotion, replacement, deletion or completion path
 changes. Health holds hostnames and closed error codes only, never routes, queries,
 titles or account data. Tests are synthetic and perform no real source requests.
+
+## 2026-11-05 moved root check review
+
+Scope: a user-started check for completed ZIP records whose saved root has the same
+id and path as the current library but an older file-system identity. By design
+such records stay unavailable history, even when the folder is re-selected. The
+user decided to add this check after 132 completed records showed as needing
+attention while their files were intact.
+
+A record moves to the current root only when the library read is complete, the ZIP
+has the recorded size and SHA-256, the library indexed that same file at the same
+relative path, its completed staging is absent, and its revision is unchanged at
+commit. `root`, `output_identity`, `target_hash` and `revision` change together, so
+the document's binding check still holds. Staging is checked first because the
+command directory derives from the binding being replaced. `updated_at`, the archive
+record, manifest hash and library entry do not change.
+
+No download, staging execution, promotion, replacement, deletion, library write or
+media write is added, and upstream behavior is not involved. A different path is
+never adopted. Missing, changed or unverifiable outputs keep their records and are
+only counted; absence does not become a new download. Compact history evidence has
+no digest, so it cannot be proven and is left alone. Tests are synthetic.

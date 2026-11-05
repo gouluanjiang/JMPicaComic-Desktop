@@ -88,6 +88,13 @@ export interface DownloadSnapshot {
   revision: number;
   tasks: DownloadTask[];
 }
+export interface DownloadRootCheck {
+  verified: number;
+  missing: number;
+  changed: number;
+  skipped: number;
+  snapshot: DownloadSnapshot;
+}
 export interface DownloadInventorySnapshot {
   revision: number;
   libraryRevision: number;
@@ -124,6 +131,7 @@ export interface DownloadAdapter {
     tasks: DownloadTaskRevision[],
   ): Promise<DownloadSnapshot>;
   removeHistory(tasks: DownloadTaskRevision[]): Promise<DownloadSnapshot>;
+  verifyRoot(): Promise<DownloadRootCheck>;
   control(
     scope: DownloadScope,
     taskId: string,

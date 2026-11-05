@@ -1994,7 +1994,8 @@ for (const entry of ["saved updates", "author search"] as const) {
       page.getByRole("toolbar", { name: "批量下载操作", exact: true }),
     ).toContainText("已选 1 本");
     await japanese.scrollIntoViewIfNeeded();
-    for (const key of ["JM:123", "JM:456", "Pica:0123456789abcdef01234567"]) {
+    // An unknown language stays in the DOM but no longer takes space on a cover.
+    for (const key of ["JM:123", "JM:456"]) {
       await expect(
         page
           .getByTestId("author-update-" + key)

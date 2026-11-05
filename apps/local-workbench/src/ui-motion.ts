@@ -47,7 +47,7 @@ type Run = {
 };
 /** The grid lays out once. Only the sidebar clip and workspace translation interpolate. */
 export function useSidebarMotion(reduced: boolean) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const run = useRef<Run | null>(null);

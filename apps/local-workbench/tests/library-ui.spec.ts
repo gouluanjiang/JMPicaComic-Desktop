@@ -118,7 +118,11 @@ async function installMock(page: Page, options: Options = {}) {
         description: null,
         tags: options.languageTags?.[number - 1] ?? [],
         bytes: 4096,
-        modifiedAt: 1800000000000,
+        // Later than addedAt, or absent: these specs exercise the recorded date.
+        modifiedAt:
+          options.usability && number < 3
+            ? 1800000000000 + number * 2000
+            : null,
         addedAt:
           options.usability && number < 3
             ? 1800000000000 + number * 1000
@@ -592,7 +596,8 @@ test("library languages use saved version tags and leave linked historical versi
     ),
   ).toEqual([]);
   await page.getByTestId("library-card-" + id(1)).scrollIntoViewIfNeeded();
-  for (const number of [1, 2, 3, 4]) {
+  // An unknown language stays in the DOM but no longer takes space on a cover.
+  for (const number of [2, 3]) {
     await expect(
       page
         .getByTestId("library-card-" + id(number))

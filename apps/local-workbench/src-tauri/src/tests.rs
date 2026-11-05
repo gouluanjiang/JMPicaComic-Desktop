@@ -710,6 +710,7 @@ fn download_commands_require_the_main_packaged_window() {
             "jm_download_history_remove",
             json!({"tasks":[{"taskId":"a".repeat(64),"expectedRevision":1}]}),
         ),
+        ("jm_download_root_verify", json!({})),
         ("source_matches_read", json!({})),
         (
             "source_matches_confirm",

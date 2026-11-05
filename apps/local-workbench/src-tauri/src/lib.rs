@@ -275,6 +275,7 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             downloads::jm_download_pause_all,
             downloads::jm_download_resume_many,
             downloads::jm_download_history_remove,
+            downloads::jm_download_root_verify,
             library::library_read,
             library::library_choose,
             library::library_import_paths,

@@ -259,7 +259,8 @@ test("both rankings show explicit languages while a manga category remains unkno
     await page
       .getByTestId(`rank-work-${source}:${selectedId}`)
       .scrollIntoViewIfNeeded();
-    for (const number of [1, 2, 3, 4]) {
+    // An unknown language stays in the DOM but no longer takes space on a cover.
+    for (const number of [1, 2]) {
       const workId =
         source === "JM" ? String(number) : String(number).padStart(24, "0");
       await expect(
