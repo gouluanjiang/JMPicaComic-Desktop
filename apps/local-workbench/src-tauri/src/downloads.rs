@@ -81,6 +81,14 @@ impl DesktopDownloads {
         self.preparation_epoch.fetch_add(1, Ordering::AcqRel);
         Ok(exclusive)
     }
+
+    /// Installing an update exits the process, so it needs the same exclusivity
+    /// as recycling: nothing running or queued, and no new admissions.
+    pub(crate) fn try_update_guard(
+        &self,
+    ) -> Result<tokio::sync::OwnedRwLockWriteGuard<()>, StoreError> {
+        self.try_library_recycle_guard()
+    }
 }
 
 #[derive(Clone)]

@@ -32,6 +32,12 @@ import type { DemoTask, TaskStage, Work } from "./types.ts";
 import { Icon } from "./icons.tsx";
 import { WorkbenchSettings } from "./WorkbenchSettings.tsx";
 import { DiagnosticsPanel } from "./DiagnosticsPanel.tsx";
+import {
+  UpdateDialog,
+  UpdateNotice,
+  UpdateSettings,
+  useUpdates,
+} from "./UpdatePanel.tsx";
 import { createDiagnosticProblem } from "./diagnostics.ts";
 import type { DiagnosticProblem } from "./diagnostics.ts";
 import type { SettingsPage } from "./settings-navigation.ts";
@@ -230,6 +236,7 @@ function Dialog({
 
 export default function App() {
   useSyncExternalStore(subscribeContentFilter, getContentFilterRevision);
+  const updates = useUpdates(persistence.native);
   const readerHost = useReaderHost(
     persistence.native,
     async (reference) => {
@@ -2243,58 +2250,61 @@ export default function App() {
         preferencesReady={preferencesReady}
         networkPanel={
           persistence.native ? (
-            <DiagnosticsPanel
-              state={{
-                accounts,
-                problems: [
-                  ...downloads.metadataProblems.map((problem) =>
-                    createDiagnosticProblem(
-                      "downloadPreparation",
-                      problem.code,
-                      problem.occurredAt,
-                      problem.source,
+            <>
+              <UpdateSettings updates={updates} />
+              <DiagnosticsPanel
+                state={{
+                  accounts,
+                  problems: [
+                    ...downloads.metadataProblems.map((problem) =>
+                      createDiagnosticProblem(
+                        "downloadPreparation",
+                        problem.code,
+                        problem.occurredAt,
+                        problem.source,
+                      ),
                     ),
-                  ),
-                  ...accountStateDiagnostics,
-                  ...(accountsError && accountDiagnostic
-                    ? [accountDiagnostic]
-                    : []),
-                  ...(preferencesError && preferenceDiagnostic
-                    ? [preferenceDiagnostic]
-                    : []),
-                  ...(libraryDiagnostic ? [libraryDiagnostic] : []),
-                  ...(downloadDiagnostic ? [downloadDiagnostic] : []),
-                ],
-                accountsLoading: loadingAccounts,
-                accountsFailed: Boolean(accountsError),
-                library: library.snapshot,
-                libraryFailed: Boolean(library.error),
-                downloads: downloads.snapshot,
-                downloadsReady: downloads.ready,
-                downloadsFailed: Boolean(downloads.error),
-                preferencesReady: Boolean(preferencesSnapshot.current),
-                preferencesFailed:
-                  preferencesFailed ||
-                  storageFailed ||
-                  Boolean(preferencesError),
-              }}
-              onOpenSettings={openSettings}
-              onOpenQueue={() => navigate("queue")}
-              onReloadAccounts={async () => {
-                if (loadingAccounts) return;
-                setLoadingAccounts(true);
-                try {
-                  mergeAccounts(await sourceAdapter.accounts(true));
-                } catch (cause) {
-                  setAccountsError(sourceErrorMessage(cause));
-                  setAccountDiagnostic(
-                    createDiagnosticProblem("accounts", cause),
-                  );
-                } finally {
-                  setLoadingAccounts(false);
-                }
-              }}
-            />
+                    ...accountStateDiagnostics,
+                    ...(accountsError && accountDiagnostic
+                      ? [accountDiagnostic]
+                      : []),
+                    ...(preferencesError && preferenceDiagnostic
+                      ? [preferenceDiagnostic]
+                      : []),
+                    ...(libraryDiagnostic ? [libraryDiagnostic] : []),
+                    ...(downloadDiagnostic ? [downloadDiagnostic] : []),
+                  ],
+                  accountsLoading: loadingAccounts,
+                  accountsFailed: Boolean(accountsError),
+                  library: library.snapshot,
+                  libraryFailed: Boolean(library.error),
+                  downloads: downloads.snapshot,
+                  downloadsReady: downloads.ready,
+                  downloadsFailed: Boolean(downloads.error),
+                  preferencesReady: Boolean(preferencesSnapshot.current),
+                  preferencesFailed:
+                    preferencesFailed ||
+                    storageFailed ||
+                    Boolean(preferencesError),
+                }}
+                onOpenSettings={openSettings}
+                onOpenQueue={() => navigate("queue")}
+                onReloadAccounts={async () => {
+                  if (loadingAccounts) return;
+                  setLoadingAccounts(true);
+                  try {
+                    mergeAccounts(await sourceAdapter.accounts(true));
+                  } catch (cause) {
+                    setAccountsError(sourceErrorMessage(cause));
+                    setAccountDiagnostic(
+                      createDiagnosticProblem("accounts", cause),
+                    );
+                  } finally {
+                    setLoadingAccounts(false);
+                  }
+                }}
+              />
+            </>
           ) : undefined
         }
         downloadPanel={
@@ -2969,6 +2979,8 @@ export default function App() {
           </button>
         </div>
       )}
+      <UpdateNotice updates={updates} />
+      <UpdateDialog updates={updates} />
       {notice && !downloadNotice && (
         <div role="status" className="toast">
           <Icon name="check" size={17} />

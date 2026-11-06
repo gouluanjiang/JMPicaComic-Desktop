@@ -6,6 +6,7 @@
   "windows": ["main"],
   "permissions": [
     "workbench-documents",
+    "workbench-updates",
     "workbench-accounts",
     "workbench-library",
     "workbench-reader",

@@ -381,6 +381,9 @@ export async function installWorkflow(
                 return { revision: 1, value: clone(history) };
               case "read_preferences":
                 return { revision: 0, value: preferences };
+              case "workbench_update_check":
+                // The startup check finds no newer release in synthetic runs.
+                return { available: false, currentVersion: "1.1.0" };
               case "source_accounts":
                 return clone(hooks.accounts);
               case "source_author_policy":
