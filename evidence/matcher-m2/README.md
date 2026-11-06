@@ -3,7 +3,7 @@
 - `before-after.json`: all 215 records, baseline reasons and full M2 identity evidence chains.
 - `windows-first-summary.json` / `windows-second-summary.json`: first and idempotent replay.
 - `linux-first-summary.json` / `linux-second-summary.json`: the same two runs on Linux.
-- `windows-tests.log` / `linux-tests.log`: complete 170-test workspace results.
+- `windows-tests.log` / `linux-tests.log`: complete 170-test workspace results. The local Windows profile path is redacted as `%USERPROFILE%`; the matcher-m3 log uses the same redaction.
 - `linux-run.json`: successful Actions run 34011408700, tested commit and steps.
 - `verification.json`: test counts, byte-identical cross-platform output hash and transitions from the existing M1 groups.
 
