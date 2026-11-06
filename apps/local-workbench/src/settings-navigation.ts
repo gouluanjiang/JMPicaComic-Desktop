@@ -25,7 +25,7 @@ const pages: { id: SettingsPage; label: string; keywords: string }[] = [
   {
     id: "network",
     label: "网络与诊断",
-    keywords: "网络 诊断 状态 问题 版本 构建 反馈 摘要",
+    keywords: "网络 诊断 状态 问题 版本 构建 反馈 摘要 软件更新 检查更新 升级",
   },
 ];
 export function matchingSettingsPages(query: string) {

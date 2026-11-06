@@ -18,6 +18,11 @@ commands.allow = [
 ]
 
 [[permission]]
+identifier = "workbench-updates"
+description = "Check the signed release manifest and, for the exact version the user confirmed, install it while no download is running. No renderer URLs, paths or updater plugin commands."
+commands.allow = ["workbench_update_check", "workbench_update_install"]
+
+[[permission]]
 identifier = "workbench-accounts"
 description = "Use native source sessions for metadata, favorites, covers and account-scoped local following."
 commands.allow = [

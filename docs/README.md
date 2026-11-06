@@ -10,6 +10,7 @@
 - [当前项目状态](PROJECT_STATUS.md)：已交付功能、已知边界、取消项和以后讨论的范围。
 - [1.1.0 版本说明](RELEASE_NOTES_1.1.0.md)与[正式发行页](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.1.0)。
 - [1.0.2 版本说明](RELEASE_NOTES_1.0.2.md)与[正式发行页](https://github.com/gouluanjiang/MangaMonitor-AI/releases/tag/v1.0.2)。
+- [内置更新器发版步骤](UPDATER_RELEASE.md)：签名密钥、更新描述文件和首次启用说明。
 - [1.1.0 发行记录](RELEASE_1.1.0_2026-11-06.md)：准确源码、CI、资产哈希、本机升级及验证边界。
 - [1.0.2 发行记录](RELEASE_1.0.2_2026-10-03.md)：准确源码、CI、资产哈希、桌面安装及剩余验证边界。
 - [1.0.1 版本说明](RELEASE_NOTES_1.0.1.md)与[正式发行页](https://github.com/gouluanjiang/MangaMonitor-AI/releases/tag/v1.0.1)。

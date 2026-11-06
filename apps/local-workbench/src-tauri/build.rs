@@ -13,6 +13,8 @@ fn main() {
         "choose_background",
         "workbench_info",
         "source_network_health",
+        "workbench_update_check",
+        "workbench_update_install",
         "reader_open",
         "reader_cancel_open",
         "reader_chapter",

@@ -1,5 +1,21 @@
 # Current development handoff
 
+## In-app updater (2026-11-06)
+
+The user asked for an updater that checks at launch and installs on confirmation.
+`apps/local-workbench/src-tauri/src/updater.rs` wraps `tauri-plugin-updater` 2.12.0
+in two main-window commands. The plugin's own commands are not granted. Installing
+requires a version from a check in this run, a verified minisign signature whose
+signed file name carries that version, and an idle download queue (the recycle
+guard). CI never contacts GitHub (`UPDATE_DISABLED_IN_CI`). The startup preference
+lives in WebView local storage, so the preferences document format is unchanged.
+Release steps, key location and key-loss consequences are in
+[UPDATER_RELEASE.md](UPDATER_RELEASE.md). This is not a media download and does not
+touch `DOWNLOAD_EXECUTOR_THAW_GATE.md` scopes. A real update can only be tested once
+a release with the updater is installed and a later release publishes `latest.json`.
+The user also named the future sources: ASMR from asmr.one and video from
+hanime1.me. Neither has been evaluated or started.
+
 ## 1.1.0 release preparation (2026-11-05)
 
 The repository is now `gouluanjiang/JMPicaComic-Desktop` (old URLs redirect). The

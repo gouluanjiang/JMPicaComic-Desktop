@@ -30,6 +30,15 @@
       "devCsp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost http://127.0.0.1:4173 ws://127.0.0.1:4173; object-src 'none'; base-uri 'self'; frame-src 'none'; form-action 'none'"
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNCQjJDOTMxM0VFMjlBM0MKUldROG11SStNY215TzJpTWpyM0d2WDVqbmhDckd0Y0lhYzVsRVRGWWhnMFFMN25GZ01YVyttcnIK",
+      "endpoints": [
+        "https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/latest/download/latest.json"
+      ],
+      "windows": { "installMode": "passive" }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": ["nsis"],

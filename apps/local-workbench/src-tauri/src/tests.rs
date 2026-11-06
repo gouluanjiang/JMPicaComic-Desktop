@@ -510,8 +510,53 @@ fn main_cannot_invoke_generic_file_or_dialog_apis() {
         "plugin:dialog|open",
         "plugin:fs|read_file",
         "plugin:shell|execute",
+        // The updater plugin's own commands accept renderer-chosen endpoints and
+        // install without the download-queue guard; only the app commands are granted.
+        "plugin:updater|check",
+        "plugin:updater|download",
+        "plugin:updater|install",
+        "plugin:updater|download_and_install",
     ] {
-        assert!(invoke(&main, command, json!({})).is_err());
+        assert!(invoke(&main, command, json!({})).is_err(), "{command}");
+    }
+}
+
+#[test]
+fn update_commands_keep_the_main_window_and_require_a_checked_version() {
+    let (_root, app) = fixture();
+    let main = window(&app, "main");
+    let secondary = window(&app, "secondary");
+    let reader = window(&app, "reader-window-1");
+    for (command, body) in [
+        ("workbench_update_check", json!({})),
+        ("workbench_update_install", json!({"version":"9.9.9"})),
+    ] {
+        for other in [&secondary, &reader] {
+            assert!(
+                invoke(other, command, body.clone())
+                    .unwrap_err()
+                    .is_string(),
+                "{command}: expected Tauri ACL error"
+            );
+        }
+        assert!(invoke_from(&main, "https://example.invalid", command, body).is_err());
+    }
+    // Nothing was checked in this run, so no version may be installed and the
+    // request never reaches the network.
+    assert_eq!(
+        invoke(
+            &main,
+            "workbench_update_install",
+            json!({"version":"9.9.9"})
+        )
+        .unwrap_err(),
+        json!({"code":"UPDATE_STALE"})
+    );
+    if std::env::var("GITHUB_ACTIONS").is_ok_and(|value| value == "true") {
+        assert_eq!(
+            invoke(&main, "workbench_update_check", json!({})).unwrap_err(),
+            json!({"code":"UPDATE_DISABLED_IN_CI"})
+        );
     }
 }
 

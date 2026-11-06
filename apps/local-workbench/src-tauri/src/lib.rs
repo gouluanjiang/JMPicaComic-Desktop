@@ -7,6 +7,7 @@ mod library;
 mod library_recycle;
 mod reader;
 mod reader_windows;
+mod updater;
 
 use accounts::DesktopAccounts;
 use std::{
@@ -217,8 +218,10 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
         .manage(Arc::new(library::DesktopLibrary::default()))
         .manage(Arc::new(downloads::DesktopDownloads::default()))
         .manage(Arc::new(reader_windows::ReaderWindows::default()))
+        .manage(Arc::new(updater::DesktopUpdater::default()))
         .on_window_event(reader_windows::window_event)
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             browsing_markers::browsing_markers_read,
             browsing_markers::browsing_markers_write,
@@ -234,6 +237,8 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             choose_background,
             workbench_info,
             source_network_health,
+            updater::workbench_update_check,
+            updater::workbench_update_install,
             reader::reader_open,
             reader::reader_cancel_open,
             reader::reader_chapter,

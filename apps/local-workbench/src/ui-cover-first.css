@@ -890,3 +890,65 @@
   min-height: 36px;
   padding: 0 12px;
 }
+
+/* In-app updates */
+.update-notice {
+  position: fixed;
+  top: 56px;
+  right: 24px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: min(440px, calc(100vw - 48px));
+  padding: 14px 16px;
+  border: 1px solid #a48cf855;
+  border-radius: 10px;
+  background: #1b1824f2;
+  box-shadow: 0 16px 48px #0008;
+  color: var(--text);
+  font-size: 14px;
+}
+.update-notice > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+.update-notice span {
+  color: var(--subtle);
+  font-size: 13px;
+}
+.update-notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.update-dialog {
+  width: min(600px, calc(100vw - 30px));
+}
+.update-dialog-meta {
+  color: var(--subtle);
+  font-size: 13px;
+}
+.update-notes {
+  max-height: 260px;
+  overflow: auto;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0006;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.update-dialog-rules {
+  margin: 12px 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
