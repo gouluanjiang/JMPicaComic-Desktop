@@ -1292,6 +1292,9 @@ test("the page origin survives delayed header and row measurement without losing
           requestAnimationFrame(sample);
         }),
     );
+  // Appending a page restores the reader's position for a few frames, and only
+  // user input cancels that. A scroll set from script during them is undone.
+  await settle();
   await page.getByRole("main").evaluate((main) => {
     main.scrollTop = 0;
   });
