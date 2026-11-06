@@ -1366,7 +1366,7 @@ export default function App() {
           }
         >
           <div>
-            <div className="product-name">MangaMonitor</div>
+            <div className="product-name">JMPicaComic-Desktop</div>
             <h1>{pageNames[page]}</h1>
             {page !== "library" && (
               <p>

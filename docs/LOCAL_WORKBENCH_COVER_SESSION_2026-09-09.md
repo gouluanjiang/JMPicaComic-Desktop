@@ -42,7 +42,7 @@
 
 - 安装程序 SHA-256：`4cf3366bc8e3068a60b07e8afd8ba617470b858f462bff5124b08ca7b279222f`
 - 工件 ZIP SHA-256：`fdd3d15915e39d830c40a5fb0fd3600f794c346f46a71d45c7104571701ffa4c`
-- 本机交付副本：`C:\Users\choumodujiang\Documents\Codex\MangaMonitor-deliverables\cover-session-fix-2026-09-09`
+- 本机交付副本：`%USERPROFILE%\Documents\Codex\MangaMonitor-deliverables\cover-session-fix-2026-09-09`
 
 ## 验收状态与下一步
 

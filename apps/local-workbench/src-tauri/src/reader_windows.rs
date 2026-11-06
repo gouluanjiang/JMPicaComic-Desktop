@@ -342,7 +342,7 @@ fn create_child<R: Runtime>(
         &reservation.label,
         WebviewUrl::App("index.html#reader-window".into()),
     )
-    .title("MangaMonitor · 手机小框阅读")
+    .title("JMPicaComic-Desktop · 小窗阅读")
     .inner_size(placement.width, placement.height)
     .position(
         f64::from(placement.x) / area.scale,

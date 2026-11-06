@@ -863,7 +863,7 @@ export function LibraryWorkbench({
         <>
           <div className="page-heading library-heading">
             <div>
-              <div className="product-name">MangaMonitor</div>
+              <div className="product-name">JMPicaComic-Desktop</div>
               <h1>漫画库</h1>
               <p>浏览电脑漫画库中的作品与文件信息</p>
             </div>

@@ -1,5 +1,19 @@
 # Current development handoff
 
+## 1.1.0 release preparation (2026-11-05)
+
+The repository is now `gouluanjiang/JMPicaComic-Desktop` (old URLs redirect). The
+app display name changes in 1.1.0; the install name `MangaMonitor Dev`, identifier
+`com.mangamonitor.workbench.preview`, executable name, data directory and credential
+namespace do not, so existing data keeps working. Cover-first UI, JM host refresh and
+verification, weekly type fallback, added-date correction, the moved root check
+(see `DOWNLOAD_EXECUTOR_THAW_GATE.md`), batch history removal, larger text and the
+bounded list-position restore (PR #33, below) shipped in this cycle.
+Cached Tauri build output holds absolute paths, so renaming the repository requires
+clearing `desktop-windows-*` Actions caches. Future wishes in the README (updater,
+ASMR and video) are not started and grant no authority. `production_enabled=false`
+is unchanged.
+
 ## Discovery author-position restore follow-up (2026-10-07)
 
 The user requested an independent **draft** repair for the post-merge UI failure

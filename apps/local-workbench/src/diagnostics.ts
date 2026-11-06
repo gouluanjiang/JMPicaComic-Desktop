@@ -215,7 +215,7 @@ export interface DiagnosticState {
 export function diagnosticSummary(state: DiagnosticState): string {
   const { info, library, downloads } = state;
   const lines = [
-    "MangaMonitor 状态摘要",
+    "JMPicaComic-Desktop 状态摘要",
     info
       ? `版本：${info.version} · ${info.revision?.slice(0, 7) ?? "本地构建"} · ${info.platform}`
       : "版本：未取得",

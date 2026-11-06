@@ -654,7 +654,7 @@ test("native diagnostics show real snapshot states, omit private data and link t
   await page.getByTestId("nav-settings").click();
   await page.getByTestId("settings-network").click();
   await expect(page.getByTestId("diagnostics-version")).toHaveText(
-    "MangaMonitor 1.0.0 · bbbbbbb",
+    "JMPicaComic-Desktop 1.0.0 · bbbbbbb",
   );
   const report = await page.getByTestId("diagnostic-summary").inputValue();
   expect(report).toContain("版本：1.0.0 · bbbbbbb · windows");

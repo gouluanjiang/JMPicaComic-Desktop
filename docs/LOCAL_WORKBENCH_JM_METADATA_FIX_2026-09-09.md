@@ -42,7 +42,7 @@
 - 安装程序 SHA-256：`d6706f3f61f17317bd90a793a0479e5305160f375f321dfd6f9da8ca69d19533`
 - 工件 ZIP SHA-256：`5e5b42127e20706757ba17ca3fe46368054de33d27868e3b9d1462beda96156b`
 - 静态界面工件：10107535023；ZIP SHA-256：`ce466cb44f43dc7790fc4cfa97ac22111dd81c99d505fc6313a1eca232413b3a`
-- 本机交付目录：`C:\Users\choumodujiang\Documents\Codex\MangaMonitor-deliverables\jm-metadata-fix-2026-09-09`，含安装包、开发报告和 `verification.json`。
+- 本机交付目录：`%USERPROFILE%\Documents\Codex\MangaMonitor-deliverables\jm-metadata-fix-2026-09-09`，含安装包、开发报告和 `verification.json`。
 
 ## 验收与后续边界
 

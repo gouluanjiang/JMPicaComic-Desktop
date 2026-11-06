@@ -472,7 +472,7 @@ export function NativeDownloads({
       >
         <div className="page-heading">
           <div>
-            <div className="eyebrow">MangaMonitor</div>
+            <div className="eyebrow">JMPicaComic-Desktop</div>
             <h1>
               下载队列{" "}
               <span className="heading-count">
