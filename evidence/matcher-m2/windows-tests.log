@@ -1,5 +1,5 @@
-warn: could not canonicalize path C:\Users\choumodujiang
-   Compiling cloud-monitor v0.1.0 (C:\Users\choumodujiang\Documents\Codex\MangaMonitor-phase1a\crates\cloud-monitor)
+warn: could not canonicalize path %USERPROFILE%
+   Compiling cloud-monitor v0.1.0 (%USERPROFILE%\Documents\Codex\MangaMonitor-phase1a\crates\cloud-monitor)
     Finished `test` profile [unoptimized + debuginfo] target(s) in 5.93s
      Running unittests src\lib.rs (target\debug\deps\cloud_monitor-ce08579d7f02b289.exe)
 
