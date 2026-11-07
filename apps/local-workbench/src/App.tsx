@@ -48,6 +48,26 @@ import {
 } from "./preferences.ts";
 import type { WorkbenchPreferences } from "./preferences.ts";
 import { UiSidebar } from "./UiSidebar.tsx";
+import type { UiSection } from "./UiSidebar.tsx";
+import { AsmrWorkspace } from "./asmr/AsmrWorkspace.tsx";
+import type { AsmrDestination, AsmrTheme } from "./asmr/AsmrWorkspace.tsx";
+
+const SECTION_KEY = "jmpicacomic.section";
+const ASMR_THEME_KEY = "jmpicacomic.asmr.theme";
+function readAsmrTheme(): AsmrTheme {
+  try {
+    return localStorage.getItem(ASMR_THEME_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+function readSection(): UiSection {
+  try {
+    return localStorage.getItem(SECTION_KEY) === "asmr" ? "asmr" : "comic";
+  } catch {
+    return "comic";
+  }
+}
 import type { UiDestination } from "./UiSidebar.tsx";
 import { useUiMotion, useSidebarMotion } from "./ui-motion.ts";
 
@@ -237,6 +257,33 @@ function Dialog({
 export default function App() {
   useSyncExternalStore(subscribeContentFilter, getContentFilterRevision);
   const updates = useUpdates(persistence.native);
+  const [section, setSection] = useState<UiSection>(() =>
+    persistence.native ? readSection() : "comic",
+  );
+  const [asmrDestination, setAsmrDestination] =
+    useState<AsmrDestination>("asmr-home");
+  const [asmrNavigationKey, setAsmrNavigationKey] = useState(0);
+  const [asmrTheme, setAsmrTheme] = useState<AsmrTheme>(readAsmrTheme);
+  const changeAsmrTheme = (next: AsmrTheme) => {
+    setAsmrTheme(next);
+    try {
+      localStorage.setItem(ASMR_THEME_KEY, next);
+    } catch {
+      // The theme still applies for this session.
+    }
+  };
+  // Once opened, the ASMR workspace stays mounted so its place survives a
+  // trip to the comic section.
+  const [asmrOpened, setAsmrOpened] = useState(section === "asmr");
+  const changeSection = (next: UiSection) => {
+    setSection(next);
+    if (next === "asmr") setAsmrOpened(true);
+    try {
+      localStorage.setItem(SECTION_KEY, next);
+    } catch {
+      // The section choice is a convenience; the switch still works.
+    }
+  };
   const readerHost = useReaderHost(
     persistence.native,
     async (reference) => {
@@ -2378,6 +2425,7 @@ export default function App() {
             ? "搜索"
             : pageNames[page];
   function navigateUi(destination: UiDestination) {
+    if (section !== "comic") changeSection("comic");
     if (destination === "settings") return openSettings();
     if (
       persistence.native &&
@@ -2443,6 +2491,8 @@ export default function App() {
     <div
       className={`app-shell ui-refined${sidebar.collapsed ? " sidebar-collapsed" : ""}`}
       inert={readerHost.isOpen}
+      data-section={section}
+      data-asmr-theme={asmrTheme}
       data-background-mode={appearance.backgroundMode}
       data-background-tone={refinement.tone}
       data-reduced-motion={refinement.reducedMotion}
@@ -2471,9 +2521,24 @@ export default function App() {
         }
         onNavigate={navigateUi}
         onToggle={sidebar.toggle}
-        onOpenAccounts={() => openSettings("accounts")}
+        onOpenAccounts={() => {
+          changeSection("comic");
+          openSettings("accounts");
+        }}
+        section={section}
+        asmrActive={asmrDestination}
+        onSection={changeSection}
+        onAsmrNavigate={(destination) => {
+          setAsmrDestination(destination);
+          setAsmrNavigationKey((value) => value + 1);
+        }}
       />
-      <div className="main-shell" ref={sidebar.workspaceRef}>
+      <div
+        className="main-shell"
+        ref={sidebar.workspaceRef}
+        inert={section === "asmr"}
+        aria-hidden={section === "asmr" ? true : undefined}
+      >
         <header className="topbar">
           <div className="breadcrumb">
             我的空间 <span>/</span> {pageTitle}
@@ -2871,6 +2936,15 @@ export default function App() {
           </span>
         </footer>
       </div>
+      {persistence.native && asmrOpened && (
+        <AsmrWorkspace
+          hidden={section !== "asmr"}
+          theme={asmrTheme}
+          onTheme={changeAsmrTheme}
+          destination={asmrDestination}
+          navigationKey={asmrNavigationKey}
+        />
+      )}
       {!persistence.native && confirmation && (
         <Dialog
           title="下载并入库"

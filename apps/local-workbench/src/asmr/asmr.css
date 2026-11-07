@@ -1,0 +1,775 @@
+/* ASMR section: a site-like workspace laid over the comic pages, in a light or
+   dark theme. The comic pages stay mounted underneath, so their state and
+   positions survive a section switch.
+
+   The comic theme styles form controls with very specific selectors, so the
+   control rules below are scoped under `.app-shell.ui-refined` and use
+   `!important` where they must win. */
+
+.asmr-workspace {
+  --asmr-primary: #1e88e5;
+  --asmr-primary-strong: #1565c0;
+  --asmr-topbar: #1e88e5;
+  --asmr-topbar-text: #ffffff;
+  --asmr-topbar-field: #ffffff2e;
+  --asmr-bg: #f3f5f8;
+  --asmr-surface: #ffffff;
+  --asmr-raised: #ffffff;
+  --asmr-text: #1f2329;
+  --asmr-muted: #6b7280;
+  --asmr-line: #e3e6eb;
+  --asmr-chip: #eef1f5;
+  --asmr-chip-hover: #dfe5ee;
+  --asmr-chip-text: #4b5563;
+  --asmr-voice: #e8f5e9;
+  --asmr-voice-text: #2e7d32;
+  --asmr-cover: #d9dde3;
+  --asmr-cover-text: #8a919c;
+  --asmr-star-empty: #d5d9df;
+  --asmr-shadow: 0 1px 3px #0000001f;
+  --asmr-shadow-hover: 0 4px 14px #00000029;
+  --asmr-error-bg: #fdecea;
+  --asmr-error-text: #b42318;
+  --asmr-selected: #e3f0fc;
+  color-scheme: light;
+  position: fixed;
+  inset: 0 0 0 var(--sidebar-width, 212px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--asmr-bg);
+  color: var(--asmr-text);
+  font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+}
+
+.asmr-workspace[data-theme="dark"] {
+  --asmr-primary: #42a5f5;
+  --asmr-primary-strong: #90caf9;
+  --asmr-topbar: #1d2026;
+  --asmr-topbar-text: #e8eaed;
+  --asmr-topbar-field: #ffffff14;
+  --asmr-bg: #121316;
+  --asmr-surface: #1c1e23;
+  --asmr-raised: #24272d;
+  --asmr-text: #e8eaed;
+  --asmr-muted: #9aa0a9;
+  --asmr-line: #2e3238;
+  --asmr-chip: #2a2e35;
+  --asmr-chip-hover: #343943;
+  --asmr-chip-text: #c3c8cf;
+  --asmr-voice: #1f3324;
+  --asmr-voice-text: #8fd19e;
+  --asmr-cover: #2a2d33;
+  --asmr-cover-text: #6f7682;
+  --asmr-star-empty: #444a53;
+  --asmr-shadow: 0 1px 3px #00000066;
+  --asmr-shadow-hover: 0 4px 16px #00000080;
+  --asmr-error-bg: #3a1d1b;
+  --asmr-error-text: #f4a49c;
+  --asmr-selected: #1e88e526;
+  color-scheme: dark;
+}
+
+.asmr-workspace[hidden] {
+  display: none;
+}
+
+.asmr-workspace button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Form controls: override the comic theme's dark, purple-accented fields. */
+.app-shell.ui-refined .asmr-workspace :is(input, select, button):focus-visible {
+  outline: 2px solid var(--asmr-primary) !important;
+  outline-offset: 2px;
+}
+.app-shell.ui-refined .asmr-workspace input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--asmr-primary);
+}
+.app-shell.ui-refined .asmr-workspace :is(select, .asmr-filter) {
+  min-height: 32px !important;
+  height: 32px;
+  padding: 0 10px !important;
+  border: 1px solid var(--asmr-line) !important;
+  border-radius: 6px !important;
+  background-color: var(--asmr-surface) !important;
+  color: var(--asmr-text) !important;
+  font-size: 14px !important;
+}
+
+.asmr-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 56px;
+  padding: 0 16px 0 20px;
+  flex-shrink: 0;
+  background: var(--asmr-topbar);
+  color: var(--asmr-topbar-text);
+  box-shadow: 0 2px 6px #0003;
+}
+
+/* The comic theme enlarges every h1; the ASMR title is a toolbar label. */
+.app-shell.ui-refined .asmr-workspace .asmr-title {
+  margin: 0;
+  color: var(--asmr-topbar-text);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asmr-icon-button {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.asmr-icon-button:hover:not(:disabled) {
+  background: #ffffff26;
+}
+.asmr-detail .asmr-icon-button:hover {
+  background: var(--asmr-chip);
+}
+.asmr-icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.asmr-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  width: min(420px, 45%);
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: var(--asmr-topbar-field);
+  border: 1px solid transparent;
+}
+.asmr-search:focus-within {
+  border-color: #ffffffb3;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 0 !important;
+  height: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--asmr-topbar-text) !important;
+  font-size: 14px !important;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-search input::placeholder {
+  color: var(--asmr-topbar-text);
+  opacity: 0.7;
+}
+
+.asmr-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.asmr-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px 24px 40px;
+}
+
+.asmr-section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 17px !important;
+  font-weight: 600;
+}
+
+.asmr-popular {
+  margin-bottom: 24px;
+}
+
+.asmr-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 220px;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+}
+
+.asmr-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.asmr-list-toolbar h2 {
+  margin: 0 auto 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.asmr-count {
+  color: var(--asmr-muted);
+  font-weight: 400;
+}
+
+.asmr-select,
+.asmr-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--asmr-muted);
+}
+.asmr-filter {
+  width: min(260px, 100%);
+}
+
+.asmr-view-modes {
+  display: inline-flex;
+  border: 1px solid var(--asmr-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.asmr-view-modes button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: var(--asmr-surface);
+  color: var(--asmr-muted) !important;
+}
+.asmr-view-modes button[aria-pressed="true"] {
+  background: var(--asmr-primary);
+  color: #fff !important;
+}
+
+.asmr-grid {
+  display: grid;
+  gap: 16px;
+}
+.asmr-grid-grid {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+.asmr-grid-cards {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.asmr-workspace.has-detail .asmr-grid-cards {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.asmr-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 8px;
+  background: var(--asmr-surface);
+  box-shadow: var(--asmr-shadow);
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.asmr-card:hover {
+  box-shadow: var(--asmr-shadow-hover);
+}
+.asmr-card.selected {
+  outline: 2px solid var(--asmr-primary);
+}
+
+.asmr-card-open {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: var(--asmr-cover);
+}
+
+.asmr-cover {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--asmr-cover);
+}
+.asmr-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.asmr-cover-placeholder {
+  color: var(--asmr-cover-text);
+  font-size: 12px;
+}
+
+.asmr-badge {
+  position: absolute;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #000000a6;
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+}
+.asmr-badge-code {
+  top: 6px;
+  left: 6px;
+}
+.asmr-badge-date {
+  right: 6px;
+  bottom: 6px;
+}
+.asmr-badge-language {
+  top: 6px;
+  right: 6px;
+  background: #1e88e5;
+}
+
+.asmr-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+}
+.asmr-card-title {
+  display: -webkit-box;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-weight: 600;
+  line-height: 1.4;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.asmr-card-circle {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--asmr-primary-strong) !important;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.asmr-card-circle:hover {
+  text-decoration: underline;
+}
+.asmr-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--asmr-muted);
+  font-size: 13px;
+}
+
+.asmr-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--asmr-text);
+}
+.asmr-stars {
+  background: linear-gradient(
+    90deg,
+    #f5a623 calc(var(--rating) * 100%),
+    var(--asmr-star-empty) calc(var(--rating) * 100%)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: 1px;
+}
+
+.asmr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.asmr-chip {
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--asmr-chip);
+  color: var(--asmr-chip-text) !important;
+  font-size: 12px;
+  line-height: 18px;
+}
+.asmr-chip:hover:not(:disabled) {
+  background: var(--asmr-chip-hover);
+}
+.asmr-chip-voice {
+  background: var(--asmr-voice);
+  color: var(--asmr-voice-text) !important;
+}
+.asmr-chip.current {
+  background: var(--asmr-primary);
+  color: #fff !important;
+}
+
+.asmr-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.asmr-pager button {
+  min-width: 64px;
+  height: 32px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 6px;
+  background: var(--asmr-surface);
+}
+.asmr-pager button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.asmr-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.asmr-index-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 6px;
+  background: var(--asmr-surface);
+  text-align: left;
+}
+.asmr-index-entry span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.asmr-index-entry:hover {
+  border-color: var(--asmr-primary);
+}
+
+.asmr-muted {
+  color: var(--asmr-muted);
+}
+.asmr-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--asmr-error-bg);
+  color: var(--asmr-error-text);
+}
+.asmr-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--asmr-primary-strong) !important;
+  text-decoration: underline;
+}
+.asmr-more {
+  display: block;
+  margin: 16px auto 0;
+}
+
+.asmr-detail {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, 44%);
+  flex-shrink: 0;
+  border-left: 1px solid var(--asmr-line);
+  background: var(--asmr-surface);
+  overflow-y: auto;
+}
+.asmr-detail-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 8px 18px;
+  border-bottom: 1px solid var(--asmr-line);
+  background: var(--asmr-surface);
+  color: var(--asmr-muted);
+}
+.asmr-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 28px;
+}
+.asmr-detail > .asmr-muted,
+.asmr-detail > .asmr-error {
+  margin: 16px 18px;
+}
+.asmr-detail-cover {
+  border-radius: 6px;
+}
+.asmr-detail-title {
+  margin: 4px 0 0;
+  font-size: 17px;
+  line-height: 1.45;
+}
+.asmr-detail-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  color: var(--asmr-muted);
+  font-size: 13px;
+}
+.asmr-detail-facts dd {
+  margin: 0;
+  color: var(--asmr-text);
+}
+.asmr-editions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.asmr-detail-subtitle {
+  margin: 10px 0 0;
+  font-size: 15px;
+}
+.asmr-detail-note {
+  font-size: 12px;
+}
+
+.asmr-tracks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.asmr-tracks .asmr-tracks {
+  padding-left: 18px;
+}
+.asmr-track,
+.asmr-folder-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--asmr-line);
+  background: none;
+  text-align: left;
+}
+.asmr-folder-toggle {
+  font-weight: 600;
+}
+.asmr-track-audio svg {
+  color: var(--asmr-primary);
+}
+.asmr-track-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.asmr-track-meta {
+  flex-shrink: 0;
+  color: var(--asmr-muted);
+  font-size: 12px;
+}
+
+/* Section switch at the top of the sidebar. */
+.app-shell.ui-refined .ui-sidebar .ui-section-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  flex-shrink: 0;
+  margin: -14px 0 18px;
+  padding: 3px;
+  border-radius: 8px;
+  background: #ffffff0d;
+}
+.app-shell.ui-refined .ui-sidebar .ui-section-switch > button {
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #a4a2ae;
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  cursor: pointer;
+}
+.app-shell.ui-refined .ui-sidebar .ui-section-switch > button:hover {
+  color: #e7dbff;
+}
+.app-shell.ui-refined
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: #a78add30;
+  color: #f3eeff;
+  font-weight: 600;
+}
+.app-shell.ui-refined.sidebar-collapsed .ui-sidebar .ui-section-switch {
+  grid-template-columns: 1fr;
+}
+.app-shell.ui-refined.sidebar-collapsed
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  height: 24px;
+  padding: 0;
+  font-size: 11px;
+}
+
+/* The sidebar follows the ASMR theme while that section is shown. */
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar {
+  background: #ffffff;
+  border-right-color: #e3e6eb;
+  color: #1f2329;
+  color-scheme: light;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  :is(.brand, .ui-brand-name) {
+  color: #1f2329;
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .brand-mark {
+  background: #1e88e5;
+  color: #ffffff;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  :is(.ui-nav-heading, small, .ui-connection) {
+  color: #8a919c;
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .ui-nav-item {
+  color: #4b5563;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item:hover:not(:disabled) {
+  background: #f1f4f8;
+  color: #1f2329;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item:is(.active, [aria-current="page"]) {
+  background: #e3f0fc;
+  color: #1565c0;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item.active::before {
+  background: #1e88e5;
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .ui-section-switch {
+  background: #eef1f5;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  color: #4b5563;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: #1e88e5;
+  color: #ffffff;
+}
+
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"] .ui-sidebar {
+  background: #16181c;
+  border-right-color: #2e3238;
+  color: #e8eaed;
+  color-scheme: dark;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  :is(.brand, .ui-brand-name) {
+  color: #e8eaed;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .brand-mark {
+  background: #1e88e5;
+  color: #ffffff;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  :is(.ui-nav-heading, small, .ui-connection) {
+  color: #7d838c;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item {
+  color: #a9aeb6;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item:hover:not(:disabled) {
+  background: #23262c;
+  color: #e8eaed;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item:is(.active, [aria-current="page"]) {
+  background: #1e88e52b;
+  color: #90caf9;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item.active::before {
+  background: #42a5f5;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-section-switch {
+  background: #23262c;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  color: #a9aeb6;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: #1e88e5;
+  color: #ffffff;
+}
