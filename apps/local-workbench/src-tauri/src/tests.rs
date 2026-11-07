@@ -521,6 +521,77 @@ fn main_cannot_invoke_generic_file_or_dialog_apis() {
     }
 }
 
+fn asmr_query() -> Value {
+    json!({"order":"added","ascending":false,"page":1,"pageSize":24,"subtitleOnly":false})
+}
+
+#[test]
+fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() {
+    let (_root, app) = fixture();
+    let main = window(&app, "main");
+    let secondary = window(&app, "secondary");
+    let reader = window(&app, "reader-window-1");
+    let commands = [
+        ("asmr_works", json!({"query": asmr_query()})),
+        ("asmr_popular", json!({"page":1,"subtitleOnly":false})),
+        ("asmr_search", json!({"keyword":"x","query": asmr_query()})),
+        (
+            "asmr_related",
+            json!({"relation":"circle","id":"1","query": asmr_query()}),
+        ),
+        ("asmr_index", json!({"kind":"tags"})),
+        ("asmr_work", json!({"id":1})),
+        ("asmr_cover", json!({"id":1,"size":"thumbnail"})),
+    ];
+    for (command, body) in commands {
+        for other in [&secondary, &reader] {
+            assert!(
+                invoke(other, command, body.clone())
+                    .unwrap_err()
+                    .is_string(),
+                "{command}: expected Tauri ACL error"
+            );
+        }
+        assert!(invoke_from(&main, "https://example.invalid", command, body).is_err());
+    }
+    // Validation happens before any request, so these never reach the site.
+    let mut zero_page = asmr_query();
+    zero_page["page"] = json!(0);
+    for (command, body) in [
+        ("asmr_works", json!({"query": zero_page})),
+        (
+            "asmr_related",
+            json!({"relation":"circle","id":"../1","query": asmr_query()}),
+        ),
+        (
+            "asmr_related",
+            json!({"relation":"voiceActor","id":"a/b","query": asmr_query()}),
+        ),
+        (
+            "asmr_search",
+            json!({"keyword":"   ","query": asmr_query()}),
+        ),
+        ("asmr_work", json!({"id":0})),
+        ("asmr_cover", json!({"id":0,"size":"main"})),
+        ("asmr_popular", json!({"page":0,"subtitleOnly":false})),
+    ] {
+        assert_eq!(
+            invoke(&main, command, body).unwrap_err(),
+            json!({"code":"ASMR_INVALID_INPUT"}),
+            "{command}"
+        );
+    }
+    // Unknown query fields and enum values are refused by deserialization.
+    let mut extra = asmr_query();
+    extra["url"] = json!("https://example.invalid");
+    assert!(invoke(&main, "asmr_works", json!({"query": extra}))
+        .unwrap_err()
+        .is_string());
+    assert!(invoke(&main, "asmr_index", json!({"kind":"users"}))
+        .unwrap_err()
+        .is_string());
+}
+
 #[test]
 fn update_commands_keep_the_main_window_and_require_a_checked_version() {
     let (_root, app) = fixture();

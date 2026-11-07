@@ -112,6 +112,34 @@ const paths = {
       <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
     </>
   ),
+  headphones: (
+    <>
+      <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
+      <path d="M4 15h3v6H5a1 1 0 0 1-1-1zM20 15h-3v6h2a1 1 0 0 0 1-1z" />
+    </>
+  ),
+  mic: (
+    <>
+      <path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M3 12V3h9l9 9-9 9Z" />
+      <path d="M7.5 7.5h.01" />
+    </>
+  ),
+  shuffle: (
+    <>
+      <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+    </>
+  ),
+  list: (
+    <>
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </>
+  ),
 } as const;
 
 export function Icon({

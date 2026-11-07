@@ -1,6 +1,9 @@
 import type { ComponentProps, RefObject } from "react";
 import { Icon } from "./icons.tsx";
 import type { AccountSummary } from "./source-types.ts";
+import type { AsmrDestination } from "./asmr/AsmrWorkspace.tsx";
+
+export type UiSection = "comic" | "asmr";
 
 export type UiDestination =
   | "library"
@@ -21,6 +24,29 @@ type Entry = {
   icon: ComponentProps<typeof Icon>["name"];
   native?: boolean;
 };
+type AsmrEntry = {
+  id: AsmrDestination;
+  label: string;
+  icon: ComponentProps<typeof Icon>["name"];
+};
+const asmrGroups: { label: string; entries: AsmrEntry[] }[] = [
+  {
+    label: "浏览",
+    entries: [
+      { id: "asmr-home", label: "作品", icon: "headphones" },
+      { id: "asmr-popular", label: "热门", icon: "discover" },
+      { id: "asmr-random", label: "随机听", icon: "shuffle" },
+    ],
+  },
+  {
+    label: "分类",
+    entries: [
+      { id: "asmr-circles", label: "社团", icon: "people" },
+      { id: "asmr-voice-actors", label: "声优", icon: "mic" },
+      { id: "asmr-tags", label: "标签", icon: "tag" },
+    ],
+  },
+];
 const groups: { label: string; entries: Entry[] }[] = [
   {
     label: "我的漫画",
@@ -65,6 +91,10 @@ export function UiSidebar({
   onNavigate,
   onToggle,
   onOpenAccounts,
+  section = "comic",
+  asmrActive = "asmr-home",
+  onSection,
+  onAsmrNavigate,
 }: {
   sidebarRef: RefObject<HTMLElement | null>;
   active: UiDestination;
@@ -76,6 +106,10 @@ export function UiSidebar({
   onNavigate(destination: UiDestination): void;
   onToggle(): void;
   onOpenAccounts(): void;
+  section?: UiSection;
+  asmrActive?: AsmrDestination;
+  onSection?(section: UiSection): void;
+  onAsmrNavigate?(destination: AsmrDestination): void;
 }) {
   const connected = accounts
     .filter((account) => account.state === "connected")
@@ -86,14 +120,29 @@ export function UiSidebar({
       : "来源尚未连接"
     : "交互样例";
   const toggleLabel = collapsed ? "展开侧栏" : "收起侧栏";
-  const entry = ({ id, label, icon }: Entry) => (
+  const asmr = native && section === "asmr";
+  const asmrEntry = ({ id, label, icon }: AsmrEntry) => (
     <button
       key={id}
-      className={`nav-item ui-nav-item ${active === id ? "active" : ""}`}
+      className={`nav-item ui-nav-item ${asmrActive === id ? "active" : ""}`}
       data-testid={`nav-${id}`}
       title={label}
       aria-label={label}
-      aria-current={active === id ? "page" : undefined}
+      aria-current={asmrActive === id ? "page" : undefined}
+      onClick={() => onAsmrNavigate?.(id)}
+    >
+      <Icon name={icon} size={19} />
+      <span className="ui-nav-label">{label}</span>
+    </button>
+  );
+  const entry = ({ id, label, icon }: Entry) => (
+    <button
+      key={id}
+      className={`nav-item ui-nav-item ${!asmr && active === id ? "active" : ""}`}
+      data-testid={`nav-${id}`}
+      title={label}
+      aria-label={label}
+      aria-current={!asmr && active === id ? "page" : undefined}
       onClick={() => onNavigate(id)}
     >
       <Icon name={icon} size={19} />
@@ -129,17 +178,45 @@ export function UiSidebar({
           JMPicaComic<small>你的漫画，井然有序。</small>
         </span>
       </button>
+      {native && onSection && (
+        <div className="ui-section-switch" role="group" aria-label="内容分区">
+          {(
+            [
+              ["comic", "漫画"],
+              ["asmr", "ASMR"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              data-testid={`section-${id}`}
+              aria-pressed={section === id}
+              onClick={() => onSection(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <nav
         className="ui-navigation"
         aria-label="主要导航"
         id="workbench-navigation"
       >
-        {groups.map((group) => (
-          <section className="ui-nav-group" key={group.label}>
-            <p className="ui-nav-heading">{group.label}</p>
-            {group.entries.filter((item) => native || !item.native).map(entry)}
-          </section>
-        ))}
+        {asmr
+          ? asmrGroups.map((group) => (
+              <section className="ui-nav-group" key={group.label}>
+                <p className="ui-nav-heading">{group.label}</p>
+                {group.entries.map(asmrEntry)}
+              </section>
+            ))
+          : groups.map((group) => (
+              <section className="ui-nav-group" key={group.label}>
+                <p className="ui-nav-heading">{group.label}</p>
+                {group.entries
+                  .filter((item) => native || !item.native)
+                  .map(entry)}
+              </section>
+            ))}
       </nav>
       <div className="sidebar-bottom">
         <button

@@ -1,4 +1,5 @@
 mod accounts;
+mod asmr;
 mod browsing_markers;
 mod discovery;
 mod downloads;
@@ -219,6 +220,7 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
         .manage(Arc::new(downloads::DesktopDownloads::default()))
         .manage(Arc::new(reader_windows::ReaderWindows::default()))
         .manage(Arc::new(updater::DesktopUpdater::default()))
+        .manage(Arc::new(asmr::DesktopAsmr::default()))
         .on_window_event(reader_windows::window_event)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -239,6 +241,13 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             source_network_health,
             updater::workbench_update_check,
             updater::workbench_update_install,
+            asmr::asmr_works,
+            asmr::asmr_popular,
+            asmr::asmr_search,
+            asmr::asmr_related,
+            asmr::asmr_index,
+            asmr::asmr_work,
+            asmr::asmr_cover,
             reader::reader_open,
             reader::reader_cancel_open,
             reader::reader_chapter,

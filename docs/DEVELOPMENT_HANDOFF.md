@@ -1,5 +1,28 @@
 # Current development handoff
 
+## ASMR section, step 1: browsing (2026-11-07)
+
+The user chose to add ASMR from asmr.one; video sources are dropped. Requirements were
+agreed in Q&A: a separate light, site-like section; follows for circles, voice actors,
+tags and work updates; online playback first; two-way account sync; downloads later.
+This step adds read-only browsing only.
+
+- `crates/asmr-source` is a separate client, so JM/Pica code and data are unchanged. It
+  covers works (sort/subtitle filter), popular (POST), search, circle/voice-actor/tag
+  works, index lists, work info plus file tree, and covers. It uses pinned API hosts
+  `api.asmr-200.com`, `api.asmr-300.com` and `api.asmr.one`, moving to the next host
+  only on network or 5xx failures. It sends no cookies and follows no redirects.
+  Responses are normalized and bounded, and media URLs are dropped. Covers come from
+  the API host and return as sniffed `data:` URLs.
+- Desktop commands `asmr_*` are granted to the main window only (`workbench-asmr`).
+  Index lists are cached for 30 minutes.
+- The UI (`src/asmr/`) is a fixed overlay to the right of the sidebar. Comic pages stay
+  mounted underneath, inert, so their state and scroll positions survive. The
+  "漫画 / ASMR" choice persists in local storage.
+- Next steps: the online player (bottom bar, full player, pop-out window, subtitles,
+  position memory, sleep timer), then follows with startup/manual checks, then account
+  sync. Downloads come later and need `DOWNLOAD_EXECUTOR_THAW_GATE.md`.
+
 ## In-app updater (2026-11-06)
 
 The user asked for an updater that checks at launch and installs on confirmation.
