@@ -865,6 +865,25 @@ test("detail title and date appear on return and survive source switches without
   expect(await detailCalls(page)).toHaveLength(1);
 });
 
+// Loading or appending a page restores the reader's position for a few frames,
+// and only user input cancels that. A scrollTop assigned from script during
+// those frames is undone, so assign it again until it survives 30 frames.
+async function setSettledScroll(page: Page, top: number) {
+  await expect
+    .poll(() =>
+      page.getByRole("main").evaluate(async (main, top) => {
+        main.scrollTop = top;
+        const assigned = main.scrollTop;
+        for (let frame = 0; frame < 30; frame++)
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
+        return assigned > 0 && main.scrollTop === assigned;
+      }, top),
+    )
+    .toBe(true);
+}
+
 async function captureRecentAnchor(page: Page) {
   const anchor = await page.getByTestId("recent-grid").evaluate((grid) => {
     const main = grid.closest("main")!.getBoundingClientRect();
@@ -1263,9 +1282,7 @@ test("feed anchors and loaded pages survive section and source switches, while a
   await install(page);
   await page.getByRole("button", { name: "读取下一页", exact: true }).click();
   await expect(page.getByTestId("recent-counts")).toContainText("已读取 39 部");
-  await page.getByRole("main").evaluate((main) => {
-    main.scrollTop = 1500;
-  });
+  await setSettledScroll(page, 1500);
   const anchor = await captureRecentAnchor(page);
   const before = await recentCalls(page);
   await page.getByTestId("nav-settings").click();
