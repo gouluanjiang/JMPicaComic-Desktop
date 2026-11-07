@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
 import { Icon } from "../icons.tsx";
 import { AsmrDetailPanel } from "./AsmrDetailPanel.tsx";
+import { AsmrPlayerView } from "./AsmrPlayer.tsx";
 import { AsmrWorkCard } from "./AsmrWorkCard.tsx";
 import type { OpenRelated } from "./AsmrWorkCard.tsx";
 import {
@@ -712,6 +713,7 @@ export function AsmrWorkspace({
           />
         )}
       </div>
+      <AsmrPlayerView hidden={hidden} onOpenWork={setSelected} />
     </div>
   );
 }

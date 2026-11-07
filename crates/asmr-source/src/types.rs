@@ -1,7 +1,9 @@
 //! Normalized, size-bounded views of asmr.one API responses. Remote media URLs
-//! are deliberately dropped: the renderer only ever sees identifiers.
+//! never reach the renderer: tracks carry file ids, and the URLs stay in
+//! [`AsmrMedia`] on the native side.
 
 use crate::{error, AsmrResult};
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -86,6 +88,7 @@ pub struct AsmrIndexEntry {
 #[serde(rename_all = "camelCase")]
 pub enum AsmrFileKind {
     Audio,
+    Video,
     Text,
     Image,
     Other,
@@ -101,11 +104,62 @@ pub enum AsmrTrack {
     },
     #[serde(rename_all = "camelCase")]
     File {
+        /// The site's file id within this work; `None` when it has no usable
+        /// media address, so the file can be listed but not opened.
+        file_id: Option<u64>,
         kind: AsmrFileKind,
         title: String,
         size: Option<u64>,
         duration_seconds: Option<f64>,
     },
+}
+
+/// Hosts that serve media files. Stream addresses must use one of these or a
+/// pinned API host.
+pub const ASMR_MEDIA_HOST_SUFFIXES: &[&str] = &[".kiko-play-niptan.one"];
+
+/// Where one file of a work is streamed from. Native only: never serialized.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AsmrMedia {
+    pub work_id: u64,
+    pub file_id: u64,
+    pub kind: AsmrFileKind,
+    pub title: String,
+    pub url: Url,
+}
+
+impl AsmrMedia {
+    /// Lowercase file extension of the title, if any.
+    pub fn extension(&self) -> Option<String> {
+        extension(&self.title)
+    }
+}
+
+pub(crate) fn extension(title: &str) -> Option<String> {
+    let (_, extension) = title.rsplit_once('.')?;
+    (!extension.is_empty() && extension.len() <= 8 && extension.is_ascii())
+        .then(|| extension.to_ascii_lowercase())
+}
+
+const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm", "mkv", "mov"];
+
+/// Accepts only HTTPS addresses on the media hosts or the pinned API hosts,
+/// on the default port and without credentials.
+pub(crate) fn allowed_media_url(url: &Url) -> bool {
+    let host = url.host_str().unwrap_or_default();
+    url.scheme() == "https"
+        && url.port().is_none()
+        && url.username().is_empty()
+        && url.password().is_none()
+        && (crate::ASMR_API_HOSTS.contains(&host)
+            || ASMR_MEDIA_HOST_SUFFIXES
+                .iter()
+                .any(|suffix| host.len() > suffix.len() && host.ends_with(suffix)))
+}
+
+fn media_url(value: &Value) -> Option<Url> {
+    let url = Url::parse(value.as_str()?).ok()?;
+    allowed_media_url(&url).then_some(url)
 }
 
 /// Removes control characters and caps length by characters.
@@ -317,15 +371,31 @@ pub(crate) fn index(value: &Value) -> AsmrResult<Vec<AsmrIndexEntry>> {
         .collect())
 }
 
-fn track(value: &Value, depth: usize, budget: &mut usize) -> AsmrResult<Option<AsmrTrack>> {
-    if depth > MAX_TRACK_DEPTH || *budget == 0 {
+struct TrackWalk<'a> {
+    work_id: u64,
+    budget: usize,
+    media: &'a mut Vec<AsmrMedia>,
+}
+
+/// `"<work>/<file>"`, accepted only for the work being read.
+fn file_id(value: &Value, work_id: u64) -> Option<u64> {
+    let (work, file) = value["hash"].as_str()?.split_once('/')?;
+    if file.is_empty() || file.len() > 20 || !file.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let file = file.parse::<u64>().ok()?;
+    (work.parse::<u64>().ok()? == work_id && file > 0).then_some(file)
+}
+
+fn track(value: &Value, depth: usize, walk: &mut TrackWalk<'_>) -> AsmrResult<Option<AsmrTrack>> {
+    if depth > MAX_TRACK_DEPTH || walk.budget == 0 {
         return Err(error("ASMR_RESPONSE_INVALID"));
     }
-    *budget -= 1;
+    walk.budget -= 1;
     let Some(title) = text(&value["title"], MAX_TITLE) else {
         return Ok(None);
     };
-    let kind = match value["type"].as_str() {
+    let mut kind = match value["type"].as_str() {
         Some("folder") => {
             let mut children = Vec::new();
             for child in value["children"]
@@ -333,7 +403,7 @@ fn track(value: &Value, depth: usize, budget: &mut usize) -> AsmrResult<Option<A
                 .map(Vec::as_slice)
                 .unwrap_or(&[])
             {
-                if let Some(child) = track(child, depth + 1, budget)? {
+                if let Some(child) = track(child, depth + 1, walk)? {
                     children.push(child);
                 }
             }
@@ -344,7 +414,26 @@ fn track(value: &Value, depth: usize, budget: &mut usize) -> AsmrResult<Option<A
         Some("image") => AsmrFileKind::Image,
         _ => AsmrFileKind::Other,
     };
+    // The site lists video files as audio or other.
+    if matches!(kind, AsmrFileKind::Audio | AsmrFileKind::Other)
+        && extension(&title).is_some_and(|ext| VIDEO_EXTENSIONS.contains(&ext.as_str()))
+    {
+        kind = AsmrFileKind::Video;
+    }
+    // Original quality first; the API's own stream path redirects to it.
+    let url = media_url(&value["mediaStreamUrl"]).or_else(|| media_url(&value["mediaDownloadUrl"]));
+    let file_id = file_id(value, walk.work_id).filter(|_| url.is_some());
+    if let (Some(file_id), Some(url)) = (file_id, url) {
+        walk.media.push(AsmrMedia {
+            work_id: walk.work_id,
+            file_id,
+            kind,
+            title: title.clone(),
+            url,
+        });
+    }
     Ok(Some(AsmrTrack::File {
+        file_id,
         kind,
         title,
         size: value["size"].as_u64(),
@@ -354,14 +443,22 @@ fn track(value: &Value, depth: usize, budget: &mut usize) -> AsmrResult<Option<A
     }))
 }
 
-pub(crate) fn tracks(value: &Value) -> AsmrResult<Vec<AsmrTrack>> {
+pub(crate) fn tracks(value: &Value, work_id: u64) -> AsmrResult<(Vec<AsmrTrack>, Vec<AsmrMedia>)> {
     let nodes = value.as_array().ok_or(error("ASMR_RESPONSE_INVALID"))?;
-    let mut budget = MAX_TRACK_NODES;
+    let mut media = Vec::new();
+    let mut walk = TrackWalk {
+        work_id,
+        budget: MAX_TRACK_NODES,
+        media: &mut media,
+    };
     let mut tracks = Vec::new();
     for node in nodes {
-        if let Some(node) = track(node, 0, &mut budget)? {
+        if let Some(node) = track(node, 0, &mut walk)? {
             tracks.push(node);
         }
     }
-    Ok(tracks)
+    // A file id is the key for streaming, so a repeated one is dropped.
+    let mut seen = std::collections::HashSet::new();
+    media.retain(|entry| seen.insert(entry.file_id));
+    Ok((tracks, media))
 }

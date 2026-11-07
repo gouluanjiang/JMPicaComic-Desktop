@@ -133,20 +133,34 @@ fn indexes_prefer_chinese_names_and_reject_unsafe_ids() {
 }
 
 #[test]
-fn track_trees_keep_structure_and_drop_media_urls() {
-    let tracks = types::tracks(&json!([
-        {"type": "folder", "title": "WAV", "children": [
-            {"type": "audio", "title": "01.wav", "size": 1000, "duration": 61.5,
-             "hash": "1683351/0", "mediaStreamUrl": "https://example.invalid/a",
-             "mediaDownloadUrl": "https://example.invalid/b"},
-            {"type": "text", "title": "01.wav.vtt", "size": 10},
-            {"type": "folder", "title": "", "children": []}
-        ]},
-        {"type": "image", "title": "cover.png"},
-        {"type": "unknown", "title": "readme.pdf"}
-    ]))
+fn track_trees_keep_structure_and_keep_media_urls_native() {
+    let cdn = "https://raw.kiko-play-niptan.one/media/stream/daily/RJ01683351/01.wav";
+    let (tracks, media) = types::tracks(
+        &json!([
+            {"type": "folder", "title": "WAV", "children": [
+                {"type": "audio", "title": "01.wav", "size": 1000, "duration": 61.5,
+                 "hash": "1683351/11", "mediaStreamUrl": cdn,
+                 "mediaDownloadUrl": "https://example.invalid/b"},
+                {"type": "text", "title": "01.wav.vtt", "size": 10, "hash": "1683351/12",
+                 "mediaStreamUrl": "https://api.asmr-200.com/api/media/stream/1683351/12"},
+                {"type": "folder", "title": "", "children": []}
+            ]},
+            {"type": "audio", "title": "PV.MP4", "hash": "1683351/13",
+             "mediaStreamUrl": "https://raw.kiko-play-niptan.one/pv.mp4"},
+            {"type": "image", "title": "cover.png", "hash": "1683351/14",
+             "mediaStreamUrl": "https://example.invalid/cover.png"},
+            {"type": "audio", "title": "other-work.mp3", "hash": "999/15",
+             "mediaStreamUrl": cdn},
+            {"type": "audio", "title": "port.mp3", "hash": "1683351/16",
+             "mediaStreamUrl": "https://raw.kiko-play-niptan.one:8443/a.mp3"},
+            {"type": "audio", "title": "lookalike.mp3", "hash": "1683351/17",
+             "mediaStreamUrl": "https://evil-kiko-play-niptan.one/a.mp3"},
+            {"type": "unknown", "title": "readme.pdf"}
+        ]),
+        1683351,
+    )
     .unwrap();
-    assert_eq!(tracks.len(), 3);
+    assert_eq!(tracks.len(), 7);
     let AsmrTrack::Folder { title, children } = &tracks[0] else {
         panic!("folder expected")
     };
@@ -155,22 +169,104 @@ fn track_trees_keep_structure_and_drop_media_urls() {
     assert_eq!(
         children[0],
         AsmrTrack::File {
+            file_id: Some(11),
             kind: AsmrFileKind::Audio,
             title: "01.wav".into(),
             size: Some(1000),
             duration_seconds: Some(61.5)
         }
     );
+    // Video files listed as audio are recognized by extension.
     assert!(matches!(
-        tracks[2],
+        tracks[1],
         AsmrTrack::File {
-            kind: AsmrFileKind::Other,
+            file_id: Some(13),
+            kind: AsmrFileKind::Video,
             ..
         }
     ));
+    // Files without an allowed address, or from another work, cannot be opened.
+    for (index, track) in tracks.iter().enumerate().skip(2) {
+        assert!(
+            matches!(track, AsmrTrack::File { file_id: None, .. }),
+            "{index}"
+        );
+    }
+    let ids: Vec<u64> = media.iter().map(|entry| entry.file_id).collect();
+    assert_eq!(ids, vec![11, 12, 13]);
+    assert_eq!(media[0].url.as_str(), cdn);
+    assert_eq!(media[0].work_id, 1683351);
+    assert_eq!(media[2].extension().as_deref(), Some("mp4"));
     let serialized = serde_json::to_string(&tracks).unwrap();
+    assert!(!serialized.contains("kiko-play"));
     assert!(!serialized.contains("example.invalid"));
-    assert!(serialized.contains(r#""type":"folder""#));
+    assert!(serialized.contains(r#""fileId":11"#));
+    assert!(serialized.contains(r#""kind":"video""#));
+}
+
+#[test]
+fn byte_ranges_are_single_bounded_and_strict() {
+    let parse = AsmrByteRange::parse;
+    assert_eq!(
+        parse(None).unwrap(),
+        AsmrByteRange {
+            start: 0,
+            end: None
+        }
+    );
+    let open = parse(Some("bytes=100-")).unwrap();
+    assert_eq!(open.end, None);
+    assert_eq!(open.capped_end(), 100 + MEDIA_CHUNK - 1);
+    let closed = parse(Some("bytes=0-99")).unwrap();
+    assert_eq!(closed.capped_end(), 99);
+    for bad in [
+        "bytes=-500",
+        "bytes=0-1,5-9",
+        "items=0-1",
+        "bytes=9-1",
+        "bytes=a-",
+        "bytes=99999999999999999999-",
+    ] {
+        assert_eq!(
+            parse(Some(bad)).unwrap_err().code,
+            "ASMR_RANGE_INVALID",
+            "{bad}"
+        );
+    }
+    assert_eq!(
+        parse_content_range("bytes 0-99/99018946"),
+        Some((0, 99, Some(99018946)))
+    );
+    assert_eq!(parse_content_range("bytes 5-9/*"), Some((5, 9, None)));
+    assert_eq!(parse_content_range("bytes 5-9/9"), None);
+    assert_eq!(parse_content_range("bytes 9-5/100"), None);
+    assert_eq!(media_type(Some("wav")), "audio/wav");
+    assert_eq!(media_type(Some("mp4")), "video/mp4");
+    assert_eq!(media_type(None), "application/octet-stream");
+}
+
+#[test]
+fn subtitle_text_decodes_common_encodings() {
+    assert_eq!(decode_text(b"\xef\xbb\xbfWEBVTT"), "WEBVTT");
+    assert_eq!(decode_text(&[0xff, 0xfe, b'h', 0, 0x2d, 0x4e]), "h中");
+    assert_eq!(decode_text(&[0xfe, 0xff, 0, b'h', 0x4e, 0x2d]), "h中");
+    assert_eq!(decode_text(b"ok\xff"), "ok\u{fffd}");
+}
+
+#[test]
+fn media_addresses_are_pinned() {
+    for (url, allowed) in [
+        ("https://raw.kiko-play-niptan.one/a.wav", true),
+        ("https://api.asmr-200.com/api/media/stream/1/2", true),
+        ("http://raw.kiko-play-niptan.one/a.wav", false),
+        ("https://kiko-play-niptan.one/a.wav", false),
+        ("https://user@raw.kiko-play-niptan.one/a.wav", false),
+        ("https://raw.kiko-play-niptan.one.evil.test/a.wav", false),
+        ("https://example.invalid/a.wav", false),
+    ] {
+        let url = Url::parse(url).unwrap();
+        assert_eq!(types::allowed_media_url(&url), allowed, "{url}");
+    }
 }
 
 #[test]
@@ -179,11 +275,11 @@ fn track_trees_are_bounded() {
     for _ in 0..20 {
         node = json!({"type": "folder", "title": "f", "children": [node]});
     }
-    assert!(types::tracks(&json!([node])).is_err());
+    assert!(types::tracks(&json!([node]), 1).is_err());
     let wide: Vec<Value> = (0..6000)
         .map(|index| json!({"type": "audio", "title": format!("{index}.mp3")}))
         .collect();
-    assert!(types::tracks(&json!(wide)).is_err());
+    assert!(types::tracks(&json!(wide), 1).is_err());
 }
 
 #[test]
