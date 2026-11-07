@@ -114,6 +114,17 @@ test("a work plays its chosen version with subtitles, keys, a queue and remember
   await expect(page.getByTestId("asmr-time")).toHaveText(/^0:1[01]$/);
   await expect(page.getByTestId("asmr-bar-cue")).toHaveText("第二句字幕");
 
+  // Desktop subtitles are on by default: the window opens for a subtitled
+  // file and receives each line with the file title.
+  await expect(page.getByTestId("asmr-desktop-lyrics")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect((await calls(page, "asmr_lyrics_open")).length).toBeGreaterThan(0);
+  await expect
+    .poll(async () => (await calls(page, "asmr_lyrics_line")).at(-1)?.args)
+    .toEqual({ text: "第二句字幕", title: "01.wav" });
+
   // Moving on saves the place in the file being left.
   await page.keyboard.press("Shift+N");
   await expect(page.getByTestId("asmr-now-title")).toHaveText("02.wav");
@@ -124,6 +135,10 @@ test("a work plays its chosen version with subtitles, keys, a queue and remember
   await expect(page.getByTestId("asmr-bar-cue")).toHaveText(
     "RJ01000003 · 合成音声作品 3",
   );
+  // A file without subtitles hides the desktop window until the next one.
+  await expect
+    .poll(async () => (await calls(page, "asmr_lyrics_hide")).length)
+    .toBe(1);
 
   // The full player lists the queue and the subtitles, and seeks from them.
   await page.getByTestId("asmr-expand").click();
@@ -142,6 +157,21 @@ test("a work plays its chosen version with subtitles, keys, a queue and remember
   await expect(full.getByTestId("asmr-current-cue")).toHaveText("第一句字幕");
   await page.keyboard.press("Escape");
   await expect(full).toBeHidden();
+
+  // Turning desktop subtitles off closes the window and is remembered.
+  await page.getByTestId("asmr-desktop-lyrics").click();
+  await expect(page.getByTestId("asmr-desktop-lyrics")).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect
+    .poll(async () => (await calls(page, "asmr_lyrics_close")).length)
+    .toBe(1);
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("jmpicacomic.asmr.desktopLyrics"),
+    ),
+  ).toBe("false");
 
   // The sleep timer counts down and can be turned off.
   await page.getByTestId("asmr-sleep").selectOption("15");
@@ -209,4 +239,90 @@ test("playback continues in the comic section and the bar returns with ASMR", as
   await expect(page.getByTestId("asmr-now-title")).toHaveText("bonus.mp3");
   await page.keyboard.press("Space");
   await expect(playButton(page)).toHaveAttribute("aria-label", "播放");
+});
+
+test("the small video can be dragged inside the section and a click opens the player", async ({
+  page,
+}) => {
+  await installAsmr(page);
+  await serveMedia(page);
+  await openAsmr(page);
+  await openPlayerWork(page);
+  await page
+    .getByTestId("asmr-detail")
+    .getByRole("button", { name: "播放 PV.mp4" })
+    .click();
+  // Without the detail panel the box starts at the bottom right.
+  await page.getByRole("button", { name: "关闭详情" }).click();
+  const screen = page.getByTestId("asmr-screen");
+  await expect(screen).toHaveClass(/is-floating/);
+  const before = (await screen.boundingBox())!;
+  await page.mouse.move(before.x + 100, before.y + 60);
+  await page.mouse.down();
+  await page.mouse.move(before.x - 200, before.y - 150, { steps: 6 });
+  await page.mouse.up();
+  const after = (await screen.boundingBox())!;
+  expect(Math.round(after.x - before.x)).toBe(-300);
+  expect(Math.round(after.y - before.y)).toBe(-210);
+  expect(
+    JSON.parse(
+      (await page.evaluate(() =>
+        localStorage.getItem("jmpicacomic.asmr.videoPosition"),
+      ))!,
+    ),
+  ).toEqual({ right: expect.any(Number), bottom: expect.any(Number) });
+  // Dragging never opens the player; a plain click does.
+  await expect(page.getByTestId("asmr-player-full")).toBeHidden();
+  // Dragging far past an edge keeps the box inside the section.
+  await page.mouse.move(after.x + 50, after.y + 50);
+  await page.mouse.down();
+  await page.mouse.move(after.x + 5000, after.y + 5000, { steps: 4 });
+  await page.mouse.up();
+  const workspace = (await page.getByTestId("asmr-workspace").boundingBox())!;
+  const clamped = (await screen.boundingBox())!;
+  expect(clamped.x + clamped.width).toBeLessThanOrEqual(
+    workspace.x + workspace.width + 1,
+  );
+  expect(clamped.y + clamped.height).toBeLessThanOrEqual(
+    (await page.getByTestId("asmr-bar").boundingBox())!.y + 1,
+  );
+  await screen.click({ position: { x: 40, y: 40 } });
+  await expect(page.getByTestId("asmr-player-full")).toBeVisible();
+});
+
+test("the desktop subtitle window shows the latest line on a transparent page", async ({
+  page,
+}) => {
+  await installAsmr(page);
+  await page.goto("/#asmr-lyrics");
+  // A hash change alone does not reload the entry.
+  await page.reload();
+  const lyrics = page.getByTestId("asmr-lyrics");
+  await expect(lyrics).toContainText("桌面字幕测试");
+  expect(
+    await page.evaluate(
+      () => getComputedStyle(document.documentElement).backgroundColor,
+    ),
+  ).toBe("rgba(0, 0, 0, 0)");
+  const text = lyrics.locator(".asmr-lyrics-text");
+  const size = () =>
+    text.evaluate((element) => getComputedStyle(element).fontSize);
+  expect(await size()).toBe("30px");
+  await lyrics.hover();
+  await page.getByRole("button", { name: "放大字幕" }).click();
+  expect(await size()).toBe("36px");
+  await page.reload();
+  await expect(lyrics).toContainText("桌面字幕测试");
+  expect(await size()).toBe("36px");
+  await lyrics.hover();
+  await page.getByRole("button", { name: "关闭桌面字幕" }).click();
+  await expect
+    .poll(async () => (await calls(page, "asmr_lyrics_close")).length)
+    .toBe(1);
+  // The window never asks for the catalog or media.
+  expect(
+    (await calls(page)).every((call) =>
+      call.command.startsWith("asmr_lyrics_"),
+    ),
+  ).toBe(true);
 });

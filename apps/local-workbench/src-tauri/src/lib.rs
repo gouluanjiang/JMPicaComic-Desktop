@@ -1,5 +1,6 @@
 mod accounts;
 mod asmr;
+mod asmr_lyrics;
 mod browsing_markers;
 mod discovery;
 mod downloads;
@@ -221,7 +222,15 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
         .manage(Arc::new(reader_windows::ReaderWindows::default()))
         .manage(Arc::new(updater::DesktopUpdater::default()))
         .manage(Arc::new(asmr::DesktopAsmr::default()))
-        .on_window_event(reader_windows::window_event)
+        .manage(Arc::new(asmr_lyrics::DesktopLyrics::default()))
+        .on_window_event(|window, event| {
+            // The subtitle window is not a reader window.
+            if window.label() == asmr_lyrics::LYRICS_LABEL {
+                asmr_lyrics::window_event(window, event);
+            } else {
+                reader_windows::window_event(window, event);
+            }
+        })
         .register_asynchronous_uri_scheme_protocol(asmr::MEDIA_SCHEME, asmr::media_protocol)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -250,6 +259,11 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             asmr::asmr_work,
             asmr::asmr_cover,
             asmr::asmr_subtitle,
+            asmr_lyrics::asmr_lyrics_open,
+            asmr_lyrics::asmr_lyrics_hide,
+            asmr_lyrics::asmr_lyrics_close,
+            asmr_lyrics::asmr_lyrics_line,
+            asmr_lyrics::asmr_lyrics_current,
             reader::reader_open,
             reader::reader_cancel_open,
             reader::reader_chapter,

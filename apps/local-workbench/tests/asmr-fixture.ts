@@ -173,6 +173,13 @@ export async function installAsmr(page: Page) {
                 "WEBVTT\n\n00:00.000 --> 00:02.000\n第一句字幕\n\n00:09.000 --> 00:25.000\n<v 合成>第二句字幕\n",
               )
             : Promise.reject({ code: "ASMR_NOT_FOUND" });
+        case "asmr_lyrics_open":
+        case "asmr_lyrics_hide":
+        case "asmr_lyrics_close":
+        case "asmr_lyrics_line":
+          return Promise.resolve(null);
+        case "asmr_lyrics_current":
+          return Promise.resolve({ text: "桌面字幕测试", title: "01.wav" });
       }
       return Promise.reject(new Error("unexpected " + command));
     };

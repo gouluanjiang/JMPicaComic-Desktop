@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { Icon } from "../icons.tsx";
+import { useDesktopLyrics } from "./asmr-desktop-lyrics.ts";
 import { cueAt } from "./asmr-media.ts";
 import { RATES, asmrPlayer } from "./asmr-player.ts";
 import type { PlayerState, QueueItem } from "./asmr-player.ts";
@@ -317,6 +319,133 @@ function FullPlayer({
   );
 }
 
+const VIDEO_POSITION_KEY = "jmpicacomic.asmr.videoPosition";
+const BAR_HEIGHT = 76;
+const DRAG_THRESHOLD = 4;
+
+/** Offsets of the small video from the workspace's right and bottom edges. */
+type Offset = { right: number; bottom: number };
+
+function readOffset(): Offset | null {
+  try {
+    const value = JSON.parse(
+      localStorage.getItem(VIDEO_POSITION_KEY) ?? "null",
+    ) as unknown;
+    if (!value || typeof value !== "object") return null;
+    const { right, bottom } = value as Record<string, unknown>;
+    return typeof right === "number" &&
+      typeof bottom === "number" &&
+      Number.isFinite(right) &&
+      Number.isFinite(bottom)
+      ? { right, bottom }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lets the small video be dragged anywhere inside the ASMR section. A press
+ * that does not move opens the full player, as a click did before.
+ */
+function useFloatingDrag(onClick: () => void) {
+  const [offset, setOffset] = useState<Offset | null>(readOffset);
+  const drag = useRef<{
+    x: number;
+    y: number;
+    start: Offset;
+    bounds: {
+      width: number;
+      height: number;
+      boxWidth: number;
+      boxHeight: number;
+    };
+    moved: boolean;
+  } | null>(null);
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    const box = event.currentTarget;
+    const parent = box.offsetParent as HTMLElement | null;
+    if (!parent) return;
+    const rect = box.getBoundingClientRect();
+    const area = parent.getBoundingClientRect();
+    drag.current = {
+      x: event.clientX,
+      y: event.clientY,
+      start: {
+        right: area.right - rect.right,
+        bottom: area.bottom - rect.bottom,
+      },
+      bounds: {
+        width: area.width,
+        height: area.height,
+        boxWidth: rect.width,
+        boxHeight: rect.height,
+      },
+      moved: false,
+    };
+    box.setPointerCapture(event.pointerId);
+  };
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const current = drag.current;
+    if (!current) return;
+    const dx = event.clientX - current.x;
+    const dy = event.clientY - current.y;
+    if (!current.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+    current.moved = true;
+    const { width, height, boxWidth, boxHeight } = current.bounds;
+    setOffset({
+      right: Math.round(
+        Math.min(Math.max(0, current.start.right - dx), width - boxWidth),
+      ),
+      bottom: Math.round(
+        Math.min(
+          Math.max(BAR_HEIGHT, current.start.bottom - dy),
+          height - boxHeight,
+        ),
+      ),
+    });
+  };
+  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const current = drag.current;
+    drag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!current) return;
+    if (!current.moved) {
+      onClick();
+      return;
+    }
+    setOffset((value) => {
+      try {
+        if (value)
+          localStorage.setItem(VIDEO_POSITION_KEY, JSON.stringify(value));
+      } catch {
+        // Not essential.
+      }
+      return value;
+    });
+  };
+  // A narrower window keeps the box inside instead of pushing it out.
+  const style: CSSProperties | undefined = offset
+    ? {
+        right: `min(${offset.right}px, calc(100% - 320px))`,
+        bottom: `min(${offset.bottom}px, calc(100% - 180px))`,
+      }
+    : undefined;
+  return {
+    style,
+    handlers: {
+      onPointerDown,
+      onPointerMove,
+      onPointerUp,
+      onPointerCancel: () => {
+        drag.current = null;
+      },
+    },
+  };
+}
+
 export function AsmrPlayerView({
   hidden,
   onOpenWork,
@@ -345,6 +474,8 @@ export function AsmrPlayerView({
         ? "floating"
         : "audio";
   const duration = state.duration || item?.durationSeconds || 0;
+  const [desktopLyrics, setDesktopLyrics] = useDesktopLyrics(item, cue);
+  const floating = useFloatingDrag(() => asmrPlayer.setExpanded(true));
   return (
     <>
       {item && state.expanded && (
@@ -359,6 +490,9 @@ export function AsmrPlayerView({
         className={`asmr-screen is-${mode}${video ? " is-video" : ""}`}
         ref={screen}
         data-testid="asmr-screen"
+        style={mode === "floating" ? floating.style : undefined}
+        title={mode === "floating" ? "拖动可移动，点击展开播放器" : undefined}
+        {...(mode === "floating" ? floating.handlers : {})}
       >
         <video
           ref={media}
@@ -366,9 +500,9 @@ export function AsmrPlayerView({
           playsInline
           preload="metadata"
           data-testid="asmr-media"
-          onClick={() =>
-            state.expanded ? asmrPlayer.toggle() : asmrPlayer.setExpanded(true)
-          }
+          onClick={() => {
+            if (state.expanded) asmrPlayer.toggle();
+          }}
         />
         {item && !video && (
           <AsmrCover
@@ -498,6 +632,20 @@ export function AsmrPlayerView({
               </select>
             </label>
             <SleepControl state={state} />
+            <button
+              className={`asmr-icon-button asmr-lyrics-toggle${desktopLyrics ? " active" : ""}`}
+              aria-label="桌面字幕"
+              aria-pressed={desktopLyrics}
+              title={
+                desktopLyrics
+                  ? "关闭桌面字幕（有字幕的文件会在桌面上显示字幕）"
+                  : "打开桌面字幕：字幕显示在可拖到任意位置的置顶小窗里"
+              }
+              data-testid="asmr-desktop-lyrics"
+              onClick={() => setDesktopLyrics(!desktopLyrics)}
+            >
+              <Icon name="captions" size={18} />
+            </button>
             <div className="asmr-player-volume">
               <button
                 className="asmr-icon-button"

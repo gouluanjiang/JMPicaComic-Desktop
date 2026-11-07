@@ -927,6 +927,7 @@ button.asmr-track:hover {
 }
 .asmr-bar-text .asmr-bar-cue {
   color: var(--asmr-primary-strong);
+  font-size: 13px;
 }
 .asmr-bar-center {
   display: flex;
@@ -1026,6 +1027,15 @@ button.asmr-track:hover {
 .asmr-player-volume {
   display: flex;
   align-items: center;
+}
+.asmr-lyrics-toggle {
+  color: var(--asmr-muted);
+}
+.asmr-lyrics-toggle.active {
+  color: var(--asmr-primary);
+}
+.asmr-screen.is-floating:active {
+  cursor: grabbing;
 }
 .asmr-player-volume input {
   width: 84px;

@@ -22,6 +22,18 @@ videos. Media streams online only; nothing is written to disk.
   player), Windows media keys via Media Session, a sleep timer with fade-out, playback
   speed, and per-file positions plus last-played file in local storage (300 each).
   Playback continues while the comic section is shown.
+- After the first live test the user asked for subtitles while the player is collapsed,
+  movable anywhere on the desktop like music-player lyrics, and a draggable video box.
+  `asmr_lyrics.rs` opens `asmr-lyrics`: undecorated, transparent, always on top, not in
+  the taskbar, not focused on open. Its capability (`asmr-lyrics.json`) allows only
+  `asmr_lyrics_current`, `asmr_lyrics_close`, event listening and
+  `core:window:allow-start-dragging`. The main window sends each line with
+  `asmr_lyrics_line` (control characters dropped, 1000 characters max). Moves and
+  resizes are reported back to the main window and stored in local storage. A saved
+  placement is reused only if at least 40 px of it is on a current screen. The window
+  shows while a subtitled file plays, hides for files without subtitles and closes
+  with the player. It is on by default, and its own close button turns it off. The
+  small video box can be dragged inside the section and its position is remembered.
 - Version folders: Chinese, subtitled, lossless and non-bonus folders score higher.
   A tie that only sound effects separate asks once; the choice is remembered.
 - Not in this step: the pop-out player window, ASS subtitles, and formats WebView2
