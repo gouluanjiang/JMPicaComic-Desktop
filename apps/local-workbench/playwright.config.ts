@@ -20,6 +20,8 @@ export default defineConfig({
     "**/ranking-ui.spec.ts",
     "**/recent-ui.spec.ts",
     "**/workflow-ui.spec.ts",
+    "**/update-ui.spec.ts",
+    "**/asmr-ui.spec.ts",
   ],
   outputDir: "test-results",
   fullyParallel: false,
