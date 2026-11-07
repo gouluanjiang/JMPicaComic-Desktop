@@ -61,7 +61,8 @@ export function loadWork(id: number): Promise<AsmrWorkDetail> {
   return invokeDesktop("asmr_work", { id }).then(validateDetail);
 }
 
-const COVER_CACHE = 400;
+// Card covers are the 560x420 "main" size, about 90 KB each as data URLs.
+const COVER_CACHE = 240;
 const COVER_CONCURRENCY = 4;
 const covers = new Map<string, string | null>();
 const waiting: (() => void)[] = [];

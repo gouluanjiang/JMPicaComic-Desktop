@@ -56,7 +56,7 @@ export type AsmrTrack =
 
 export type AsmrWorkDetail = { work: AsmrWork; tracks: AsmrTrack[] };
 
-export const PAGE_SIZE = 24;
+export const PAGE_SIZE = 48;
 // Native caps are in characters; UTF-16 lengths can be up to twice that.
 const MAX_TEXT = 1100;
 const workCode = /^[A-Z]{2}\d{6,8}$/;
