@@ -1,18 +1,37 @@
-/* ASMR section: a light, site-like workspace laid over the comic pages. The
-   comic pages stay mounted underneath, so their state and positions survive a
-   section switch. */
+/* ASMR section: a site-like workspace laid over the comic pages, in a light or
+   dark theme. The comic pages stay mounted underneath, so their state and
+   positions survive a section switch.
+
+   The comic theme styles form controls with very specific selectors, so the
+   control rules below are scoped under `.app-shell.ui-refined` and use
+   `!important` where they must win. */
 
 .asmr-workspace {
   --asmr-primary: #1e88e5;
-  --asmr-primary-dark: #1565c0;
+  --asmr-primary-strong: #1565c0;
+  --asmr-topbar: #1e88e5;
+  --asmr-topbar-text: #ffffff;
+  --asmr-topbar-field: #ffffff2e;
   --asmr-bg: #f3f5f8;
   --asmr-surface: #ffffff;
+  --asmr-raised: #ffffff;
   --asmr-text: #1f2329;
   --asmr-muted: #6b7280;
   --asmr-line: #e3e6eb;
   --asmr-chip: #eef1f5;
+  --asmr-chip-hover: #dfe5ee;
+  --asmr-chip-text: #4b5563;
   --asmr-voice: #e8f5e9;
   --asmr-voice-text: #2e7d32;
+  --asmr-cover: #d9dde3;
+  --asmr-cover-text: #8a919c;
+  --asmr-star-empty: #d5d9df;
+  --asmr-shadow: 0 1px 3px #0000001f;
+  --asmr-shadow-hover: 0 4px 14px #00000029;
+  --asmr-error-bg: #fdecea;
+  --asmr-error-text: #b42318;
+  --asmr-selected: #e3f0fc;
+  color-scheme: light;
   position: fixed;
   inset: 0 0 0 var(--sidebar-width, 212px);
   z-index: 20;
@@ -22,6 +41,34 @@
   color: var(--asmr-text);
   font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
   font-size: 14px;
+}
+
+.asmr-workspace[data-theme="dark"] {
+  --asmr-primary: #42a5f5;
+  --asmr-primary-strong: #90caf9;
+  --asmr-topbar: #1d2026;
+  --asmr-topbar-text: #e8eaed;
+  --asmr-topbar-field: #ffffff14;
+  --asmr-bg: #121316;
+  --asmr-surface: #1c1e23;
+  --asmr-raised: #24272d;
+  --asmr-text: #e8eaed;
+  --asmr-muted: #9aa0a9;
+  --asmr-line: #2e3238;
+  --asmr-chip: #2a2e35;
+  --asmr-chip-hover: #343943;
+  --asmr-chip-text: #c3c8cf;
+  --asmr-voice: #1f3324;
+  --asmr-voice-text: #8fd19e;
+  --asmr-cover: #2a2d33;
+  --asmr-cover-text: #6f7682;
+  --asmr-star-empty: #444a53;
+  --asmr-shadow: 0 1px 3px #00000066;
+  --asmr-shadow-hover: 0 4px 16px #00000080;
+  --asmr-error-bg: #3a1d1b;
+  --asmr-error-text: #f4a49c;
+  --asmr-selected: #1e88e526;
+  color-scheme: dark;
 }
 
 .asmr-workspace[hidden] {
@@ -34,22 +81,48 @@
   cursor: pointer;
 }
 
+/* Form controls: override the comic theme's dark, purple-accented fields. */
+.app-shell.ui-refined .asmr-workspace :is(input, select, button):focus-visible {
+  outline: 2px solid var(--asmr-primary) !important;
+  outline-offset: 2px;
+}
+.app-shell.ui-refined .asmr-workspace input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--asmr-primary);
+}
+.app-shell.ui-refined .asmr-workspace :is(select, .asmr-filter) {
+  min-height: 32px !important;
+  height: 32px;
+  padding: 0 10px !important;
+  border: 1px solid var(--asmr-line) !important;
+  border-radius: 6px !important;
+  background-color: var(--asmr-surface) !important;
+  color: var(--asmr-text) !important;
+  font-size: 14px !important;
+}
+
 .asmr-topbar {
   display: flex;
   align-items: center;
   gap: 14px;
   height: 56px;
-  padding: 0 20px;
+  padding: 0 16px 0 20px;
   flex-shrink: 0;
-  background: var(--asmr-primary);
-  color: #fff;
+  background: var(--asmr-topbar);
+  color: var(--asmr-topbar-text);
   box-shadow: 0 2px 6px #0003;
 }
 
-.asmr-title {
+/* The comic theme enlarges every h1; the ASMR title is a toolbar label. */
+.app-shell.ui-refined .asmr-workspace .asmr-title {
   margin: 0;
+  color: var(--asmr-topbar-text);
   font-size: 18px;
   font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -58,14 +131,19 @@
 .asmr-icon-button {
   display: inline-grid;
   place-items: center;
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
 }
 .asmr-icon-button:hover:not(:disabled) {
   background: #ffffff26;
+}
+.asmr-detail .asmr-icon-button:hover {
+  background: var(--asmr-chip);
 }
 .asmr-icon-button:disabled {
   opacity: 0.4;
@@ -81,19 +159,29 @@
   height: 36px;
   padding: 0 12px;
   border-radius: 6px;
-  background: #ffffff2e;
+  background: var(--asmr-topbar-field);
+  border: 1px solid transparent;
 }
-.asmr-search input {
+.asmr-search:focus-within {
+  border-color: #ffffffb3;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-search input {
   flex: 1;
   min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #fff;
-  font: inherit;
+  min-height: 0 !important;
+  height: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--asmr-topbar-text) !important;
+  font-size: 14px !important;
 }
-.asmr-search input::placeholder {
-  color: #ffffffb3;
+.app-shell.ui-refined .asmr-workspace .asmr-search input::placeholder {
+  color: var(--asmr-topbar-text);
+  opacity: 0.7;
 }
 
 .asmr-body {
@@ -131,7 +219,7 @@
   grid-auto-columns: 220px;
   gap: 14px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding: 2px 2px 8px;
 }
 
 .asmr-list-toolbar {
@@ -158,16 +246,6 @@
   gap: 6px;
   color: var(--asmr-muted);
 }
-.asmr-select select,
-.asmr-filter {
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--asmr-line);
-  border-radius: 6px;
-  background: var(--asmr-surface);
-  color: var(--asmr-text);
-  font: inherit;
-}
 .asmr-filter {
   width: min(260px, 100%);
 }
@@ -183,13 +261,14 @@
   place-items: center;
   width: 34px;
   height: 30px;
+  padding: 0;
   border: 0;
   background: var(--asmr-surface);
-  color: var(--asmr-muted);
+  color: var(--asmr-muted) !important;
 }
 .asmr-view-modes button[aria-pressed="true"] {
   background: var(--asmr-primary);
-  color: #fff;
+  color: #fff !important;
 }
 
 .asmr-grid {
@@ -212,12 +291,12 @@
   min-width: 0;
   border-radius: 8px;
   background: var(--asmr-surface);
-  box-shadow: 0 1px 3px #0000001f;
+  box-shadow: var(--asmr-shadow);
   overflow: hidden;
   transition: box-shadow 0.15s;
 }
 .asmr-card:hover {
-  box-shadow: 0 4px 14px #00000029;
+  box-shadow: var(--asmr-shadow-hover);
 }
 .asmr-card.selected {
   outline: 2px solid var(--asmr-primary);
@@ -228,7 +307,7 @@
   display: block;
   padding: 0;
   border: 0;
-  background: #d9dde3;
+  background: var(--asmr-cover);
 }
 
 .asmr-cover {
@@ -236,7 +315,7 @@
   place-items: center;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: #d9dde3;
+  background: var(--asmr-cover);
 }
 .asmr-cover img {
   width: 100%;
@@ -244,7 +323,7 @@
   object-fit: cover;
 }
 .asmr-cover-placeholder {
-  color: #8a919c;
+  color: var(--asmr-cover-text);
   font-size: 12px;
 }
 
@@ -268,7 +347,7 @@
 .asmr-badge-language {
   top: 6px;
   right: 6px;
-  background: var(--asmr-primary);
+  background: #1e88e5;
 }
 
 .asmr-card-body {
@@ -295,7 +374,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--asmr-primary-dark) !important;
+  color: var(--asmr-primary-strong) !important;
   font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
@@ -322,7 +401,7 @@
   background: linear-gradient(
     90deg,
     #f5a623 calc(var(--rating) * 100%),
-    #d5d9df calc(var(--rating) * 100%)
+    var(--asmr-star-empty) calc(var(--rating) * 100%)
   );
   background-clip: text;
   -webkit-background-clip: text;
@@ -340,12 +419,12 @@
   border: 0;
   border-radius: 12px;
   background: var(--asmr-chip);
-  color: #4b5563 !important;
+  color: var(--asmr-chip-text) !important;
   font-size: 12px;
   line-height: 18px;
 }
 .asmr-chip:hover:not(:disabled) {
-  background: #dfe5ee;
+  background: var(--asmr-chip-hover);
 }
 .asmr-chip-voice {
   background: var(--asmr-voice);
@@ -409,14 +488,14 @@
   margin-bottom: 14px;
   padding: 10px 14px;
   border-radius: 6px;
-  background: #fdecea;
-  color: #b42318;
+  background: var(--asmr-error-bg);
+  color: var(--asmr-error-text);
 }
 .asmr-text-button {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--asmr-primary-dark) !important;
+  color: var(--asmr-primary-strong) !important;
   text-decoration: underline;
 }
 .asmr-more {
@@ -525,53 +604,172 @@
   font-size: 12px;
 }
 
-/* Sidebar while the ASMR section is active. */
-.app-shell[data-section="asmr"] .ui-sidebar {
-  background: #ffffff;
-  border-right: 1px solid #e3e6eb;
-  color: #1f2329;
-}
-.app-shell[data-section="asmr"] .ui-sidebar :is(.ui-nav-heading, small) {
-  color: #6b7280;
-}
-.app-shell[data-section="asmr"] .ui-sidebar .ui-nav-item {
-  color: #374151;
-}
-.app-shell[data-section="asmr"] .ui-sidebar .ui-nav-item.active {
-  background: #e3f0fc;
-  color: #1565c0;
-}
-
-.ui-section-switch {
+/* Section switch at the top of the sidebar. */
+.app-shell.ui-refined .ui-sidebar .ui-section-switch {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  margin: 4px 12px 10px;
+  gap: 2px;
+  flex-shrink: 0;
+  margin: -14px 0 18px;
   padding: 3px;
   border-radius: 8px;
-  background: #ffffff14;
+  background: #ffffff0d;
 }
-.ui-section-switch button {
+.app-shell.ui-refined .ui-sidebar .ui-section-switch > button {
+  min-width: 0;
   height: 28px;
+  padding: 0 4px;
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: inherit;
+  color: #a4a2ae;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
   cursor: pointer;
 }
-.ui-section-switch button[aria-pressed="true"] {
-  background: #ffffff26;
+.app-shell.ui-refined .ui-sidebar .ui-section-switch > button:hover {
+  color: #e7dbff;
+}
+.app-shell.ui-refined
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: #a78add30;
+  color: #f3eeff;
   font-weight: 600;
 }
-.app-shell[data-section="asmr"] .ui-section-switch {
+.app-shell.ui-refined.sidebar-collapsed .ui-sidebar .ui-section-switch {
+  grid-template-columns: 1fr;
+}
+.app-shell.ui-refined.sidebar-collapsed
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  height: 24px;
+  padding: 0;
+  font-size: 11px;
+}
+
+/* The sidebar follows the ASMR theme while that section is shown. */
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar {
+  background: #ffffff;
+  border-right-color: #e3e6eb;
+  color: #1f2329;
+  color-scheme: light;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  :is(.brand, .ui-brand-name) {
+  color: #1f2329;
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .brand-mark {
+  background: #1e88e5;
+  color: #ffffff;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  :is(.ui-nav-heading, small, .ui-connection) {
+  color: #8a919c;
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .ui-nav-item {
+  color: #4b5563;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item:hover:not(:disabled) {
+  background: #f1f4f8;
+  color: #1f2329;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item:is(.active, [aria-current="page"]) {
+  background: #e3f0fc;
+  color: #1565c0;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item.active::before {
+  background: #1e88e5;
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .ui-section-switch {
   background: #eef1f5;
 }
-.app-shell[data-section="asmr"] .ui-section-switch button[aria-pressed="true"] {
-  background: #1e88e5;
-  color: #fff;
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  color: #4b5563;
 }
-.sidebar-collapsed .ui-section-switch {
-  grid-template-columns: 1fr;
-  margin: 4px 8px 10px;
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: #1e88e5;
+  color: #ffffff;
+}
+
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"] .ui-sidebar {
+  background: #16181c;
+  border-right-color: #2e3238;
+  color: #e8eaed;
+  color-scheme: dark;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  :is(.brand, .ui-brand-name) {
+  color: #e8eaed;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .brand-mark {
+  background: #1e88e5;
+  color: #ffffff;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  :is(.ui-nav-heading, small, .ui-connection) {
+  color: #7d838c;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item {
+  color: #a9aeb6;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item:hover:not(:disabled) {
+  background: #23262c;
+  color: #e8eaed;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item:is(.active, [aria-current="page"]) {
+  background: #1e88e52b;
+  color: #90caf9;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-nav-item.active::before {
+  background: #42a5f5;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-section-switch {
+  background: #23262c;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  color: #a9aeb6;
+}
+.app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: #1e88e5;
+  color: #ffffff;
 }

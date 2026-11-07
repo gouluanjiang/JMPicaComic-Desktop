@@ -313,3 +313,44 @@ test("searching a work code opens it and failures can be retried", async ({
   });
   await expect(page.locator(".asmr-title")).toHaveText("搜索：rj01000005");
 });
+
+test("the ASMR theme switches between light and dark, and the sidebar follows it", async ({
+  page,
+}) => {
+  await installAsmr(page);
+  const shell = page.locator(".app-shell");
+  const workspace = page.getByTestId("asmr-workspace");
+  await openAsmr(page);
+  await expect(workspace).toHaveAttribute("data-theme", "light");
+  await expect(shell).toHaveAttribute("data-section", "asmr");
+  const sidebarBackground = () =>
+    page
+      .locator(".ui-sidebar")
+      .evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(await sidebarBackground()).toBe("rgb(255, 255, 255)");
+  // Fields use the ASMR palette, not the comic theme's dark inputs.
+  const searchBackground = await page
+    .getByTestId("asmr-search")
+    .evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(searchBackground).toBe("rgba(0, 0, 0, 0)");
+  await page.getByRole("button", { name: "切换到暗色主题" }).click();
+  await expect(workspace).toHaveAttribute("data-theme", "dark");
+  await expect(shell).toHaveAttribute("data-asmr-theme", "dark");
+  expect(await sidebarBackground()).toBe("rgb(22, 24, 28)");
+  await page.reload();
+  await expect(workspace).toHaveAttribute("data-theme", "dark");
+  await expect(
+    page.getByRole("button", { name: "切换到浅色主题" }),
+  ).toBeVisible();
+  // The comic section keeps its own sidebar.
+  await page.getByTestId("section-comic").click();
+  expect(await sidebarBackground()).not.toBe("rgb(22, 24, 28)");
+  // A collapsed sidebar stacks the section switch inside its width.
+  await page.getByTestId("sidebar-toggle").click();
+  const sidebar = (await page.locator(".ui-sidebar").boundingBox())!;
+  for (const id of ["section-comic", "section-asmr"]) {
+    const box = (await page.getByTestId(id).boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(sidebar.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(sidebar.x + sidebar.width);
+  }
+});

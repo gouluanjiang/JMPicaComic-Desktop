@@ -23,6 +23,8 @@ import type {
 } from "./asmr-types.ts";
 import "./asmr.css";
 
+export type AsmrTheme = "light" | "dark";
+
 export type AsmrDestination =
   | "asmr-home"
   | "asmr-popular"
@@ -477,10 +479,14 @@ export function AsmrWorkspace({
   destination,
   navigationKey,
   hidden = false,
+  theme = "light",
+  onTheme,
 }: {
   destination: AsmrDestination;
   navigationKey: number;
   hidden?: boolean;
+  theme?: AsmrTheme;
+  onTheme?(theme: AsmrTheme): void;
 }) {
   const [history, setHistory] = useState<View[]>(() => [viewFor(destination)]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -617,6 +623,7 @@ export function AsmrWorkspace({
     <div
       className={`asmr-workspace${selected !== null ? " has-detail" : ""}`}
       data-testid="asmr-workspace"
+      data-theme={theme}
       hidden={hidden}
     >
       <header className="asmr-topbar">
@@ -651,6 +658,15 @@ export function AsmrWorkspace({
             onChange={(event) => setQuery(event.target.value)}
           />
         </form>
+        <button
+          className="asmr-icon-button"
+          data-testid="asmr-theme"
+          aria-label={theme === "dark" ? "切换到浅色主题" : "切换到暗色主题"}
+          title={theme === "dark" ? "切换到浅色主题" : "切换到暗色主题"}
+          onClick={() => onTheme?.(theme === "dark" ? "light" : "dark")}
+        >
+          <Icon name={theme === "dark" ? "sun" : "moon"} size={19} />
+        </button>
       </header>
       <div className="asmr-body">
         <div className="asmr-content" ref={content}>
