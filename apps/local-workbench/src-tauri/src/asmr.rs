@@ -16,7 +16,7 @@ use tauri::{Runtime, State, WebviewWindow};
 
 /// Circle and voice-actor lists are about half a megabyte each.
 const INDEX_TTL: Duration = Duration::from_secs(30 * 60);
-const POPULAR_PAGE_SIZE: u64 = 24;
+const POPULAR_PAGE_SIZE: u64 = 48;
 
 type Indexes = HashMap<AsmrIndexKind, (Instant, Arc<Vec<AsmrIndexEntry>>)>;
 

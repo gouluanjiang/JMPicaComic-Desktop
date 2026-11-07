@@ -167,7 +167,7 @@ export function AsmrWorkCard({
         aria-label={`查看 ${work.title}`}
         onClick={() => onOpen(work)}
       >
-        <AsmrCover id={work.id} code={work.code} size="thumbnail" />
+        <AsmrCover id={work.id} code={work.code} size="main" />
         <span className="asmr-badge asmr-badge-code">{work.code}</span>
         {work.release && (
           <span className="asmr-badge asmr-badge-date">{work.release}</span>

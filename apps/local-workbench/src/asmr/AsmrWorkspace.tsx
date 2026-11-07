@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { Icon } from "../icons.tsx";
 import { AsmrDetailPanel } from "./AsmrDetailPanel.tsx";
 import { AsmrWorkCard } from "./AsmrWorkCard.tsx";
@@ -117,39 +117,17 @@ function titleFor(view: View): string {
   }
 }
 
-function Pager({
-  page,
-  total,
-  onPage,
-}: {
-  page: number;
-  total: number;
-  onPage(page: number): void;
-}) {
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  if (pages <= 1) return null;
-  return (
-    <nav className="asmr-pager" aria-label="翻页">
-      <button disabled={page <= 1} onClick={() => onPage(1)}>
-        首页
-      </button>
-      <button disabled={page <= 1} onClick={() => onPage(page - 1)}>
-        上一页
-      </button>
-      <span data-testid="asmr-page">
-        第 {page} / {pages} 页
-      </span>
-      <button disabled={page >= pages} onClick={() => onPage(page + 1)}>
-        下一页
-      </button>
-      <button disabled={page >= pages} onClick={() => onPage(pages)}>
-        末页
-      </button>
-    </nav>
-  );
-}
-
 type Loader = (query: AsmrListQuery) => Promise<AsmrPage>;
+
+// Keeps one endless list to a size the page can render comfortably.
+const MAX_LOADED = 2000;
+
+type Loaded = {
+  works: AsmrWork[];
+  total: number;
+  nextPage: number;
+  done: boolean;
+};
 
 function WorkList({
   title,
@@ -164,7 +142,7 @@ function WorkList({
   selected,
   onOpen,
   onRelated,
-  scrollTop,
+  scrollRoot,
 }: {
   title: string;
   loader: Loader;
@@ -178,40 +156,95 @@ function WorkList({
   selected: number | null;
   onOpen(work: AsmrWork): void;
   onRelated: OpenRelated;
-  scrollTop(): void;
+  scrollRoot: RefObject<HTMLDivElement | null>;
 }) {
   const [order, setOrder] = useState<AsmrOrder>(defaultOrder);
-  const [page, setPage] = useState(1);
-  const [result, setResult] = useState<AsmrPage | null>(null);
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [attempt, setAttempt] = useState(0);
   const sequence = useRef(0);
-  useEffect(() => {
+  const sentinel = useRef<HTMLDivElement>(null);
+  const loadPage = (pageNumber: number, reset: boolean) => {
     const id = ++sequence.current;
+    setLoading(true);
     setError(null);
-    setResult(null);
+    if (reset) setLoaded(null);
     loader({
       order,
       ascending: false,
-      page,
+      page: pageNumber,
       pageSize: PAGE_SIZE,
       subtitleOnly,
     })
-      .then((value) => {
-        if (id === sequence.current) setResult(value);
+      .then((result) => {
+        if (id !== sequence.current) return;
+        setLoaded((previous) => {
+          const base = reset || !previous ? [] : previous.works;
+          // New works can shift later pages; never show one twice.
+          const seen = new Set(base.map((work) => work.id));
+          const works = [
+            ...base,
+            ...result.works.filter((work) => !seen.has(work.id)),
+          ].slice(0, MAX_LOADED);
+          return {
+            works,
+            total: result.total,
+            nextPage: pageNumber + 1,
+            done:
+              result.works.length === 0 ||
+              pageNumber * PAGE_SIZE >= result.total ||
+              works.length >= MAX_LOADED,
+          };
+        });
       })
       .catch((reason) => {
         if (id === sequence.current) setError(asmrErrorMessage(reason));
+      })
+      .finally(() => {
+        if (id === sequence.current) setLoading(false);
       });
+  };
+  useEffect(() => {
+    loadPage(1, true);
     // `loader` is recreated per render; `loaderKey` names what it loads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaderKey, order, page, subtitleOnly, attempt]);
+  }, [loaderKey, order, subtitleOnly]);
+  const loadMore = () => {
+    if (loaded && !loaded.done && !loading) loadPage(loaded.nextPage, false);
+  };
+  useEffect(() => {
+    const element = sentinel.current;
+    if (!element || !loaded || loaded.done || loading || error) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          loadPage(loaded.nextPage, false);
+        }
+      },
+      { root: scrollRoot.current, rootMargin: "0px 0px 800px 0px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, loading, error]);
+  const retry = () =>
+    loaded ? loadPage(loaded.nextPage, false) : loadPage(1, true);
+  const errorBlock = error && (
+    <div className="asmr-error" role="alert">
+      {error}
+      <button className="asmr-text-button" onClick={retry}>
+        重试
+      </button>
+    </div>
+  );
   return (
     <section className="asmr-list" aria-label={title}>
       <div className="asmr-list-toolbar">
         <h2>
           {title}
-          {result && <span className="asmr-count">（{result.total}）</span>}
+          {loaded && <span className="asmr-count">（{loaded.total}）</span>}
         </h2>
         {sortable && (
           <label className="asmr-select">
@@ -219,10 +252,7 @@ function WorkList({
             <select
               value={order}
               data-testid="asmr-order"
-              onChange={(event) => {
-                setOrder(event.target.value as AsmrOrder);
-                setPage(1);
-              }}
+              onChange={(event) => setOrder(event.target.value as AsmrOrder)}
             >
               {orders.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -237,10 +267,7 @@ function WorkList({
             type="checkbox"
             checked={subtitleOnly}
             data-testid="asmr-subtitle-only"
-            onChange={(event) => {
-              onSubtitleOnly(event.target.checked);
-              setPage(1);
-            }}
+            onChange={(event) => onSubtitleOnly(event.target.checked)}
           />
           <span>带字幕</span>
         </label>
@@ -263,51 +290,55 @@ function WorkList({
           </button>
         </div>
       </div>
-      {error && (
-        <div className="asmr-error" role="alert">
-          {error}
-          <button
-            className="asmr-text-button"
-            onClick={() => setAttempt((value) => value + 1)}
-          >
-            重试
-          </button>
-        </div>
-      )}
-      {!result && !error && (
+      {!loaded && errorBlock}
+      {!loaded && !error && (
         <p className="asmr-muted" role="status">
           正在读取…
         </p>
       )}
-      {result && result.works.length === 0 && (
+      {loaded && loaded.works.length === 0 && (
         <p className="asmr-muted">没有找到作品。</p>
       )}
-      {result && result.works.length > 0 && (
-        <div
-          className={`asmr-grid asmr-grid-${viewMode}`}
-          data-testid="asmr-works"
-        >
-          {result.works.map((work) => (
-            <AsmrWorkCard
-              key={work.id}
-              work={work}
-              variant={viewMode}
-              selected={selected === work.id}
-              onOpen={onOpen}
-              onRelated={onRelated}
-            />
-          ))}
-        </div>
-      )}
-      {result && (
-        <Pager
-          page={page}
-          total={result.total}
-          onPage={(next) => {
-            setPage(next);
-            scrollTop();
-          }}
-        />
+      {loaded && loaded.works.length > 0 && (
+        <>
+          <div
+            className={`asmr-grid asmr-grid-${viewMode}`}
+            data-testid="asmr-works"
+          >
+            {loaded.works.map((work) => (
+              <AsmrWorkCard
+                key={work.id}
+                work={work}
+                variant={viewMode}
+                selected={selected === work.id}
+                onOpen={onOpen}
+                onRelated={onRelated}
+              />
+            ))}
+          </div>
+          <div
+            ref={sentinel}
+            className="asmr-list-end"
+            data-testid="asmr-list-end"
+          >
+            {errorBlock}
+            {loading ? (
+              <span role="status">正在读取更多…</span>
+            ) : loaded.done ? (
+              <span>
+                {loaded.works.length >= MAX_LOADED
+                  ? `已显示 ${loaded.works.length} 部，可以用排序或搜索缩小范围`
+                  : `已显示全部 ${loaded.works.length} 部`}
+              </span>
+            ) : (
+              !error && (
+                <button className="asmr-load-more" onClick={loadMore}>
+                  加载更多（已显示 {loaded.works.length} / {loaded.total}）
+                </button>
+              )
+            )}
+          </div>
+        </>
       )}
     </section>
   );
@@ -534,7 +565,7 @@ export function AsmrWorkspace({
     selected,
     onOpen: openWork,
     onRelated: openRelated,
-    scrollTop,
+    scrollRoot: content,
   };
   // Each list is keyed by what it loads, so page and order start fresh.
   let body: ReactNode = null;

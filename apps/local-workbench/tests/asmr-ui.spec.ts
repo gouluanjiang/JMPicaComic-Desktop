@@ -64,11 +64,11 @@ async function installAsmr(page: Page) {
     });
     const page = (start: number, total: number, pageNumber = 1) => ({
       works: Array.from(
-        { length: Math.min(24, Math.max(0, total - (pageNumber - 1) * 24)) },
-        (_, i) => work(start + (pageNumber - 1) * 24 + i),
+        { length: Math.min(48, Math.max(0, total - (pageNumber - 1) * 48)) },
+        (_, i) => work(start + (pageNumber - 1) * 48 + i),
       ),
       page: pageNumber,
-      pageSize: 24,
+      pageSize: 48,
       total,
     });
     bridge.invoke = (command, args = {}) => {
@@ -163,7 +163,7 @@ test("the ASMR section opens beside the comic pages and keeps both in place", as
     "合成音声作品 100",
   );
   const works = page.getByTestId("asmr-works");
-  await expect(works.locator("article")).toHaveCount(24);
+  await expect(works.locator("article")).toHaveCount(48);
   await expect(page.getByTestId("asmr-work-1000001")).toContainText(
     "RJ01000001",
   );
@@ -171,15 +171,24 @@ test("the ASMR section opens beside the comic pages and keeps both in place", as
   // The sidebar now offers the ASMR entries.
   await expect(page.getByTestId("nav-asmr-circles")).toBeVisible();
   await expect(page.getByTestId("nav-library")).toBeHidden();
-  await page.getByRole("button", { name: "下一页" }).click();
-  await expect(page.getByTestId("asmr-page")).toHaveText("第 2 / 3 页");
+  // Scrolling near the end loads the next batch without a page click.
+  await page.getByTestId("asmr-list-end").scrollIntoViewIfNeeded();
+  await expect(works.locator("article")).toHaveCount(60);
+  await expect(page.getByTestId("asmr-list-end")).toContainText(
+    "已显示全部 60 部",
+  );
+  // Development builds run effects twice, so compare the pages requested.
+  const pages = (await calls(page, "asmr_works")).map(
+    (call) => (call.args.query as { page: number }).page,
+  );
+  expect([...new Set(pages)]).toEqual([1, 2]);
   await page.getByTestId("section-comic").click();
   await expect(page.getByTestId("asmr-workspace")).toBeHidden();
   await expect(page.getByTestId("nav-library")).toBeVisible();
   await expect(page.locator(".main-shell")).not.toHaveAttribute("inert", "");
-  // Coming back keeps the ASMR page that was open.
+  // Coming back keeps everything that was loaded.
   await openAsmr(page);
-  await expect(page.getByTestId("asmr-page")).toHaveText("第 2 / 3 页");
+  await expect(works.locator("article")).toHaveCount(60);
   // The choice survives a restart.
   await page.reload();
   await expect(page.getByTestId("asmr-workspace")).toBeVisible();
@@ -195,7 +204,7 @@ test("sorting, subtitles and view modes request exactly what is shown", async ({
   await installAsmr(page);
   await openAsmr(page);
   await expect(page.getByTestId("asmr-works").locator("article")).toHaveCount(
-    24,
+    48,
   );
   await page.getByTestId("asmr-order").selectOption("downloads");
   await page.getByTestId("asmr-subtitle-only").check();
@@ -206,7 +215,7 @@ test("sorting, subtitles and view modes request exactly what is shown", async ({
         order: "downloads",
         ascending: false,
         page: 1,
-        pageSize: 24,
+        pageSize: 48,
         subtitleOnly: true,
       },
     });
@@ -255,7 +264,7 @@ test("a work opens in the side panel with its files, people, tags and editions",
       order: "added",
       ascending: false,
       page: 1,
-      pageSize: 24,
+      pageSize: 48,
       subtitleOnly: false,
     },
   });
@@ -303,7 +312,7 @@ test("searching a work code opens it and failures can be retried", async ({
   await expect(page.getByRole("alert")).toContainText("连接 asmr.one 失败");
   await page.getByRole("button", { name: "重试" }).click();
   await expect(page.getByTestId("asmr-works").locator("article")).toHaveCount(
-    24,
+    48,
   );
   await page.getByTestId("asmr-search").fill("rj01000005");
   await page.getByTestId("asmr-search").press("Enter");
