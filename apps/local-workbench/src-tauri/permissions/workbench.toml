@@ -24,8 +24,8 @@ commands.allow = ["workbench_update_check", "workbench_update_install"]
 
 [[permission]]
 identifier = "workbench-asmr"
-description = "Read the public ASMR catalog: listings, search, circles, voice actors, tags, work details, file trees and covers as data URLs. No accounts, media URLs, downloads or paths."
-commands.allow = ["asmr_works", "asmr_popular", "asmr_search", "asmr_related", "asmr_index", "asmr_work", "asmr_cover"]
+description = "Read the public ASMR catalog: listings, search, circles, voice actors, tags, work details, file trees, covers as data URLs and subtitle text by file id. Audio and video stream through the main-window-only media protocol. No accounts, media URLs, downloads or paths."
+commands.allow = ["asmr_works", "asmr_popular", "asmr_search", "asmr_related", "asmr_index", "asmr_work", "asmr_cover", "asmr_subtitle"]
 
 [[permission]]
 identifier = "workbench-accounts"

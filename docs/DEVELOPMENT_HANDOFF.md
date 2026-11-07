@@ -1,5 +1,34 @@
 # Current development handoff
 
+## ASMR section, step 2: online player (2026-11-07)
+
+The user asked for the player next, with a video player for works that ship subtitled
+videos. Media streams online only; nothing is written to disk.
+
+- `asmr-source` now keeps each file's stream address native (`AsmrMedia`) and gives the
+  renderer only a `fileId` per file. Addresses must be HTTPS on `*.kiko-play-niptan.one`
+  or a pinned API host, on the default port and without credentials; one redirect is
+  followed only to another allowed address. Files with `.mp4/.m4v/.webm/.mkv/.mov`
+  are typed `video`.
+- Audio and video play through the `asmrmedia` URI scheme
+  (`http://asmrmedia.localhost/<work>-<file>` on Windows), served to the main window
+  only. Each request fetches one byte range of at most 2 MiB upstream and answers
+  206, so memory stays bounded. Addresses are cached per work for an hour (32 works);
+  a 403/404 refreshes them once. The CSP adds `media-src` for this scheme only.
+- `asmr_subtitle` returns VTT/LRC/SRT text (max 2 MiB; UTF-8 or UTF-16 with BOM).
+- The UI (`asmr-media.ts`, `asmr-player.ts`, `AsmrPlayer.tsx`): a bottom bar, a full
+  player with a subtitle list and queue, a small floating video, element fullscreen,
+  keyboard keys (Space/K, ←/→ 10 s, Shift for 30 s, M, Shift+N/P, Esc, ↑/↓ in the full
+  player), Windows media keys via Media Session, a sleep timer with fade-out, playback
+  speed, and per-file positions plus last-played file in local storage (300 each).
+  Playback continues while the comic section is shown.
+- Version folders: Chinese, subtitled, lossless and non-bonus folders score higher.
+  A tie that only sound effects separate asks once; the choice is remembered.
+- Not in this step: the pop-out player window, ASS subtitles, and formats WebView2
+  cannot decode (the player reports these instead of transcoding).
+- Local Rust builds failed with LNK1104 on this machine (even with an ASCII target
+  directory), so the Rust changes were compiled and tested only in CI.
+
 ## ASMR section, step 1: browsing (2026-11-07)
 
 The user chose to add ASMR from asmr.one; video sources are dropped. Requirements were

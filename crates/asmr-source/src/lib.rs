@@ -1,12 +1,12 @@
 //! Read-only asmr.one catalog client: listings, search, circles, voice actors,
-//! tags, work details, file trees and covers. No accounts, playback URLs,
-//! downloads or filesystem access.
+//! tags, work details, file trees, covers, and bounded pieces of media files
+//! for online playback. No accounts, downloads or filesystem access.
 
 mod types;
 
 pub use types::{
     is_work_code, parse_work_input, AsmrCircle, AsmrEdition, AsmrFileKind, AsmrIndexEntry,
-    AsmrPage, AsmrTag, AsmrTrack, AsmrVoiceActor, AsmrWork,
+    AsmrMedia, AsmrPage, AsmrTag, AsmrTrack, AsmrVoiceActor, AsmrWork, ASMR_MEDIA_HOST_SUFFIXES,
 };
 
 use base64::Engine as _;
@@ -29,6 +29,12 @@ const MAX_COVER: usize = 4 * 1024 * 1024;
 const MAX_PAGE: u64 = 100_000;
 const MAX_PAGE_SIZE: u64 = 48;
 const MAX_KEYWORD: usize = 100;
+/// Largest piece of a media file fetched per request. The webview asks again
+/// for the rest, so memory stays bounded however long the file is.
+pub const MEDIA_CHUNK: u64 = 2 * 1024 * 1024;
+const MEDIA_TIMEOUT: Duration = Duration::from_secs(60);
+const MAX_TEXT: usize = 2 * 1024 * 1024;
+const SUBTITLE_EXTENSIONS: &[&str] = &["vtt", "lrc", "srt"];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub struct AsmrError {
@@ -126,6 +132,138 @@ pub enum AsmrCoverSize {
 pub struct AsmrWorkDetail {
     pub work: AsmrWork,
     pub tracks: Vec<AsmrTrack>,
+    /// Stream addresses by file id. Kept native.
+    #[serde(skip)]
+    pub media: Vec<AsmrMedia>,
+}
+
+/// One requested byte range, `bytes=start-` or `bytes=start-end`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AsmrByteRange {
+    pub start: u64,
+    pub end: Option<u64>,
+}
+
+impl AsmrByteRange {
+    /// A missing header means the whole file from the start. Suffix and
+    /// multiple ranges are refused; media elements never send them.
+    pub fn parse(header: Option<&str>) -> AsmrResult<Self> {
+        let Some(header) = header else {
+            return Ok(Self {
+                start: 0,
+                end: None,
+            });
+        };
+        let invalid = error("ASMR_RANGE_INVALID");
+        let spec = header.trim().strip_prefix("bytes=").ok_or(invalid)?;
+        if spec.contains(',') {
+            return Err(invalid);
+        }
+        let (start, end) = spec.split_once('-').ok_or(invalid)?;
+        let start = range_number(start).ok_or(invalid)?;
+        let end = match end.trim() {
+            "" => None,
+            end => Some(
+                range_number(end)
+                    .filter(|end| *end >= start)
+                    .ok_or(invalid)?,
+            ),
+        };
+        Ok(Self { start, end })
+    }
+
+    /// The last byte fetched for this request, at most one chunk past start.
+    pub fn capped_end(&self) -> u64 {
+        let cap = self.start.saturating_add(MEDIA_CHUNK - 1);
+        self.end.map_or(cap, |end| end.min(cap))
+    }
+}
+
+fn range_number(value: &str) -> Option<u64> {
+    let value = value.trim();
+    let digits =
+        !value.is_empty() && value.len() <= 19 && value.bytes().all(|b| b.is_ascii_digit());
+    if !digits {
+        return None;
+    }
+    value.parse().ok()
+}
+
+/// A piece of a media file and where it sits in the whole.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AsmrMediaChunk {
+    pub start: u64,
+    pub end: u64,
+    pub total: Option<u64>,
+    pub content_type: &'static str,
+    pub bytes: Vec<u8>,
+}
+
+/// Content types by extension. Anything else is served as opaque bytes and
+/// the media element decides whether it can play it.
+pub fn media_type(extension: Option<&str>) -> &'static str {
+    match extension.unwrap_or_default() {
+        "mp3" => "audio/mpeg",
+        "wav" => "audio/wav",
+        "flac" => "audio/flac",
+        "m4a" => "audio/mp4",
+        "aac" => "audio/aac",
+        "ogg" | "oga" | "opus" => "audio/ogg",
+        "mp4" | "m4v" | "mov" => "video/mp4",
+        "webm" => "video/webm",
+        "mkv" => "video/x-matroska",
+        _ => "application/octet-stream",
+    }
+}
+
+/// `bytes <start>-<end>/<total or *>`.
+pub fn parse_content_range(header: &str) -> Option<(u64, u64, Option<u64>)> {
+    let (range, total) = header.trim().strip_prefix("bytes ")?.split_once('/')?;
+    let (start, end) = range.split_once('-')?;
+    let start = range_number(start)?;
+    let end = range_number(end).filter(|end| *end >= start)?;
+    let total = match total.trim() {
+        "*" => None,
+        total => Some(range_number(total).filter(|total| *total > end)?),
+    };
+    Some((start, end, total))
+}
+
+/// Subtitle text in UTF-8 or UTF-16 with a byte-order mark; anything else is
+/// read as UTF-8 with invalid bytes replaced.
+pub fn decode_text(bytes: &[u8]) -> String {
+    fn utf16(bytes: &[u8], little: bool) -> String {
+        let units = bytes.chunks_exact(2).map(|pair| {
+            if little {
+                u16::from_le_bytes([pair[0], pair[1]])
+            } else {
+                u16::from_be_bytes([pair[0], pair[1]])
+            }
+        });
+        char::decode_utf16(units)
+            .map(|unit| unit.unwrap_or(char::REPLACEMENT_CHARACTER))
+            .collect()
+    }
+    if let Some(rest) = bytes.strip_prefix(&[0xef, 0xbb, 0xbf]) {
+        String::from_utf8_lossy(rest).into_owned()
+    } else if let Some(rest) = bytes.strip_prefix(&[0xff, 0xfe]) {
+        utf16(rest, true)
+    } else if let Some(rest) = bytes.strip_prefix(&[0xfe, 0xff]) {
+        utf16(rest, false)
+    } else {
+        String::from_utf8_lossy(bytes).into_owned()
+    }
+}
+
+fn media_status(status: u16) -> AsmrResult<()> {
+    match status {
+        200..=299 => Ok(()),
+        404 | 410 => Err(error("ASMR_NOT_FOUND")),
+        401 | 403 => Err(error("ASMR_REFUSED")),
+        416 => Err(error("ASMR_RANGE_INVALID")),
+        429 => Err(error("ASMR_RATE_LIMITED")),
+        _ => Err(error("ASMR_REQUEST_FAILED")),
+    }
 }
 
 /// One request against a path below `/api/`.
@@ -389,8 +527,128 @@ impl AsmrSource {
         let work = types::work(&self.json(ApiRequest::get(&["workInfo", &id])).await?)?;
         let mut tracks = ApiRequest::get(&["tracks", &id]);
         tracks.extra_query.push(("v", "2".to_owned()));
-        let tracks = types::tracks(&self.json(tracks).await?)?;
-        Ok(AsmrWorkDetail { work, tracks })
+        let (tracks, media) = types::tracks(&self.json(tracks).await?, work.id)?;
+        Ok(AsmrWorkDetail {
+            work,
+            tracks,
+            media,
+        })
+    }
+
+    /// Sends one GET to a media address and follows at most one redirect,
+    /// and only to another allowed media address.
+    async fn media_request(
+        &self,
+        url: &Url,
+        range: Option<(u64, u64)>,
+    ) -> AsmrResult<reqwest::Response> {
+        use reqwest::header::{ACCEPT, LOCATION, RANGE};
+        let mut url = url.clone();
+        for _ in 0..2 {
+            if !types::allowed_media_url(&url) {
+                return Err(error("ASMR_REFUSED"));
+            }
+            let mut builder = self
+                .client
+                .get(url.clone())
+                .timeout(MEDIA_TIMEOUT)
+                .header(ACCEPT, "*/*");
+            if let Some((start, end)) = range {
+                builder = builder.header(RANGE, format!("bytes={start}-{end}"));
+            }
+            let response = builder.send().await.map_err(|_| error("ASMR_NETWORK"))?;
+            if !response.status().is_redirection() {
+                return Ok(response);
+            }
+            url = response
+                .headers()
+                .get(LOCATION)
+                .and_then(|location| location.to_str().ok())
+                .and_then(|location| url.join(location).ok())
+                .ok_or(error("ASMR_REQUEST_FAILED"))?;
+        }
+        Err(error("ASMR_REQUEST_FAILED"))
+    }
+
+    /// At most [`MEDIA_CHUNK`] bytes of an audio or video file, starting at
+    /// the requested offset.
+    pub async fn media(
+        &self,
+        media: &AsmrMedia,
+        range: AsmrByteRange,
+    ) -> AsmrResult<AsmrMediaChunk> {
+        if !matches!(media.kind, AsmrFileKind::Audio | AsmrFileKind::Video) {
+            return Err(error("ASMR_INVALID_INPUT"));
+        }
+        let end = range.capped_end();
+        let mut response = self
+            .media_request(&media.url, Some((range.start, end)))
+            .await?;
+        let status = response.status().as_u16();
+        media_status(status)?;
+        let total = if status == 206 {
+            let (start, last, total) = response
+                .headers()
+                .get(reqwest::header::CONTENT_RANGE)
+                .and_then(|value| value.to_str().ok())
+                .and_then(parse_content_range)
+                .ok_or(error("ASMR_RESPONSE_INVALID"))?;
+            if start != range.start || last > end {
+                return Err(error("ASMR_RESPONSE_INVALID"));
+            }
+            total
+        } else if range.start == 0 {
+            // The whole file came back; keep only the first chunk of it.
+            response.content_length()
+        } else {
+            return Err(error("ASMR_RANGE_UNSUPPORTED"));
+        };
+        let limit =
+            usize::try_from(end - range.start + 1).map_err(|_| error("ASMR_RANGE_INVALID"))?;
+        let mut bytes = Vec::with_capacity(limit.min(256 * 1024));
+        while bytes.len() < limit {
+            let Some(chunk) = response.chunk().await.map_err(|_| error("ASMR_NETWORK"))? else {
+                break;
+            };
+            let room = limit - bytes.len();
+            bytes.extend_from_slice(&chunk[..chunk.len().min(room)]);
+        }
+        if bytes.is_empty() {
+            return Err(error("ASMR_RESPONSE_INVALID"));
+        }
+        Ok(AsmrMediaChunk {
+            start: range.start,
+            end: range.start + bytes.len() as u64 - 1,
+            total,
+            content_type: media_type(media.extension().as_deref()),
+            bytes,
+        })
+    }
+
+    /// A subtitle file (VTT, LRC or SRT) as text.
+    pub async fn subtitle(&self, media: &AsmrMedia) -> AsmrResult<String> {
+        let subtitle = media
+            .extension()
+            .is_some_and(|extension| SUBTITLE_EXTENSIONS.contains(&extension.as_str()));
+        if media.kind != AsmrFileKind::Text || !subtitle {
+            return Err(error("ASMR_INVALID_INPUT"));
+        }
+        let mut response = self.media_request(&media.url, None).await?;
+        media_status(response.status().as_u16())?;
+        if response
+            .content_length()
+            .is_some_and(|length| length > MAX_TEXT as u64)
+        {
+            return Err(error("ASMR_RESPONSE_TOO_LARGE"));
+        }
+        let mut bytes = Vec::new();
+        while let Some(chunk) = response.chunk().await.map_err(|_| error("ASMR_NETWORK"))? {
+            if bytes.len() + chunk.len() > MAX_TEXT {
+                return Err(error("ASMR_RESPONSE_TOO_LARGE"));
+            }
+            bytes.extend_from_slice(&chunk);
+        }
+        Ok(decode_text(&bytes))
     }
 
     /// A cover as a `data:` URL, or `None` when the site has none.

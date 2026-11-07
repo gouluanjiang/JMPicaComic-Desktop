@@ -22,6 +22,7 @@ fn main() {
         "asmr_index",
         "asmr_work",
         "asmr_cover",
+        "asmr_subtitle",
         "reader_open",
         "reader_cancel_open",
         "reader_chapter",

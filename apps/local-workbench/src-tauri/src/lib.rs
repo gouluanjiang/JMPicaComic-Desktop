@@ -222,6 +222,7 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
         .manage(Arc::new(updater::DesktopUpdater::default()))
         .manage(Arc::new(asmr::DesktopAsmr::default()))
         .on_window_event(reader_windows::window_event)
+        .register_asynchronous_uri_scheme_protocol(asmr::MEDIA_SCHEME, asmr::media_protocol)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
@@ -248,6 +249,7 @@ fn app_builder<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             asmr::asmr_index,
             asmr::asmr_work,
             asmr::asmr_cover,
+            asmr::asmr_subtitle,
             reader::reader_open,
             reader::reader_cancel_open,
             reader::reader_chapter,
