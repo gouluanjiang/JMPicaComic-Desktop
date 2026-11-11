@@ -1,5 +1,60 @@
 # Current development handoff
 
+## 1.2.0 release preparation and roadmap (2026-11-11)
+
+PR #51 (ASMR player, desktop subtitles) merged after the user's live test of the
+candidate built from `41bcfda`. PR #52 fixed two scroll races in
+`recent-ui.spec.ts`; it changes tests only. Main was `03bd359` with all checks green.
+
+The user approved a release before the remaining ASMR steps and left the order to
+the maintainer session. 1.2.0 ships what main already holds: the in-app updater
+(#47) and the ASMR section's browsing (#49, #50) and online player (#51). Comic
+behaviour and document formats are unchanged.
+
+- The version is 1.2.0 in `package.json`, `Cargo.toml`, `Cargo.lock`,
+  `tauri.conf.json` (also the bundled release-notes path) and the issue template.
+  Notes are in `RELEASE_NOTES_1.2.0.md`. The README now describes the updater and the
+  ASMR section and no longer lists video sources.
+- This is the first release that needs [UPDATER_RELEASE.md](UPDATER_RELEASE.md):
+  sign the verified installer, write `latest.json`, add it to `SHA256SUMS.txt`.
+  Publishing still needs the user's explicit confirmation.
+- The candidate installed on the user's machine reports 1.1.0 and contains the
+  updater, so it can run the first real in-app update once 1.2.0 and its
+  `latest.json` are public. That has not happened yet.
+- `production_enabled=false` is unchanged.
+
+Roadmap after 1.2.0, agreed with the user on 2026-11-11. This is planning only:
+nothing below is built, and it grants no authority for account actions or downloads.
+
+1. **Small video.** The user reads comics while watching, so the picture has to be
+   able to leave the app window.
+   - The in-page small video (320 px wide and 16:9 today) becomes resizable by its
+     edges or corners and keeps the video's own aspect ratio. The size is
+     remembered, has a minimum of about 200 px, never exceeds the section area above
+     the bar, and the overlaid subtitle scales with it.
+   - A pop-out uses ordinary video picture-in-picture: a button, plus an attempt to
+     pop out when the box is dragged to the window edge. Burned-in subtitles show
+     anyway. For separate subtitle files the user accepts the desktop subtitle
+     window. WebView2 support is unverified, so probe first; the fallbacks are
+     Document Picture-in-Picture or an own native video window.
+   - There will be no separate pop-out player window.
+   - Suggested: ship this batch as its own small release.
+2. **Follows.** Circles, voice actors, tags and single works, each checked at
+   startup or manually. New works appear on a "关注更新" page in the ASMR sidebar
+   with an unread count and no Windows notifications. A tag follow reports only
+   works added after the follow, and a check reads only the newest page.
+3. **Account sync.** Favourites, playlists and listening marks. The site's login and
+   marking API has not been probed. Writes are real account actions.
+4. **Downloads and the local library.** These need `DOWNLOAD_EXECUTOR_THAW_GATE.md`.
+
+Undecided: ASS subtitles (timing and plain text only) and a fallback to the site's
+low-quality stream for files WebView2 cannot decode. A read-only sample of about 50
+recent works' file lists was proposed to measure how common they are; the user has
+not approved it. Transcoding and a bundled ffmpeg are ruled out.
+
+Still open from 1.1.0: the interactive installer pages are untested, LOCAL-03 was
+not re-checked, and one failure of `author-workspace-ui.spec.ts:7` is unexplained.
+
 ## ASMR section, step 2: online player (2026-11-07)
 
 The user asked for the player next, with a video player for works that ship subtitled
