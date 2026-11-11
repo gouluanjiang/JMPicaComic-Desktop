@@ -813,10 +813,33 @@ test("detail title and date appear on return and survive source switches without
     },
   });
   const card = recentCard(page, "Pica", 15);
-  await card.scrollIntoViewIfNeeded();
-  const before = await page
-    .getByRole("main")
-    .evaluate((main) => main.scrollTop);
+  const main = page.getByRole("main");
+  await expect(page.getByTestId("recent-counts")).toContainText("已读取 20 部");
+  // The first page can still be settling its anchor across frames, and that
+  // restore deliberately overrides programmatic scrolling such as
+  // scrollIntoViewIfNeeded. Real wheel input cancels it, as a user's would.
+  const delta = await card.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const view = element.closest("main")!.getBoundingClientRect();
+    return Math.round(
+      rect.top + rect.height / 2 - (view.top + view.height / 2),
+    );
+  });
+  expect(delta).toBeGreaterThan(0);
+  await main.hover();
+  await page.mouse.wheel(0, delta);
+  // Wheel delivery is asynchronous; capture only the settled position.
+  let previous = -1;
+  await expect
+    .poll(async () => {
+      const value = await main.evaluate((element) => element.scrollTop);
+      const settled = value > 0 && value === previous;
+      previous = value;
+      return settled;
+    })
+    .toBe(true);
+  await expect(card).toBeInViewport();
+  const before = await main.evaluate((element) => element.scrollTop);
   const calls = (await recentCalls(page)).length;
   await card.getByRole("button", { name: /^Pica 合成最近更新 15 ·/ }).click();
   await expect(
@@ -841,6 +864,25 @@ test("detail title and date appear on return and survive source switches without
   await expect(card).toContainText("2026-10-02");
   expect(await detailCalls(page)).toHaveLength(1);
 });
+
+// Loading or appending a page restores the reader's position for a few frames,
+// and only user input cancels that. A scrollTop assigned from script during
+// those frames is undone, so assign it again until it survives 30 frames.
+async function setSettledScroll(page: Page, top: number) {
+  await expect
+    .poll(() =>
+      page.getByRole("main").evaluate(async (main, top) => {
+        main.scrollTop = top;
+        const assigned = main.scrollTop;
+        for (let frame = 0; frame < 30; frame++)
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
+        return assigned > 0 && main.scrollTop === assigned;
+      }, top),
+    )
+    .toBe(true);
+}
 
 async function captureRecentAnchor(page: Page) {
   const anchor = await page.getByTestId("recent-grid").evaluate((grid) => {
@@ -1240,9 +1282,7 @@ test("feed anchors and loaded pages survive section and source switches, while a
   await install(page);
   await page.getByRole("button", { name: "读取下一页", exact: true }).click();
   await expect(page.getByTestId("recent-counts")).toContainText("已读取 39 部");
-  await page.getByRole("main").evaluate((main) => {
-    main.scrollTop = 1500;
-  });
+  await setSettledScroll(page, 1500);
   const anchor = await captureRecentAnchor(page);
   const before = await recentCalls(page);
   await page.getByTestId("nav-settings").click();
