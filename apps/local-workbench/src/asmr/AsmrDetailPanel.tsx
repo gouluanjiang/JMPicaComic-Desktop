@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Icon } from "../icons.tsx";
+import { chooseGroup, playGroups, seKind } from "./asmr-media.ts";
+import type { PlayGroup } from "./asmr-media.ts";
+import {
+  asmrPlayer,
+  lastPlayed,
+  rememberSePreference,
+  sePreference,
+} from "./asmr-player.ts";
 import { loadWork } from "./asmr-runtime.ts";
 import {
   asmrErrorMessage,
@@ -7,16 +15,25 @@ import {
   formatSize,
   parseWorkInput,
 } from "./asmr-types.ts";
-import type { AsmrTrack, AsmrWorkDetail } from "./asmr-types.ts";
+import type { AsmrTrack, AsmrWork, AsmrWorkDetail } from "./asmr-types.ts";
 import { AsmrChips, AsmrCover, AsmrStars } from "./AsmrWorkCard.tsx";
 import type { OpenRelated } from "./AsmrWorkCard.tsx";
 
 const kindIcon = {
   audio: "headphones",
+  video: "film",
   text: "book",
   image: "grid",
   other: "folder",
 } as const;
+
+function containsFile(tracks: AsmrTrack[], fileId: number): boolean {
+  return tracks.some((track) =>
+    track.type === "folder"
+      ? containsFile(track.children, fileId)
+      : track.fileId === fileId,
+  );
+}
 
 function countFiles(tracks: AsmrTrack[]): number {
   return tracks.reduce(
@@ -26,18 +43,36 @@ function countFiles(tracks: AsmrTrack[]): number {
   );
 }
 
-function TrackTree({ tracks, depth }: { tracks: AsmrTrack[]; depth: number }) {
+type TreeProps = {
+  depth: number;
+  playing: number | null;
+  onPlay(fileId: number): void;
+};
+
+/** The file id now playing from this work, as a primitive for cheap renders. */
+function usePlayingFile(workId: number): number | null {
+  return useSyncExternalStore(asmrPlayer.subscribe, () => {
+    const state = asmrPlayer.getState();
+    const item = state.queue[state.index];
+    return item && item.workId === workId ? item.fileId : null;
+  });
+}
+
+function TrackTree({
+  tracks,
+  ...props
+}: TreeProps & {
+  tracks: AsmrTrack[];
+}) {
+  const { depth, playing, onPlay } = props;
   return (
     <ul className="asmr-tracks" role={depth === 0 ? "tree" : "group"}>
-      {tracks.map((track, index) =>
-        track.type === "folder" ? (
-          <Folder key={`${index}:${track.title}`} track={track} depth={depth} />
-        ) : (
-          <li
-            key={`${index}:${track.title}`}
-            className={`asmr-track asmr-track-${track.kind}`}
-            role="treeitem"
-          >
+      {tracks.map((track, index) => {
+        const key = `${index}:${track.title}`;
+        if (track.type === "folder")
+          return <Folder key={key} track={track} {...props} />;
+        const meta = (
+          <>
             <Icon name={kindIcon[track.kind]} size={16} />
             <span className="asmr-track-title">{track.title}</span>
             <span className="asmr-track-meta">
@@ -45,21 +80,50 @@ function TrackTree({ tracks, depth }: { tracks: AsmrTrack[]; depth: number }) {
                 formatSize(track.size) ??
                 ""}
             </span>
+          </>
+        );
+        const fileId = track.fileId;
+        const playable =
+          fileId !== null && (track.kind === "audio" || track.kind === "video");
+        return playable ? (
+          <li key={key} role="treeitem">
+            <button
+              className={`asmr-track asmr-track-${track.kind}${playing === fileId ? " playing" : ""}`}
+              aria-current={playing === fileId ? "true" : undefined}
+              aria-label={`播放 ${track.title}`}
+              title={`播放 ${track.title}`}
+              onClick={() => onPlay(fileId)}
+            >
+              {meta}
+            </button>
           </li>
-        ),
-      )}
+        ) : (
+          <li
+            key={key}
+            className={`asmr-track asmr-track-${track.kind}`}
+            role="treeitem"
+          >
+            {meta}
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
 function Folder({
   track,
-  depth,
-}: {
+  ...props
+}: TreeProps & {
   track: Extract<AsmrTrack, { type: "folder" }>;
-  depth: number;
 }) {
-  const [open, setOpen] = useState(depth === 0);
+  const [open, setOpen] = useState(props.depth === 0);
+  // The folder holding what is playing opens so the file can be seen.
+  const holdsPlaying =
+    props.playing !== null && containsFile(track.children, props.playing);
+  useEffect(() => {
+    if (holdsPlaying) setOpen(true);
+  }, [holdsPlaying]);
   return (
     <li className="asmr-folder" role="treeitem" aria-expanded={open}>
       <button className="asmr-folder-toggle" onClick={() => setOpen(!open)}>
@@ -69,8 +133,88 @@ function Folder({
           {countFiles(track.children)} 个文件
         </span>
       </button>
-      {open && <TrackTree tracks={track.children} depth={depth + 1} />}
+      {open && (
+        <TrackTree tracks={track.children} {...props} depth={props.depth + 1} />
+      )}
     </li>
+  );
+}
+
+function PlaySection({
+  work,
+  groups,
+  playing,
+}: {
+  work: AsmrWork;
+  groups: PlayGroup[];
+  playing: number | null;
+}) {
+  const [choices, setChoices] = useState<PlayGroup[] | null>(null);
+  if (groups.length === 0)
+    return <p className="asmr-muted">这部作品没有可以在线播放的音频或视频。</p>;
+  const start = (group: PlayGroup, fileId: number | null = null) => {
+    setChoices(null);
+    asmrPlayer.playGroup(work, group, fileId);
+  };
+  const last = lastPlayed(work.id);
+  const lastGroup =
+    last === null
+      ? undefined
+      : groups.find((group) =>
+          group.items.some((item) => item.fileId === last),
+        );
+  const lastItem = lastGroup?.items.find((item) => item.fileId === last);
+  return (
+    <div className="asmr-play">
+      <div className="asmr-play-buttons">
+        <button
+          className="asmr-primary-button"
+          data-testid="asmr-play-work"
+          onClick={() => {
+            const choice = chooseGroup(groups, sePreference());
+            if ("choices" in choice) setChoices(choice.choices);
+            else if (choice.group) start(choice.group);
+          }}
+        >
+          <Icon name="play" size={16} />
+          播放
+        </button>
+        {lastGroup && lastItem && playing === null && (
+          <button
+            className="asmr-secondary-button"
+            data-testid="asmr-resume"
+            title={lastItem.title}
+            onClick={() => start(lastGroup, lastItem.fileId)}
+          >
+            继续：{lastItem.title}
+          </button>
+        )}
+      </div>
+      {choices && (
+        <div
+          className="asmr-version-choice"
+          role="group"
+          aria-label="选择版本"
+          data-testid="asmr-version-choice"
+        >
+          <p>这部作品有多个版本，选择要播放的：</p>
+          {choices.map((group) => (
+            <button
+              key={group.path.join("/")}
+              onClick={() => {
+                rememberSePreference(seKind(group));
+                start(group);
+              }}
+            >
+              <span>{group.path.join(" / ") || "顶层文件"}</span>
+              <span className="asmr-track-meta">
+                {group.items.length} 个文件
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -105,6 +249,14 @@ export function AsmrDetailPanel({
   }, [id, attempt]);
   const work = detail?.work;
   const duration = formatDuration(work?.durationSeconds ?? null);
+  const groups = detail ? playGroups(detail.tracks) : [];
+  const playing = usePlayingFile(id);
+  const playFile = (fileId: number) => {
+    const group = groups.find((candidate) =>
+      candidate.items.some((item) => item.fileId === fileId),
+    );
+    if (work && group) asmrPlayer.playGroup(work, group, fileId);
+  };
   return (
     <aside
       className="asmr-detail"
@@ -199,17 +351,25 @@ export function AsmrDetailPanel({
               })}
             </div>
           )}
+          <PlaySection
+            key={work.id}
+            work={work}
+            groups={groups}
+            playing={playing}
+          />
           <h3 className="asmr-detail-subtitle">
             文件 · {countFiles(detail.tracks)} 个
           </h3>
           {detail.tracks.length ? (
-            <TrackTree tracks={detail.tracks} depth={0} />
+            <TrackTree
+              tracks={detail.tracks}
+              depth={0}
+              playing={playing}
+              onPlay={playFile}
+            />
           ) : (
             <p className="asmr-muted">这部作品暂时没有可显示的文件。</p>
           )}
-          <p className="asmr-muted asmr-detail-note">
-            在线播放会在之后的版本加入。
-          </p>
         </div>
       )}
     </aside>

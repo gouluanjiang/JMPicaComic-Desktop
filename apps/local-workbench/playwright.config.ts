@@ -22,6 +22,7 @@ export default defineConfig({
     "**/workflow-ui.spec.ts",
     "**/update-ui.spec.ts",
     "**/asmr-ui.spec.ts",
+    "**/asmr-player-ui.spec.ts",
   ],
   outputDir: "test-results",
   fullyParallel: false,

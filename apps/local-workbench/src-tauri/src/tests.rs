@@ -542,6 +542,7 @@ fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() 
         ("asmr_index", json!({"kind":"tags"})),
         ("asmr_work", json!({"id":1})),
         ("asmr_cover", json!({"id":1,"size":"thumbnail"})),
+        ("asmr_subtitle", json!({"workId":1,"fileId":1})),
     ];
     for (command, body) in commands {
         for other in [&secondary, &reader] {
@@ -574,6 +575,8 @@ fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() 
         ("asmr_work", json!({"id":0})),
         ("asmr_cover", json!({"id":0,"size":"main"})),
         ("asmr_popular", json!({"page":0,"subtitleOnly":false})),
+        ("asmr_subtitle", json!({"workId":0,"fileId":1})),
+        ("asmr_subtitle", json!({"workId":1,"fileId":0})),
     ] {
         assert_eq!(
             invoke(&main, command, body).unwrap_err(),
@@ -590,6 +593,172 @@ fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() 
     assert!(invoke(&main, "asmr_index", json!({"kind":"users"}))
         .unwrap_err()
         .is_string());
+}
+
+#[test]
+fn asmr_media_paths_and_responses_stay_closed() {
+    use asmr_source::{AsmrError, AsmrMediaChunk};
+    use tauri::http::{header, StatusCode};
+    assert_eq!(
+        asmr::media_path("/1683351-1965843"),
+        Some((1683351, 1965843))
+    );
+    for bad in [
+        "/",
+        "/1683351",
+        "/0-1",
+        "/1-0",
+        "/1-2-3",
+        "/../1-2",
+        "/1-2/",
+        "/a-2",
+        "1-2",
+        "/99999999999999999999-1",
+    ] {
+        assert_eq!(asmr::media_path(bad), None, "{bad}");
+    }
+    let response = asmr::media_response(Ok(AsmrMediaChunk {
+        start: 100,
+        end: 103,
+        total: Some(1000),
+        content_type: "audio/wav",
+        bytes: vec![1, 2, 3, 4],
+    }));
+    assert_eq!(response.status(), StatusCode::PARTIAL_CONTENT);
+    assert_eq!(
+        response.headers()[header::CONTENT_RANGE],
+        "bytes 100-103/1000"
+    );
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "audio/wav");
+    assert_eq!(response.headers()[header::ACCEPT_RANGES], "bytes");
+    assert_eq!(response.body().as_slice(), [1, 2, 3, 4]);
+    let unknown_total = asmr::media_response(Ok(AsmrMediaChunk {
+        start: 0,
+        end: 0,
+        total: None,
+        content_type: "video/mp4",
+        bytes: vec![0],
+    }));
+    assert_eq!(
+        unknown_total.headers()[header::CONTENT_RANGE],
+        "bytes 0-0/*"
+    );
+    for (code, status) in [
+        ("ASMR_NOT_FOUND", StatusCode::NOT_FOUND),
+        ("ASMR_REFUSED", StatusCode::FORBIDDEN),
+        ("ASMR_RANGE_INVALID", StatusCode::RANGE_NOT_SATISFIABLE),
+        ("ASMR_RANGE_UNSUPPORTED", StatusCode::RANGE_NOT_SATISFIABLE),
+        ("ASMR_RATE_LIMITED", StatusCode::TOO_MANY_REQUESTS),
+        ("ASMR_NETWORK", StatusCode::BAD_GATEWAY),
+    ] {
+        let response = asmr::media_response(Err(AsmrError { code }));
+        assert_eq!(response.status(), status, "{code}");
+        assert!(response.body().is_empty(), "{code}");
+    }
+}
+
+#[test]
+fn the_desktop_subtitle_window_only_reads_lines_and_closes_itself() {
+    let (_root, app) = fixture();
+    let main = window(&app, "main");
+    let reader = window(&app, "reader-window-1");
+    let lyrics = window(&app, "asmr-lyrics");
+    // Only the main window sends lines; control characters are dropped.
+    assert_eq!(
+        invoke(
+            &main,
+            "asmr_lyrics_line",
+            json!({"text":"第一行\n第二行\u{0007}","title":"01.wav"})
+        )
+        .unwrap(),
+        Value::Null
+    );
+    assert_eq!(
+        invoke(&lyrics, "asmr_lyrics_current", json!({})).unwrap(),
+        json!({"text":"第一行\n第二行","title":"01.wav"})
+    );
+    for (command, body) in [
+        ("asmr_lyrics_line", json!({"text":"x","title":"y"})),
+        ("asmr_lyrics_open", json!({})),
+        ("asmr_lyrics_hide", json!({})),
+        ("asmr_works", json!({"query": asmr_query()})),
+        ("asmr_subtitle", json!({"workId":1,"fileId":1})),
+    ] {
+        assert!(
+            invoke(&lyrics, command, body.clone())
+                .unwrap_err()
+                .is_string(),
+            "{command}: expected Tauri ACL error"
+        );
+    }
+    for (command, body) in [
+        ("asmr_lyrics_line", json!({"text":"x","title":"y"})),
+        ("asmr_lyrics_current", json!({})),
+        ("asmr_lyrics_close", json!({})),
+        ("asmr_lyrics_open", json!({})),
+    ] {
+        assert!(
+            invoke(&reader, command, body).unwrap_err().is_string(),
+            "{command}: expected Tauri ACL error"
+        );
+    }
+    assert!(invoke(&main, "asmr_lyrics_current", json!({}))
+        .unwrap_err()
+        .is_string());
+    // Unknown placement fields are refused before any window is made.
+    assert!(invoke(
+        &main,
+        "asmr_lyrics_open",
+        json!({"placement":{"x":0,"y":0,"width":800,"height":120,"url":"x"}})
+    )
+    .unwrap_err()
+    .is_string());
+    assert_eq!(
+        invoke(&lyrics, "asmr_lyrics_close", json!({})).unwrap(),
+        Value::Null
+    );
+}
+
+#[test]
+fn desktop_subtitle_placements_stay_on_a_screen() {
+    use crate::asmr_lyrics::{default_placement, fits, Area, LyricsPlacement};
+    let screens = [
+        Area {
+            x: 0.0,
+            y: 0.0,
+            width: 1920.0,
+            height: 1040.0,
+        },
+        Area {
+            x: -1280.0,
+            y: 0.0,
+            width: 1280.0,
+            height: 984.0,
+        },
+    ];
+    let at = |x, y| LyricsPlacement {
+        x,
+        y,
+        width: 760.0,
+        height: 120.0,
+    };
+    assert!(fits(&at(600.0, 860.0), &screens));
+    assert!(fits(&at(-900.0, 100.0), &screens));
+    // Mostly off screen but with a grabbable part left.
+    assert!(fits(&at(1870.0, 500.0), &screens));
+    assert!(!fits(&at(1900.0, 500.0), &screens));
+    assert!(!fits(&at(3000.0, 100.0), &screens));
+    assert!(!fits(&at(f64::NAN, 100.0), &screens));
+    let tiny = LyricsPlacement {
+        width: 10.0,
+        ..at(0.0, 0.0)
+    };
+    assert!(!fits(&tiny, &screens));
+    let placed = default_placement(screens[0]);
+    assert_eq!(placed.width, 760.0);
+    assert_eq!(placed.x, (1920.0 - 760.0) / 2.0);
+    assert!(placed.y + placed.height <= 1040.0);
+    assert!(fits(&placed, &screens));
 }
 
 #[test]

@@ -775,3 +775,492 @@
   background: #1e88e5;
   color: #ffffff;
 }
+
+/* Playback: play buttons in the detail panel. */
+.asmr-play {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 4px;
+}
+.asmr-play-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.asmr-primary-button,
+.asmr-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 17px;
+  font-weight: 600;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-primary-button {
+  border: 0;
+  background: var(--asmr-primary);
+  color: #fff;
+}
+.asmr-primary-button:hover {
+  filter: brightness(1.08);
+}
+.app-shell.ui-refined .asmr-workspace .asmr-secondary-button {
+  border: 1px solid var(--asmr-line);
+  background: var(--asmr-surface);
+  color: var(--asmr-text);
+}
+.asmr-secondary-button {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-secondary-button:hover {
+  border-color: var(--asmr-primary);
+}
+.asmr-version-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 8px;
+  background: var(--asmr-bg);
+}
+.asmr-version-choice p {
+  margin: 0 0 2px;
+  color: var(--asmr-muted);
+  font-size: 13px;
+}
+.asmr-version-choice button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 6px;
+  background: var(--asmr-surface);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.asmr-version-choice button:hover {
+  border-color: var(--asmr-primary);
+}
+button.asmr-track {
+  background: none;
+  text-align: left;
+  border-radius: 6px;
+}
+button.asmr-track:hover {
+  background: var(--asmr-chip);
+}
+.asmr-track.playing {
+  background: color-mix(in srgb, var(--asmr-primary) 14%, transparent);
+  color: var(--asmr-primary-strong);
+  font-weight: 600;
+}
+.asmr-track-video svg {
+  color: var(--asmr-primary);
+}
+
+/* Playback: bottom bar. */
+.asmr-bar {
+  position: relative;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) auto;
+  align-items: center;
+  gap: 16px;
+  height: 76px;
+  padding: 0 16px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--asmr-line);
+  background: var(--asmr-surface);
+  box-shadow: 0 -2px 8px #0000001a;
+}
+.asmr-bar-now {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+}
+.asmr-bar-now:hover {
+  background: var(--asmr-chip);
+}
+.asmr-bar-cover {
+  width: 56px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+/* The placeholder code does not fit this size. */
+.asmr-bar-cover .asmr-cover-placeholder {
+  display: none;
+}
+.asmr-bar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.asmr-bar-text strong,
+.asmr-bar-text span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.asmr-bar-text strong {
+  font-size: 14px;
+}
+.asmr-bar-text span {
+  color: var(--asmr-muted);
+  font-size: 12px;
+}
+.asmr-bar-text .asmr-bar-cue {
+  color: var(--asmr-primary-strong);
+  font-size: 13px;
+}
+.asmr-bar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.asmr-bar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.asmr-bar .asmr-icon-button:hover:not(:disabled),
+.asmr-player-full .asmr-icon-button:hover:not(:disabled) {
+  background: var(--asmr-chip);
+}
+.asmr-play-button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-play-button {
+  border: 0;
+  background: var(--asmr-primary);
+  color: #fff;
+}
+.asmr-bar-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  color: var(--asmr-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.asmr-bar-progress input {
+  flex: 1;
+}
+.app-shell.ui-refined .asmr-workspace input[type="range"] {
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--asmr-primary);
+  cursor: pointer;
+}
+.asmr-bar-error,
+.asmr-bar-status {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  max-width: min(620px, 90%);
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--asmr-raised);
+  box-shadow: var(--asmr-shadow);
+  font-size: 13px;
+  transform: translateX(-50%);
+}
+.asmr-bar-error {
+  color: #d32f2f;
+}
+.asmr-bar-error .asmr-text-button {
+  margin-left: 8px;
+}
+.asmr-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-bar-tools select {
+  height: 30px;
+  min-height: 30px !important;
+  padding: 0 6px !important;
+  font-size: 13px !important;
+}
+.asmr-player-sleep {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--asmr-muted);
+}
+.asmr-player-sleep.active {
+  color: var(--asmr-primary);
+}
+.asmr-player-countdown {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.asmr-player-volume {
+  display: flex;
+  align-items: center;
+}
+.asmr-lyrics-toggle {
+  color: var(--asmr-muted);
+}
+.asmr-lyrics-toggle.active {
+  color: var(--asmr-primary);
+}
+.asmr-screen.is-floating:active {
+  cursor: grabbing;
+}
+.asmr-player-volume input {
+  width: 84px;
+}
+
+/* Playback: the media element, laid out per mode. */
+.asmr-screen {
+  position: absolute;
+  z-index: 25;
+  display: none;
+  overflow: hidden;
+  background: #000;
+}
+.asmr-screen.is-floating {
+  right: 16px;
+  bottom: 92px;
+  display: block;
+  width: 320px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px #0006;
+  cursor: pointer;
+}
+/* Keep the small video beside an open detail panel, not over it. */
+.asmr-workspace.has-detail .asmr-screen.is-floating {
+  right: calc(min(480px, 44%) + 16px);
+}
+.asmr-screen.is-expanded {
+  top: calc(56px + 64px);
+  right: calc(380px + 24px);
+  bottom: calc(76px + 110px);
+  left: 24px;
+  display: block;
+  border-radius: 10px;
+}
+.asmr-screen.is-expanded:not(.is-video) {
+  background: transparent;
+}
+.asmr-screen:fullscreen {
+  border-radius: 0;
+}
+.asmr-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.asmr-screen:not(.is-video) .asmr-video {
+  display: none;
+}
+.asmr-screen-cover {
+  width: 100%;
+  height: 100%;
+}
+.asmr-screen-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.asmr-video-cue {
+  position: absolute;
+  right: 8%;
+  bottom: 6%;
+  left: 8%;
+  color: #fff;
+  font-size: clamp(14px, 2.4vw, 26px);
+  text-align: center;
+  text-shadow:
+    0 0 4px #000,
+    0 0 2px #000;
+  white-space: pre-line;
+  pointer-events: none;
+}
+.asmr-screen.is-floating .asmr-video-cue {
+  font-size: 13px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-screen-fullscreen {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #0008;
+  color: #fff;
+}
+
+/* Playback: full player. */
+.asmr-player-full {
+  position: absolute;
+  top: 56px;
+  right: 0;
+  bottom: 76px;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  background: var(--asmr-bg);
+}
+.asmr-player-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 24px;
+}
+.asmr-player-full-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+  flex-shrink: 0;
+}
+.asmr-player-full-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+.asmr-player-full-title strong,
+.asmr-player-full-title button {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.asmr-player-screen-slot {
+  flex: 1;
+}
+.asmr-player-big-cue {
+  display: grid;
+  place-items: center;
+  height: 110px;
+  margin: 0;
+  color: var(--asmr-text);
+  font-size: 20px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-line;
+  overflow: hidden;
+}
+.asmr-player-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--asmr-line);
+  background: var(--asmr-surface);
+}
+.asmr-player-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--asmr-line);
+}
+.asmr-player-tabs button {
+  flex: 1;
+  height: 44px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--asmr-muted);
+}
+.asmr-player-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--asmr-primary);
+  color: var(--asmr-primary-strong);
+  font-weight: 600;
+}
+.asmr-player-side-body {
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+  overflow-y: auto;
+}
+.asmr-cues,
+.asmr-queue {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.asmr-cues button,
+.asmr-queue button {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
+  white-space: pre-line;
+}
+.asmr-queue button {
+  align-items: center;
+}
+.asmr-cues button:hover,
+.asmr-queue button:hover {
+  background: var(--asmr-chip);
+}
+.asmr-cues button.active,
+.asmr-queue button.active {
+  background: color-mix(in srgb, var(--asmr-primary) 14%, transparent);
+  color: var(--asmr-primary-strong);
+  font-weight: 600;
+}
+.asmr-cue-time {
+  flex-shrink: 0;
+  color: var(--asmr-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.asmr-queue-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .asmr-bar {
+    grid-template-columns: minmax(120px, 1fr) minmax(200px, 2fr) auto;
+    gap: 8px;
+  }
+  .asmr-player-volume input,
+  .asmr-player-rate {
+    display: none;
+  }
+  .asmr-player-full {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  .asmr-screen.is-expanded {
+    right: calc(280px + 24px);
+  }
+}

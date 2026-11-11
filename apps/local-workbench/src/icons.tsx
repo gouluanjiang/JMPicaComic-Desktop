@@ -151,6 +151,55 @@ const paths = {
       <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
     </>
   ),
+  previous: (
+    <>
+      <path d="M6 5v14M19 5 9 12l10 7Z" />
+    </>
+  ),
+  next: (
+    <>
+      <path d="M18 5v14M5 5l10 7-10 7Z" />
+    </>
+  ),
+  volume: (
+    <>
+      <path d="M4 9v6h4l5 4V5L8 9Z" />
+      <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />
+    </>
+  ),
+  mute: (
+    <>
+      <path d="M4 9v6h4l5 4V5L8 9Z" />
+      <path d="m17 9 5 6M22 9l-5 6" />
+    </>
+  ),
+  chevronUp: (
+    <>
+      <path d="m6 15 6-6 6 6" />
+    </>
+  ),
+  chevronDown: (
+    <>
+      <path d="m6 9 6 6 6-6" />
+    </>
+  ),
+  captions: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M10.5 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3" />
+    </>
+  ),
+  film: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" />
+    </>
+  ),
+  fullscreen: (
+    <>
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </>
+  ),
 } as const;
 
 export function Icon({

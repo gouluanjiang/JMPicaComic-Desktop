@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "asmr-lyrics",
+  "description": "The ASMR desktop subtitle window: subtitle text from the main window, moving and closing itself.",
+  "local": true,
+  "windows": [
+    "asmr-lyrics"
+  ],
+  "permissions": [
+    "workbench-asmr-lyrics",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-start-dragging"
+  ]
+}

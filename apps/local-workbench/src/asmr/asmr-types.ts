@@ -43,11 +43,14 @@ export type AsmrPage = {
 
 export type AsmrIndexEntry = { id: string; name: string; count: number };
 
-export type AsmrFileKind = "audio" | "text" | "image" | "other";
+export type AsmrFileKind = "audio" | "video" | "text" | "image" | "other";
+export type AsmrFile = Extract<AsmrTrack, { type: "file" }>;
 export type AsmrTrack =
   | { type: "folder"; title: string; children: AsmrTrack[] }
   | {
       type: "file";
+      /** The site's file id; null when the file cannot be opened. */
+      fileId: number | null;
       kind: AsmrFileKind;
       title: string;
       size: number | null;
@@ -180,13 +183,17 @@ function validateTrack(value: unknown, depth: number): AsmrTrack {
   const kind = node.kind;
   if (
     kind !== "audio" &&
+    kind !== "video" &&
     kind !== "text" &&
     kind !== "image" &&
     kind !== "other"
   )
     invalid();
+  const fileId = optional(node.fileId, count);
+  if (fileId === 0) invalid();
   return {
     type: "file",
+    fileId,
     kind,
     title: text(node.title),
     size: optional(node.size, count),

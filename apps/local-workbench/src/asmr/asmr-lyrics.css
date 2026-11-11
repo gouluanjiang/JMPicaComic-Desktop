@@ -1,0 +1,83 @@
+/* The desktop subtitle window: transparent except for its text. */
+html.asmr-lyrics-root,
+html.asmr-lyrics-root body,
+html.asmr-lyrics-root #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.asmr-lyrics {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 6px 16px;
+  border-radius: 12px;
+  cursor: move;
+  user-select: none;
+  transition: background 0.15s;
+}
+/* A faint panel while the pointer is over it shows what can be dragged. */
+.asmr-lyrics:hover {
+  background: #0000004d;
+}
+
+.asmr-lyrics-text {
+  margin: 0;
+  color: #ffffff;
+  font-family: "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  /* A dark outline keeps the text readable on any wallpaper or window. */
+  text-shadow:
+    0 0 2px #0b3d73,
+    0 0 2px #0b3d73,
+    0 0 4px #0b3d73,
+    0 2px 6px #000000b3;
+}
+.asmr-lyrics-idle {
+  color: #e3f2fd;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.asmr-lyrics-tools {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.asmr-lyrics:hover .asmr-lyrics-tools {
+  opacity: 1;
+}
+.asmr-lyrics-tools button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: #000000a6;
+  color: #ffffff;
+  font:
+    600 12px system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+.asmr-lyrics-tools button:hover:not(:disabled) {
+  background: #1e88e5;
+}
+.asmr-lyrics-tools button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
