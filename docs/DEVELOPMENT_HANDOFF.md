@@ -18,9 +18,17 @@ behaviour and document formats are unchanged.
 - This is the first release that needs [UPDATER_RELEASE.md](UPDATER_RELEASE.md):
   sign the verified installer, write `latest.json`, add it to `SHA256SUMS.txt`.
   Publishing still needs the user's explicit confirmation.
-- The candidate installed on the user's machine reports 1.1.0 and contains the
-  updater, so it can run the first real in-app update once 1.2.0 and its
-  `latest.json` are public. That has not happened yet.
+- 1.2.0 was published on 2026-11-12 at the user's explicit confirmation: tag
+  `v1.2.0` on main merge `38ef278`. The record is
+  [RELEASE_1.2.0_2026-11-12.md](RELEASE_1.2.0_2026-11-12.md).
+- The candidate installed on the user's machine reported 1.1.0 and contained the
+  updater, so it ran the first real in-app update, to 1.2.0. The user confirmed it;
+  the installed hash and the registered version match. An update between two
+  public versions has not happened yet.
+- A read-only sample of the 50 newest works' file lists (2026-11-11) found only VTT
+  and LRC subtitles, only WAV, MP3 and MP4 media, and the site's low-quality stream
+  only on WAV files. ASS support therefore waits until after account sync, and the
+  low-quality fallback is not worth building.
 - `production_enabled=false` is unchanged.
 
 Roadmap after 1.2.0, agreed with the user on 2026-11-11. This is planning only:
@@ -47,10 +55,8 @@ nothing below is built, and it grants no authority for account actions or downlo
    marking API has not been probed. Writes are real account actions.
 4. **Downloads and the local library.** These need `DOWNLOAD_EXECUTOR_THAW_GATE.md`.
 
-Undecided: ASS subtitles (timing and plain text only) and a fallback to the site's
-low-quality stream for files WebView2 cannot decode. A read-only sample of about 50
-recent works' file lists was proposed to measure how common they are; the user has
-not approved it. Transcoding and a bundled ffmpeg are ruled out.
+Deferred after the sample above: ASS subtitles (timing and plain text only), until
+a real work needs them. Transcoding and a bundled ffmpeg are ruled out.
 
 Still open from 1.1.0: the interactive installer pages are untested, LOCAL-03 was
 not re-checked, and one failure of `author-workspace-ui.spec.ts:7` is unexplained.
