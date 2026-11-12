@@ -11,7 +11,7 @@ body:
     attributes:
       label: 程序版本和提交号
       description: 在“设置 → 网络与诊断”查看
-      placeholder: 1.1.0 (abc1234)
+      placeholder: 1.2.0 (abc1234)
     validations:
       required: true
   - type: input
