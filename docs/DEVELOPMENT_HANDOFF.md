@@ -1,5 +1,25 @@
 # Current development handoff
 
+## ASMR small video: resize and picture-in-picture (2026-11-12)
+
+First roadmap item after 1.2.0, frontend only (`AsmrPlayer.tsx`, `asmr.css`).
+
+- The small video takes the playing video's own aspect ratio (16:9 until metadata
+  arrives, limited to 0.4–3) and resizes from its four corners; the opposite corner
+  stays put. Width is at least 200 px, bounded by the section and the bar, and
+  stored in local storage (`jmpicacomic.asmr.videoWidth`). The overlaid subtitle
+  scales with the box through a container query.
+- A "画中画" button on the small video and in the full player calls
+  `requestPictureInPicture()` on the same element. It is rendered only when
+  `document.pictureInPictureEnabled` is true. Releasing a drag outside the program
+  window also asks for it. While it is active the small box is hidden; stopping the
+  player or switching to audio leaves it.
+- Not verified: whether WebView2 offers picture-in-picture and accepts the request
+  from a pointer release. The Playwright test replaces the API with a stand-in, and
+  the browser specs were not run locally (3.1 GiB free RAM), only type-checked. If
+  the button never appears in the desktop app, the fallbacks are Document
+  Picture-in-Picture or an own native video window.
+
 ## 1.2.0 release preparation and roadmap (2026-11-11)
 
 PR #51 (ASMR player, desktop subtitles) merged after the user's live test of the

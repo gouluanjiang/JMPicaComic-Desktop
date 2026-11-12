@@ -1109,15 +1109,69 @@ button.asmr-track:hover {
   white-space: pre-line;
   pointer-events: none;
 }
-.asmr-screen.is-floating .asmr-video-cue {
-  font-size: 13px;
+/* The small video's subtitle grows and shrinks with the box. */
+.asmr-screen.is-floating {
+  container-type: inline-size;
 }
-.app-shell.ui-refined .asmr-workspace .asmr-screen-fullscreen {
+.asmr-screen.is-floating .asmr-video-cue {
+  font-size: clamp(11px, 4cqw, 30px);
+}
+.app-shell.ui-refined .asmr-workspace .asmr-screen-fullscreen,
+.app-shell.ui-refined .asmr-workspace .asmr-screen-popout {
   position: absolute;
   top: 10px;
   right: 10px;
   background: #0008;
   color: #fff;
+}
+.app-shell.ui-refined .asmr-workspace .is-expanded .asmr-screen-popout {
+  right: 54px;
+}
+/* On the small video the button appears with the pointer, as do the corners. */
+.app-shell.ui-refined .asmr-workspace .is-floating .asmr-screen-popout {
+  top: 6px;
+  right: 24px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.app-shell.ui-refined .asmr-workspace .is-floating:hover .asmr-screen-popout,
+.app-shell.ui-refined
+  .asmr-workspace
+  .is-floating
+  .asmr-screen-popout:focus-visible {
+  opacity: 1;
+}
+.asmr-screen-resize {
+  position: absolute;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  touch-action: none;
+}
+.asmr-screen-resize.is-nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+.asmr-screen-resize.is-ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+.asmr-screen-resize.is-sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+.asmr-screen-resize.is-se {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+/* While the picture is outside the window the small box has nothing to show. */
+.asmr-screen.is-floating.is-pip {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Playback: full player. */

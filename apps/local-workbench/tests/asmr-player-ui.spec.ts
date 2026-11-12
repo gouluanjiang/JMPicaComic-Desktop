@@ -290,6 +290,124 @@ test("the small video can be dragged inside the section and a click opens the pl
   await expect(page.getByTestId("asmr-player-full")).toBeVisible();
 });
 
+test("the small video resizes from a corner, keeps its shape and remembers the size", async ({
+  page,
+}) => {
+  await installAsmr(page);
+  await serveMedia(page);
+  await openAsmr(page);
+  await openPlayerWork(page);
+  await page
+    .getByTestId("asmr-detail")
+    .getByRole("button", { name: "播放 PV.mp4" })
+    .click();
+  await page.getByRole("button", { name: "关闭详情" }).click();
+  const screen = page.getByTestId("asmr-screen");
+  await expect(screen).toHaveClass(/is-floating/);
+  const before = (await screen.boundingBox())!;
+  expect(Math.round(before.width)).toBe(320);
+  expect(Math.round(before.height)).toBe(180);
+
+  // Pulling the top-left corner out grows the box; the opposite corner stays.
+  await page.mouse.move(before.x + 5, before.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(before.x - 155, before.y - 20, { steps: 6 });
+  await page.mouse.up();
+  const grown = (await screen.boundingBox())!;
+  expect(Math.round(grown.width)).toBe(480);
+  expect(Math.round(grown.height)).toBe(270);
+  expect(Math.round(grown.x + grown.width)).toBe(
+    Math.round(before.x + before.width),
+  );
+  expect(Math.round(grown.y + grown.height)).toBe(
+    Math.round(before.y + before.height),
+  );
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("jmpicacomic.asmr.videoWidth"),
+    ),
+  ).toBe("480");
+  // Resizing is neither a move nor a click.
+  await expect(page.getByTestId("asmr-player-full")).toBeHidden();
+
+  // It never shrinks below a readable size.
+  await page.mouse.move(grown.x + 5, grown.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(grown.x + 2000, grown.y + 2000, { steps: 4 });
+  await page.mouse.up();
+  const small = (await screen.boundingBox())!;
+  expect(Math.round(small.width)).toBe(200);
+  expect(small.width / small.height).toBeCloseTo(16 / 9, 1);
+
+  // Nor past the section: the bottom-right corner has little room here.
+  await page.mouse.move(small.x + small.width - 5, small.y + small.height - 5);
+  await page.mouse.down();
+  await page.mouse.move(small.x + 5000, small.y + 5000, { steps: 4 });
+  await page.mouse.up();
+  const workspace = (await page.getByTestId("asmr-workspace").boundingBox())!;
+  const limited = (await screen.boundingBox())!;
+  expect(limited.x + limited.width).toBeLessThanOrEqual(
+    workspace.x + workspace.width + 1,
+  );
+  expect(limited.y + limited.height).toBeLessThanOrEqual(
+    (await page.getByTestId("asmr-bar").boundingBox())!.y + 1,
+  );
+  expect(limited.width / limited.height).toBeCloseTo(16 / 9, 1);
+});
+
+test("picture-in-picture hides the small video until the picture returns", async ({
+  page,
+}) => {
+  // Headless Chromium has no picture-in-picture window; stand in for it.
+  await page.addInitScript(() => {
+    let current: Element | null = null;
+    Object.defineProperty(document, "pictureInPictureEnabled", {
+      get: () => true,
+    });
+    Object.defineProperty(document, "pictureInPictureElement", {
+      get: () => current,
+    });
+    HTMLVideoElement.prototype.requestPictureInPicture = function () {
+      current = this;
+      this.dispatchEvent(new Event("enterpictureinpicture"));
+      return Promise.resolve({} as PictureInPictureWindow);
+    };
+    document.exitPictureInPicture = () => {
+      const element = current;
+      current = null;
+      element?.dispatchEvent(new Event("leavepictureinpicture"));
+      return Promise.resolve();
+    };
+  });
+  await installAsmr(page);
+  await serveMedia(page);
+  await openAsmr(page);
+  await openPlayerWork(page);
+  await page
+    .getByTestId("asmr-detail")
+    .getByRole("button", { name: "播放 PV.mp4" })
+    .click();
+  await page.getByRole("button", { name: "关闭详情" }).click();
+  const screen = page.getByTestId("asmr-screen");
+  await expect(screen).toHaveClass(/is-floating/);
+  await screen.hover();
+  await page.getByRole("button", { name: "画中画", exact: true }).click();
+  await expect(screen).toHaveClass(/is-pip/);
+  // The button is neither a move nor a click on the box.
+  await expect(page.getByTestId("asmr-player-full")).toBeHidden();
+  // The full player offers to bring the picture back.
+  await page.getByTestId("asmr-expand").click();
+  await page.getByRole("button", { name: "收回画中画" }).click();
+  await expect(screen).not.toHaveClass(/is-pip/);
+  // Stopping the player ends picture-in-picture as well.
+  await page.getByRole("button", { name: "画中画", exact: true }).click();
+  await expect(screen).toHaveClass(/is-pip/);
+  await page.getByRole("button", { name: "停止并关闭播放器" }).click();
+  expect(
+    await page.evaluate(() => document.pictureInPictureElement === null),
+  ).toBe(true);
+});
+
 test("the desktop subtitle window shows the latest line on a transparent page", async ({
   page,
 }) => {
