@@ -1,16 +1,21 @@
 import { invokeDesktop } from "../runtime.ts";
 import {
+  validateAccount,
   validateCover,
   validateDetail,
   validateIndex,
   validatePage,
+  validatePlaylists,
 } from "./asmr-types.ts";
 import type {
+  AsmrAccount,
   AsmrCoverSize,
   AsmrIndexEntry,
   AsmrIndexKind,
   AsmrListQuery,
   AsmrPage,
+  AsmrPlaylistPage,
+  AsmrProgress,
   AsmrRelation,
   AsmrWorkDetail,
 } from "./asmr-types.ts";
@@ -55,6 +60,37 @@ export function loadIndex(kind: AsmrIndexKind): Promise<AsmrIndexEntry[]> {
   indexes.set(kind, request);
   request.catch(() => indexes.delete(kind));
   return request;
+}
+
+export function loadAccount(): Promise<AsmrAccount> {
+  return invokeDesktop("asmr_account", {}).then(validateAccount);
+}
+
+/** The password goes to the native side once and is not kept here. */
+export function signIn(name: string, password: string): Promise<AsmrAccount> {
+  return invokeDesktop("asmr_login", { name, password }).then(validateAccount);
+}
+
+export function signOut(): Promise<AsmrAccount> {
+  return invokeDesktop("asmr_logout", {}).then(validateAccount);
+}
+
+export function loadReviews(
+  progress: AsmrProgress | null,
+  ascending: boolean,
+  page: number,
+): Promise<AsmrPage> {
+  return invokeDesktop("asmr_reviews", { progress, ascending, page }).then(
+    validatePage,
+  );
+}
+
+export function loadPlaylists(page: number): Promise<AsmrPlaylistPage> {
+  return invokeDesktop("asmr_playlists", { page }).then(validatePlaylists);
+}
+
+export function loadPlaylistWorks(id: string, page: number): Promise<AsmrPage> {
+  return invokeDesktop("asmr_playlist_works", { id, page }).then(validatePage);
 }
 
 export function loadWork(id: number): Promise<AsmrWorkDetail> {

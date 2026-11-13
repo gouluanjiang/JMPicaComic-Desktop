@@ -6,6 +6,23 @@ export type AsmrOrder =
 export type AsmrRelation = "circle" | "voiceActor" | "tag";
 export type AsmrIndexKind = "circles" | "tags" | "voiceActors";
 export type AsmrCoverSize = "thumbnail" | "main";
+/** The site's five listening marks. */
+export type AsmrProgress =
+  "marked" | "listening" | "listened" | "replay" | "postponed";
+export const PROGRESS: AsmrProgress[] = [
+  "marked",
+  "listening",
+  "listened",
+  "replay",
+  "postponed",
+];
+export const progressLabels: Record<AsmrProgress, string> = {
+  marked: "想听",
+  listening: "在听",
+  listened: "听过",
+  replay: "重听",
+  postponed: "搁置",
+};
 
 export type AsmrListQuery = {
   order: AsmrOrder;
@@ -32,6 +49,12 @@ export type AsmrWork = {
   durationSeconds: number | null;
   hasSubtitle: boolean;
   editions: { code: string; lang: string; label: string }[];
+  /** The signed-in listener's own rating, 1 to 5. */
+  userRating: number | null;
+  /** The signed-in listener's mark, where the list reports it. */
+  progress: AsmrProgress | null;
+  /** When the mark or rating last changed. */
+  marked: string | null;
 };
 
 export type AsmrPage = {
@@ -42,6 +65,29 @@ export type AsmrPage = {
 };
 
 export type AsmrIndexEntry = { id: string; name: string; count: number };
+
+export type AsmrAccount = {
+  signedIn: boolean;
+  name: string | null;
+  /** False when the session lasts for this run only. */
+  remembered: boolean;
+};
+
+export type AsmrPlaylist = {
+  id: string;
+  name: string;
+  description: string;
+  works: number;
+  coverWork: number | null;
+  updated: string | null;
+};
+
+export type AsmrPlaylistPage = {
+  playlists: AsmrPlaylist[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
 
 export type AsmrFileKind = "audio" | "video" | "text" | "image" | "other";
 export type AsmrFile = Extract<AsmrTrack, { type: "file" }>;
@@ -65,6 +111,7 @@ const MAX_TEXT = 1100;
 const workCode = /^[A-Z]{2}\d{6,8}$/;
 const personId = /^[A-Za-z0-9-]{1,64}$/;
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+const playlistId = /^[0-9a-fA-F-]{36}$/;
 
 export class AsmrError extends Error {
   readonly code: string;
@@ -144,6 +191,17 @@ export function validateWork(value: unknown): AsmrWork {
         label: typeof edition.label === "string" ? edition.label : "",
       };
     }),
+    userRating: optional(work.userRating, (raw) =>
+      Number.isInteger(raw) && (raw as number) >= 1 && (raw as number) <= 5
+        ? (raw as number)
+        : invalid(),
+    ),
+    progress: optional(work.progress, (raw) =>
+      PROGRESS.includes(raw as AsmrProgress)
+        ? (raw as AsmrProgress)
+        : invalid(),
+    ),
+    marked: optional(work.marked, date),
   };
 }
 
@@ -157,6 +215,58 @@ export function validatePage(value: unknown): AsmrPage {
     pageSize: count(page.pageSize),
     total: count(page.total),
   };
+}
+
+export function validateAccount(value: unknown): AsmrAccount {
+  const account = record(value);
+  const name = optional(account.name, (raw) => text(raw, 64));
+  if (
+    typeof account.signedIn !== "boolean" ||
+    account.signedIn !== (name !== null)
+  )
+    invalid();
+  return {
+    signedIn: account.signedIn as boolean,
+    name,
+    remembered: account.remembered !== false,
+  };
+}
+
+export function validatePlaylists(value: unknown): AsmrPlaylistPage {
+  const page = record(value);
+  const playlists = list(page.playlists);
+  if (playlists.length > 100) invalid();
+  return {
+    playlists: playlists.map((raw) => {
+      const playlist = record(raw);
+      const id = text(playlist.id, 36);
+      if (!playlistId.test(id)) invalid();
+      const coverWork = optional(playlist.coverWork, count);
+      if (coverWork === 0) invalid();
+      return {
+        id,
+        name: text(playlist.name, 240),
+        description:
+          typeof playlist.description === "string" &&
+          playlist.description.length <= MAX_TEXT
+            ? playlist.description
+            : invalid(),
+        works: count(playlist.works),
+        coverWork,
+        updated: optional(playlist.updated, date),
+      };
+    }),
+    page: count(page.page),
+    pageSize: count(page.pageSize),
+    total: count(page.total),
+  };
+}
+
+/** The site's default list has a reserved name instead of a title. */
+export function playlistTitle(name: string): string {
+  if (name === "__SYS_PLAYLIST_MARKED") return "我标记的";
+  if (name === "__SYS_PLAYLIST_LIKED") return "我喜欢的";
+  return name;
 }
 
 export function validateIndex(value: unknown): AsmrIndexEntry[] {
@@ -280,6 +390,9 @@ const messages: Record<string, string> = {
   ASMR_RESPONSE_INVALID: "asmr.one 返回的数据无法识别。",
   ASMR_RESPONSE_TOO_LARGE: "asmr.one 返回的数据过大，已停止读取。",
   ASMR_REFUSED: "asmr.one 拒绝了这次请求。",
+  ASMR_LOGIN_FAILED: "登录失败，请检查账号和密码。",
+  ASMR_LOGIN_EXPIRED: "登录已失效，请重新登录。",
+  ASMR_SIGNED_OUT: "请先登录 asmr.one 账号。",
 };
 
 export function asmrErrorMessage(error: unknown): string {

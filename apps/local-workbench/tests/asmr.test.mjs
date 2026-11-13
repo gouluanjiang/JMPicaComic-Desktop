@@ -6,10 +6,15 @@ import {
   formatDuration,
   formatSize,
   parseWorkInput,
+  playlistTitle,
+  PROGRESS,
+  progressLabels,
+  validateAccount,
   validateCover,
   validateDetail,
   validateIndex,
   validatePage,
+  validatePlaylists,
   validateWork,
   workCodeFor,
 } from "../src/asmr/asmr-types.ts";
@@ -40,7 +45,13 @@ const work = (overrides = {}) => ({
 });
 
 test("works and pages accept only the native contract", () => {
-  assert.deepEqual(validateWork(work()), work());
+  // Signed out, the native side leaves the listener's fields empty.
+  assert.deepEqual(validateWork(work()), {
+    ...work(),
+    userRating: null,
+    progress: null,
+    marked: null,
+  });
   const page = validatePage({
     works: [work()],
     page: 1,
@@ -282,4 +293,73 @@ test("media addresses carry only work and file ids", () => {
     mediaUrl(1683351, 1965843),
     /^(http:\/\/asmrmedia\.localhost|asmrmedia:\/\/localhost)\/1683351-1965843$/,
   );
+});
+
+test("marks, ratings, accounts and playlists are validated", () => {
+  const plain = validateWork(work());
+  assert.deepEqual(
+    [plain.userRating, plain.progress, plain.marked],
+    [null, null, null],
+  );
+  const marked = validateWork(
+    work({ userRating: 5, progress: "replay", marked: "2026-11-13" }),
+  );
+  assert.deepEqual(
+    [marked.userRating, marked.progress, marked.marked],
+    [5, "replay", "2026-11-13"],
+  );
+  for (const bad of [
+    { userRating: 6 },
+    { userRating: 2.5 },
+    { progress: "archived" },
+    { marked: "yesterday" },
+  ])
+    assert.throws(() => validateWork(work(bad)), /ASMR_RESPONSE_INVALID/);
+  assert.deepEqual(progressLabels.postponed, "搁置");
+  assert.equal(PROGRESS.length, 5);
+
+  assert.deepEqual(
+    validateAccount({ signedIn: true, name: "synthetic", remembered: false }),
+    { signedIn: true, name: "synthetic", remembered: false },
+  );
+  assert.deepEqual(validateAccount({ signedIn: false, name: null }), {
+    signedIn: false,
+    name: null,
+    remembered: true,
+  });
+  for (const bad of [
+    { signedIn: true, name: null },
+    { signedIn: false, name: "synthetic" },
+    { signedIn: "yes", name: "synthetic" },
+    null,
+  ])
+    assert.throws(() => validateAccount(bad), /ASMR_RESPONSE_INVALID/);
+
+  const playlist = {
+    id: "00000000-0000-4000-8000-000000000001",
+    name: "合成播放列表",
+    description: "",
+    works: 3,
+    coverWork: 1000301,
+    updated: "2026-11-13",
+  };
+  const page = { playlists: [playlist], page: 1, pageSize: 20, total: 1 };
+  assert.deepEqual(validatePlaylists(page), page);
+  for (const bad of [
+    { id: "../escape" },
+    { name: "" },
+    { works: -1 },
+    { coverWork: 0 },
+    { description: 5 },
+    { updated: "soon" },
+  ])
+    assert.throws(
+      () =>
+        validatePlaylists({ ...page, playlists: [{ ...playlist, ...bad }] }),
+      /ASMR_RESPONSE_INVALID/,
+    );
+  assert.equal(playlistTitle("__SYS_PLAYLIST_MARKED"), "我标记的");
+  assert.equal(playlistTitle("合成播放列表"), "合成播放列表");
+  assert.match(asmrErrorMessage({ code: "ASMR_LOGIN_FAILED" }), /账号和密码/);
+  assert.match(asmrErrorMessage({ code: "ASMR_LOGIN_EXPIRED" }), /重新登录/);
 });

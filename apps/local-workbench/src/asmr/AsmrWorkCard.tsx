@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { cachedCover, loadCover } from "./asmr-runtime.ts";
-import { chineseLabel, formatDuration } from "./asmr-types.ts";
+import { chineseLabel, formatDuration, progressLabels } from "./asmr-types.ts";
 import type { AsmrCoverSize, AsmrRelation, AsmrWork } from "./asmr-types.ts";
 
 export type OpenRelated = (
@@ -175,6 +175,11 @@ export function AsmrWorkCard({
         {language && (
           <span className="asmr-badge asmr-badge-language">{language}</span>
         )}
+        {work.progress && (
+          <span className="asmr-badge asmr-badge-progress">
+            {progressLabels[work.progress]}
+          </span>
+        )}
       </button>
       <div className="asmr-card-body">
         <button className="asmr-card-title" onClick={() => onOpen(work)}>
@@ -197,6 +202,11 @@ export function AsmrWorkCard({
               <span>下载 {work.downloads.toLocaleString("zh-CN")}</span>
               {duration && <span>时长 {duration}</span>}
               {work.price !== null && <span>{work.price} 日元</span>}
+              {work.userRating !== null && (
+                <span className="asmr-my-rating">
+                  我的评分 {work.userRating}★
+                </span>
+              )}
             </div>
             <Chips work={work} onRelated={onRelated} tagLimit={6} />
           </>

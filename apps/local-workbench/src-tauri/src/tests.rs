@@ -543,6 +543,21 @@ fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() 
         ("asmr_work", json!({"id":1})),
         ("asmr_cover", json!({"id":1,"size":"thumbnail"})),
         ("asmr_subtitle", json!({"workId":1,"fileId":1})),
+        ("asmr_account", json!({})),
+        (
+            "asmr_login",
+            json!({"name":"synthetic","password":"secret"}),
+        ),
+        ("asmr_logout", json!({})),
+        (
+            "asmr_reviews",
+            json!({"progress":"marked","ascending":false,"page":1}),
+        ),
+        ("asmr_playlists", json!({"page":1})),
+        (
+            "asmr_playlist_works",
+            json!({"id":"4a0389f8-2434-4102-9dad-eeb6ea89ad1d","page":1}),
+        ),
     ];
     for (command, body) in commands {
         for other in [&secondary, &reader] {
@@ -593,6 +608,75 @@ fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() 
     assert!(invoke(&main, "asmr_index", json!({"kind":"users"}))
         .unwrap_err()
         .is_string());
+}
+
+#[test]
+fn asmr_account_commands_stay_signed_out_and_refuse_bad_input_before_the_network() {
+    let (_root, app) = fixture();
+    let main = window(&app, "main");
+    let signed_out = json!({"signedIn": false, "name": null, "remembered": true});
+    assert_eq!(
+        invoke(&main, "asmr_account", json!({})).unwrap(),
+        signed_out
+    );
+    // Account lists are refused locally while nobody is signed in.
+    for (command, body) in [
+        (
+            "asmr_reviews",
+            json!({"progress": null, "ascending": false, "page": 1}),
+        ),
+        ("asmr_playlists", json!({"page": 1})),
+        (
+            "asmr_playlist_works",
+            json!({"id": "4a0389f8-2434-4102-9dad-eeb6ea89ad1d", "page": 1}),
+        ),
+    ] {
+        assert_eq!(
+            invoke(&main, command, body).unwrap_err(),
+            json!({"code":"ASMR_SIGNED_OUT"}),
+            "{command}"
+        );
+    }
+    for (name, password) in [("", "secret"), ("synthetic", ""), ("a\nb", "secret")] {
+        assert_eq!(
+            invoke(
+                &main,
+                "asmr_login",
+                json!({"name": name, "password": password})
+            )
+            .unwrap_err(),
+            json!({"code":"ASMR_INVALID_INPUT"})
+        );
+    }
+    assert!(invoke(
+        &main,
+        "asmr_reviews",
+        json!({"progress": "archived", "ascending": false, "page": 1})
+    )
+    .unwrap_err()
+    .is_string());
+    assert_eq!(invoke(&main, "asmr_logout", json!({})).unwrap(), signed_out);
+}
+
+#[test]
+fn asmr_sessions_encode_only_a_name_and_a_header_safe_token() {
+    let blob = asmr::encode_session("synthetic", "aaa.bbb.ccc").unwrap();
+    let (name, token) = asmr::decode_session(&blob).unwrap();
+    assert_eq!(
+        (name.as_str(), token.as_str()),
+        ("synthetic", "aaa.bbb.ccc")
+    );
+    assert!(asmr::encode_session("synthetic", &"a".repeat(3000)).is_none());
+    for bad in [
+        json!({"version": 2, "name": "synthetic", "token": "aaa"}),
+        json!({"version": 1, "name": "", "token": "aaa"}),
+        json!({"version": 1, "name": "synthetic", "token": "has space"}),
+        json!({"version": 1, "name": "synthetic"}),
+        json!("aaa"),
+    ] {
+        assert!(asmr::decode_session(&serde_json::to_vec(&bad).unwrap()).is_none());
+    }
+    assert!(asmr::decode_session(b"not json").is_none());
 }
 
 #[test]

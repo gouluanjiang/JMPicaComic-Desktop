@@ -1,12 +1,15 @@
-//! Read-only ASMR catalog commands for the main window, and the media
+//! ASMR catalog and account commands for the main window, and the media
 //! protocol that streams audio and video for online playback. Covers return
 //! as `data:` URLs and media is addressed by work and file id, so no remote
-//! URL, path or account material reaches the renderer.
+//! URL or path reaches the renderer. Signing in keeps the session token in
+//! the operating system's credential store; the renderer only ever learns
+//! the account name.
 
 use crate::require_main;
 use asmr_source::{
     AsmrByteRange, AsmrCoverSize, AsmrError, AsmrIndexEntry, AsmrIndexKind, AsmrListQuery,
-    AsmrMedia, AsmrMediaChunk, AsmrPage, AsmrRelation, AsmrSource, AsmrWorkDetail,
+    AsmrMedia, AsmrMediaChunk, AsmrPage, AsmrPlaylistPage, AsmrProgress, AsmrRelation, AsmrSource,
+    AsmrWorkDetail,
 };
 use serde::Serialize;
 use std::{
@@ -18,6 +21,7 @@ use tauri::{
     http::{header, Method, Request, Response, StatusCode},
     Manager, Runtime, State, UriSchemeContext, UriSchemeResponder, WebviewWindow,
 };
+use zeroize::Zeroizing;
 
 /// Circle and voice-actor lists are about half a megabyte each.
 const INDEX_TTL: Duration = Duration::from_secs(30 * 60);
@@ -31,6 +35,79 @@ const MEDIA_WORKS: usize = 32;
 /// `asmrmedia://localhost/<work>-<file>` elsewhere.
 pub(crate) const MEDIA_SCHEME: &str = "asmrmedia";
 
+const PLAYLIST_PAGE_SIZE: u64 = 48;
+const MAX_SESSION_BYTES: usize = 2400;
+
+/// Where the session survives a restart: the Windows credential store. Tests
+/// and other platforms keep it for the run only and never touch the real one.
+#[derive(Default)]
+struct SessionStore {
+    #[cfg(any(test, not(windows)))]
+    memory: Mutex<Option<Vec<u8>>>,
+}
+
+#[cfg(all(windows, not(test)))]
+impl SessionStore {
+    fn load(&self) -> Option<Zeroizing<Vec<u8>>> {
+        workbench_credentials::WindowsAsmrSession::new()
+            .load()
+            .ok()
+            .flatten()
+    }
+
+    fn save(&self, blob: &[u8]) -> bool {
+        workbench_credentials::WindowsAsmrSession::new()
+            .save(blob)
+            .is_ok()
+    }
+
+    fn delete(&self) {
+        let _ = workbench_credentials::WindowsAsmrSession::new().delete();
+    }
+}
+
+#[cfg(any(test, not(windows)))]
+impl SessionStore {
+    fn load(&self) -> Option<Zeroizing<Vec<u8>>> {
+        self.memory.lock().ok()?.clone().map(Zeroizing::new)
+    }
+
+    fn save(&self, blob: &[u8]) -> bool {
+        self.memory
+            .lock()
+            .map(|mut memory| *memory = Some(blob.to_vec()))
+            .is_ok()
+    }
+
+    fn delete(&self) {
+        if let Ok(mut memory) = self.memory.lock() {
+            *memory = None;
+        }
+    }
+}
+
+/// `{"version":1,"name":...,"token":...}`.
+pub(crate) fn encode_session(name: &str, token: &str) -> Option<Zeroizing<Vec<u8>>> {
+    let bytes = Zeroizing::new(
+        serde_json::to_vec(&serde_json::json!({"version": 1, "name": name, "token": token}))
+            .ok()?,
+    );
+    (bytes.len() <= MAX_SESSION_BYTES).then_some(bytes)
+}
+
+pub(crate) fn decode_session(bytes: &[u8]) -> Option<(String, Zeroizing<String>)> {
+    let value: serde_json::Value = serde_json::from_slice(bytes).ok()?;
+    if value["version"].as_u64() != Some(1) {
+        return None;
+    }
+    let name = value["name"].as_str()?;
+    let token = value["token"].as_str()?;
+    let named =
+        !name.is_empty() && name.chars().count() <= 64 && !name.chars().any(char::is_control);
+    (named && asmr_source::is_token(token))
+        .then(|| (name.to_owned(), Zeroizing::new(token.to_owned())))
+}
+
 type Indexes = HashMap<AsmrIndexKind, (Instant, Arc<Vec<AsmrIndexEntry>>)>;
 type MediaFiles = HashMap<u64, AsmrMedia>;
 
@@ -39,6 +116,9 @@ pub(crate) struct DesktopAsmr {
     source: Mutex<Option<Arc<AsmrSource>>>,
     indexes: Mutex<Indexes>,
     media: Mutex<HashMap<u64, (Instant, Arc<MediaFiles>)>>,
+    store: SessionStore,
+    /// The signed-in account's name. The token lives in the source.
+    account: Mutex<Option<String>>,
 }
 
 impl DesktopAsmr {
@@ -48,8 +128,44 @@ impl DesktopAsmr {
             return Ok(Arc::clone(source));
         }
         let created = Arc::new(AsmrSource::new()?);
+        // A stored session is picked up once, without asking the site.
+        if let Some(blob) = self.store.load() {
+            match decode_session(&blob) {
+                Some((name, token)) if created.set_token(Some(token.to_string())).is_ok() => {
+                    if let Ok(mut account) = self.account.lock() {
+                        *account = Some(name);
+                    }
+                }
+                _ => self.store.delete(),
+            }
+        }
         *source = Some(Arc::clone(&created));
         Ok(created)
+    }
+
+    fn summary(&self, remembered: bool) -> Result<AsmrAccount, AsmrError> {
+        let name = self.account.lock().map_err(|_| unavailable())?.clone();
+        Ok(AsmrAccount {
+            signed_in: name.is_some(),
+            name,
+            remembered,
+        })
+    }
+
+    fn sign_out(&self) -> Result<(), AsmrError> {
+        self.store.delete();
+        self.source()?.set_token(None)?;
+        *self.account.lock().map_err(|_| unavailable())? = None;
+        Ok(())
+    }
+
+    /// A token the site no longer accepts is forgotten, so the next request
+    /// goes out signed out and the listener is asked to sign in again.
+    fn settle<T>(&self, result: Result<T, AsmrError>) -> Result<T, AsmrError> {
+        if matches!(&result, Err(error) if error.code == "ASMR_LOGIN_EXPIRED") {
+            let _ = self.sign_out();
+        }
+        result
     }
 
     /// Keeps the stream addresses of the most recently read works.
@@ -135,6 +251,12 @@ fn not_found() -> AsmrError {
     }
 }
 
+fn signed_out() -> AsmrError {
+    AsmrError {
+        code: "ASMR_SIGNED_OUT",
+    }
+}
+
 fn unavailable() -> AsmrError {
     AsmrError {
         code: "ASMR_UNAVAILABLE",
@@ -143,6 +265,100 @@ fn unavailable() -> AsmrError {
 
 fn main_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), AsmrError> {
     require_main(window.label()).map_err(|_| AsmrError { code: "FORBIDDEN" })
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct AsmrAccount {
+    signed_in: bool,
+    name: Option<String>,
+    /// False when the session could not be stored and lasts for this run only.
+    remembered: bool,
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_account<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+) -> Result<AsmrAccount, AsmrError> {
+    main_window(&window)?;
+    state.source()?;
+    state.summary(true)
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_login<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    name: String,
+    password: String,
+) -> Result<AsmrAccount, AsmrError> {
+    main_window(&window)?;
+    let password = Zeroizing::new(password);
+    let source = state.source()?;
+    let session = source.login(&name, &password).await?;
+    let token = Zeroizing::new(session.token);
+    let remembered =
+        encode_session(&session.name, &token).is_some_and(|blob| state.store.save(&blob));
+    source.set_token(Some(token.to_string()))?;
+    *state.account.lock().map_err(|_| unavailable())? = Some(session.name);
+    state.summary(remembered)
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_logout<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+) -> Result<AsmrAccount, AsmrError> {
+    main_window(&window)?;
+    state.sign_out()?;
+    state.summary(true)
+}
+
+/// Works the listener marked or rated, optionally one mark only.
+#[tauri::command]
+pub(crate) async fn asmr_reviews<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    progress: Option<AsmrProgress>,
+    ascending: bool,
+    page: u64,
+) -> Result<AsmrPage, AsmrError> {
+    main_window(&window)?;
+    let source = state.source()?;
+    if !source.signed_in() {
+        return Err(signed_out());
+    }
+    state.settle(source.reviews(progress, ascending, page).await)
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_playlists<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    page: u64,
+) -> Result<AsmrPlaylistPage, AsmrError> {
+    main_window(&window)?;
+    let source = state.source()?;
+    if !source.signed_in() {
+        return Err(signed_out());
+    }
+    state.settle(source.playlists(page).await)
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_playlist_works<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    id: String,
+    page: u64,
+) -> Result<AsmrPage, AsmrError> {
+    main_window(&window)?;
+    let source = state.source()?;
+    if !source.signed_in() {
+        return Err(signed_out());
+    }
+    state.settle(source.playlist_works(&id, page, PLAYLIST_PAGE_SIZE).await)
 }
 
 #[derive(Serialize)]
@@ -159,7 +375,7 @@ pub(crate) async fn asmr_works<R: Runtime>(
     query: AsmrListQuery,
 ) -> Result<AsmrPage, AsmrError> {
     main_window(&window)?;
-    state.source()?.works(query).await
+    state.settle(state.source()?.works(query).await)
 }
 
 #[tauri::command]
@@ -170,10 +386,12 @@ pub(crate) async fn asmr_popular<R: Runtime>(
     subtitle_only: bool,
 ) -> Result<AsmrPage, AsmrError> {
     main_window(&window)?;
-    state
-        .source()?
-        .popular(page, POPULAR_PAGE_SIZE, subtitle_only)
-        .await
+    state.settle(
+        state
+            .source()?
+            .popular(page, POPULAR_PAGE_SIZE, subtitle_only)
+            .await,
+    )
 }
 
 #[tauri::command]
@@ -184,7 +402,7 @@ pub(crate) async fn asmr_search<R: Runtime>(
     query: AsmrListQuery,
 ) -> Result<AsmrPage, AsmrError> {
     main_window(&window)?;
-    state.source()?.search(&keyword, query).await
+    state.settle(state.source()?.search(&keyword, query).await)
 }
 
 #[tauri::command]
@@ -196,7 +414,7 @@ pub(crate) async fn asmr_related<R: Runtime>(
     query: AsmrListQuery,
 ) -> Result<AsmrPage, AsmrError> {
     main_window(&window)?;
-    state.source()?.related(relation, &id, query).await
+    state.settle(state.source()?.related(relation, &id, query).await)
 }
 
 #[tauri::command]
@@ -232,7 +450,7 @@ pub(crate) async fn asmr_work<R: Runtime>(
     id: u64,
 ) -> Result<AsmrWorkDetail, AsmrError> {
     main_window(&window)?;
-    let detail = state.source()?.work(id).await?;
+    let detail = state.settle(state.source()?.work(id).await)?;
     state.remember(id, &detail.media);
     Ok(detail)
 }

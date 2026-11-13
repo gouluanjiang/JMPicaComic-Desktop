@@ -65,6 +65,46 @@ pub struct AsmrWork {
     pub duration_seconds: Option<u64>,
     pub has_subtitle: bool,
     pub editions: Vec<AsmrEdition>,
+    /// The signed-in listener's own rating, 1 to 5.
+    pub user_rating: Option<u8>,
+    /// The signed-in listener's mark, where the endpoint reports it.
+    pub progress: Option<AsmrProgress>,
+    /// When the mark or rating last changed.
+    pub marked: Option<String>,
+}
+
+/// The site's five listening marks.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AsmrProgress {
+    Marked,
+    Listening,
+    Listened,
+    Replay,
+    Postponed,
+}
+
+impl AsmrProgress {
+    pub(crate) fn parameter(self) -> &'static str {
+        match self {
+            Self::Marked => "marked",
+            Self::Listening => "listening",
+            Self::Listened => "listened",
+            Self::Replay => "replay",
+            Self::Postponed => "postponed",
+        }
+    }
+
+    fn parse(value: &Value) -> Option<Self> {
+        Some(match value.as_str()? {
+            "marked" => Self::Marked,
+            "listening" => Self::Listening,
+            "listened" => Self::Listened,
+            "replay" => Self::Replay,
+            "postponed" => Self::Postponed,
+            _ => return None,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -173,21 +213,21 @@ pub(crate) fn clean_text(value: &str, limit: usize) -> String {
         .to_owned()
 }
 
-fn text(value: &Value, limit: usize) -> Option<String> {
+pub(crate) fn text(value: &Value, limit: usize) -> Option<String> {
     value
         .as_str()
         .map(|value| clean_text(value, limit))
         .filter(|value| !value.is_empty())
 }
 
-fn count(value: &Value) -> u64 {
+pub(crate) fn count(value: &Value) -> u64 {
     value
         .as_u64()
         .or_else(|| value.as_f64().filter(|v| *v >= 0.0).map(|v| v as u64))
         .unwrap_or(0)
 }
 
-fn date(value: &Value) -> Option<String> {
+pub(crate) fn date(value: &Value) -> Option<String> {
     let value = value.as_str()?.get(..10)?;
     let bytes = value.as_bytes();
     let shaped = bytes.len() == 10
@@ -316,6 +356,12 @@ pub(crate) fn work(value: &Value) -> AsmrResult<AsmrWork> {
             .filter_map(edition)
             .take(MAX_EDITIONS)
             .collect(),
+        user_rating: value["userRating"]
+            .as_u64()
+            .filter(|rating| (1..=5).contains(rating))
+            .map(|rating| rating as u8),
+        progress: AsmrProgress::parse(&value["progress"]),
+        marked: date(&value["updated_at"]),
     })
 }
 
@@ -333,7 +379,12 @@ pub(crate) fn page(value: &Value) -> AsmrResult<AsmrPage> {
             .iter()
             .filter_map(|work| self::work(work).ok())
             .collect(),
-        page: pagination["currentPage"].as_u64().unwrap_or(1).max(1),
+        // Playlists call the page number `page`.
+        page: pagination["currentPage"]
+            .as_u64()
+            .or_else(|| pagination["page"].as_u64())
+            .unwrap_or(1)
+            .max(1),
         page_size: pagination["pageSize"]
             .as_u64()
             .unwrap_or(works.len() as u64),

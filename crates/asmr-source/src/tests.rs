@@ -474,3 +474,189 @@ async fn covers_are_sniffed_and_missing_covers_are_not_errors() {
         "https://api.asmr-200.com/api/cover/1683351.jpg?type=main"
     );
 }
+
+fn marked_work(id: u64, progress: &str, rating: Value) -> Value {
+    let mut work = synthetic_work(id);
+    work["progress"] = json!(progress);
+    work["userRating"] = rating;
+    work["updated_at"] = json!("2026-11-13 08:00:00");
+    work
+}
+
+#[test]
+fn marks_and_ratings_are_read_and_unknown_values_are_dropped() {
+    let work = types::work(&marked_work(1, "replay", json!(5))).unwrap();
+    assert_eq!(work.progress, Some(AsmrProgress::Replay));
+    assert_eq!(work.user_rating, Some(5));
+    assert_eq!(work.marked.as_deref(), Some("2026-11-13"));
+    let odd = types::work(&marked_work(1, "archived", json!(9))).unwrap();
+    assert_eq!(odd.progress, None);
+    assert_eq!(odd.user_rating, None);
+    let plain = types::work(&synthetic_work(1)).unwrap();
+    assert_eq!((plain.progress, plain.user_rating), (None, None));
+    assert_eq!(
+        serde_json::to_value(AsmrProgress::Listened).unwrap(),
+        json!("listened")
+    );
+}
+
+#[tokio::test]
+async fn signing_in_returns_a_session_and_refuses_bad_input_before_any_request() {
+    let source = AsmrSource::scripted(vec![
+        reply(
+            200,
+            json!({"user": {"loggedIn": true, "name": "synthetic", "group": "user"}, "token": "aaa.bbb.ccc"}),
+        ),
+        reply(401, json!({"error": "bad"})),
+        reply(
+            200,
+            json!({"user": {"name": "synthetic"}, "token": "has space"}),
+        ),
+    ]);
+    let session = source.login(" synthetic ", "secret").await.unwrap();
+    assert_eq!(session.name, "synthetic");
+    assert_eq!(session.token, "aaa.bbb.ccc");
+    assert!(!format!("{session:?}").contains("aaa"));
+    // Signing in does not install the token by itself.
+    assert!(!source.signed_in());
+    assert_eq!(
+        source.login("synthetic", "wrong").await.unwrap_err().code,
+        "ASMR_LOGIN_FAILED"
+    );
+    assert_eq!(
+        source.login("synthetic", "secret").await.unwrap_err().code,
+        "ASMR_LOGIN_FAILED"
+    );
+    let recorded = source.recorded();
+    assert_eq!(recorded.len(), 3);
+    assert_eq!(recorded[0].0, Method::POST);
+    assert_eq!(recorded[0].1, "https://api.asmr-200.com/api/auth/me");
+    assert_eq!(
+        recorded[0].2,
+        Some(json!({"name": "synthetic", "password": "secret"}))
+    );
+    for (name, password) in [("", "x"), ("a", ""), ("a\nb", "x"), ("a", "x\u{0}")] {
+        assert_eq!(
+            source.login(name, password).await.unwrap_err().code,
+            "ASMR_INVALID_INPUT"
+        );
+    }
+    assert_eq!(source.recorded().len(), 3);
+    assert_eq!(
+        source.set_token(Some("bad token".into())).unwrap_err().code,
+        "ASMR_INVALID_INPUT"
+    );
+    assert!(is_token("aaa.bbb-ccc_ddd"));
+    assert!(!is_token(""));
+    assert!(!is_token("line\nbreak"));
+}
+
+#[tokio::test]
+async fn account_lists_use_the_site_queries_and_a_rejected_token_is_reported() {
+    let empty =
+        json!({"works": [], "pagination": {"currentPage": 1, "pageSize": 20, "totalCount": 0}});
+    let playlist_id = "4a0389f8-2434-4102-9dad-eeb6ea89ad1d";
+    let source = AsmrSource::scripted(vec![
+        reply(
+            200,
+            json!({"user": {"loggedIn": true, "name": "synthetic"}, "auth": true}),
+        ),
+        reply(
+            200,
+            json!({"works": [marked_work(7, "marked", Value::Null)],
+                   "pagination": {"currentPage": 1, "pageSize": 20, "totalCount": 1}}),
+        ),
+        reply(200, empty.clone()),
+        reply(
+            200,
+            json!({"playlists": [
+                {"id": playlist_id, "name": "合成列表", "description": "", "works_count": 6,
+                 "latestWorkID": 1582222, "updated_at": "2026-07-29 14:19:01", "privacy": 0,
+                 "mainCoverUrl": "https://example.invalid/never-forwarded.jpg"},
+                {"id": "../escape", "name": "无效"}
+            ], "pagination": {"page": 1, "pageSize": 20, "totalCount": 2}}),
+        ),
+        reply(
+            200,
+            json!({"works": [synthetic_work(9)],
+                   "pagination": {"page": 2, "pageSize": 12, "totalCount": 13}}),
+        ),
+        reply(200, marked_work(1683351, "listening", json!(4))),
+        reply(200, json!([])),
+        reply(401, json!({"error": "expired"})),
+    ]);
+    source.set_token(Some("aaa.bbb.ccc".into())).unwrap();
+    assert_eq!(source.account().await.unwrap(), "synthetic");
+    let marked = source.reviews(None, false, 1).await.unwrap();
+    assert_eq!(marked.works[0].progress, Some(AsmrProgress::Marked));
+    source
+        .reviews(Some(AsmrProgress::Postponed), true, 3)
+        .await
+        .unwrap();
+    let playlists = source.playlists(1).await.unwrap();
+    assert_eq!(playlists.total, 2);
+    assert_eq!(playlists.playlists.len(), 1);
+    assert_eq!(playlists.playlists[0].works, 6);
+    assert_eq!(playlists.playlists[0].cover_work, Some(1582222));
+    assert_eq!(
+        playlists.playlists[0].updated.as_deref(),
+        Some("2026-07-29")
+    );
+    assert!(!serde_json::to_string(&playlists).unwrap().contains("http"));
+    let works = source.playlist_works(playlist_id, 2, 12).await.unwrap();
+    assert_eq!((works.page, works.total), (2, 13));
+    // Signed in, a work is read from the endpoint that carries the mark.
+    let detail = source.work(1683351).await.unwrap();
+    assert_eq!(detail.work.progress, Some(AsmrProgress::Listening));
+    assert_eq!(detail.work.user_rating, Some(4));
+    assert_eq!(
+        source.reviews(None, false, 1).await.unwrap_err().code,
+        "ASMR_LOGIN_EXPIRED"
+    );
+    let recorded = source.recorded();
+    let urls: Vec<&str> = recorded.iter().map(|(_, url, _)| url.as_str()).collect();
+    assert_eq!(
+        urls,
+        vec![
+            "https://api.asmr-200.com/api/auth/me",
+            "https://api.asmr-200.com/api/review?order=updated_at&sort=desc&page=1",
+            "https://api.asmr-200.com/api/review?order=updated_at&sort=asc&page=3&filter=postponed",
+            "https://api.asmr-200.com/api/playlist/get-playlists?page=1&pageSize=20&filterBy=all",
+            "https://api.asmr-200.com/api/playlist/get-playlist-works?id=4a0389f8-2434-4102-9dad-eeb6ea89ad1d&page=2&pageSize=12",
+            "https://api.asmr-200.com/api/work/1683351",
+            "https://api.asmr-200.com/api/tracks/1683351?v=2",
+            "https://api.asmr-200.com/api/review?order=updated_at&sort=desc&page=1",
+        ]
+    );
+    for bad in [
+        "",
+        "short",
+        "4a0389f8-2434-4102-9dad-eeb6ea89ad1/",
+        "4a0389f8-2434-4102-9dad-eeb6ea89ad1dd",
+    ] {
+        assert_eq!(
+            source.playlist_works(bad, 1, 12).await.unwrap_err().code,
+            "ASMR_INVALID_INPUT",
+            "{bad}"
+        );
+    }
+    assert_eq!(
+        source
+            .playlist_works(playlist_id, 1, 49)
+            .await
+            .unwrap_err()
+            .code,
+        "ASMR_INVALID_INPUT"
+    );
+    assert_eq!(
+        source.reviews(None, false, 0).await.unwrap_err().code,
+        "ASMR_INVALID_INPUT"
+    );
+    assert_eq!(
+        source.playlists(0).await.unwrap_err().code,
+        "ASMR_INVALID_INPUT"
+    );
+    // Signed out again, a 401 is an ordinary refusal.
+    source.set_token(None).unwrap();
+    assert!(!source.signed_in());
+}

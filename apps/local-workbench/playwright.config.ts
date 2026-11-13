@@ -23,6 +23,7 @@ export default defineConfig({
     "**/update-ui.spec.ts",
     "**/asmr-ui.spec.ts",
     "**/asmr-player-ui.spec.ts",
+    "**/asmr-account-ui.spec.ts",
   ],
   outputDir: "test-results",
   fullyParallel: false,
