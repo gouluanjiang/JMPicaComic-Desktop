@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  RefObject,
+} from "react";
 import { Icon } from "../icons.tsx";
 import { useDesktopLyrics } from "./asmr-desktop-lyrics.ts";
 import { cueAt } from "./asmr-media.ts";
@@ -320,8 +324,89 @@ function FullPlayer({
 }
 
 const VIDEO_POSITION_KEY = "jmpicacomic.asmr.videoPosition";
+const VIDEO_WIDTH_KEY = "jmpicacomic.asmr.videoWidth";
 const BAR_HEIGHT = 76;
 const DRAG_THRESHOLD = 4;
+const DEFAULT_WIDTH = 320;
+const MIN_WIDTH = 200;
+const DEFAULT_RATIO = 16 / 9;
+const CORNERS = ["nw", "ne", "sw", "se"] as const;
+type Corner = (typeof CORNERS)[number];
+
+function readWidth(): number {
+  try {
+    const value = Number(localStorage.getItem(VIDEO_WIDTH_KEY));
+    return Number.isFinite(value) && value >= MIN_WIDTH
+      ? Math.min(value, 4000)
+      : DEFAULT_WIDTH;
+  } catch {
+    return DEFAULT_WIDTH;
+  }
+}
+
+function store(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Not essential.
+  }
+}
+
+/** The playing video's own width / height, 16:9 until it is known. */
+function useVideoRatio(media: RefObject<HTMLVideoElement | null>): number {
+  const [ratio, setRatio] = useState(DEFAULT_RATIO);
+  useEffect(() => {
+    const element = media.current;
+    if (!element) return;
+    const update = () => {
+      const { videoWidth, videoHeight } = element;
+      const next =
+        videoWidth > 0 && videoHeight > 0
+          ? videoWidth / videoHeight
+          : DEFAULT_RATIO;
+      // Keep extreme shapes usable as a small box.
+      setRatio(Math.min(Math.max(next, 0.4), 3));
+    };
+    element.addEventListener("loadedmetadata", update);
+    element.addEventListener("emptied", update);
+    update();
+    return () => {
+      element.removeEventListener("loadedmetadata", update);
+      element.removeEventListener("emptied", update);
+    };
+  }, [media]);
+  return ratio;
+}
+
+/** Picture-in-picture for the video, where the web view offers it. */
+function usePictureInPicture(media: RefObject<HTMLVideoElement | null>) {
+  const [active, setActive] = useState(false);
+  const supported =
+    typeof document !== "undefined" &&
+    document.pictureInPictureEnabled === true;
+  useEffect(() => {
+    const element = media.current;
+    if (!element) return;
+    const enter = () => setActive(true);
+    const leave = () => setActive(false);
+    element.addEventListener("enterpictureinpicture", enter);
+    element.addEventListener("leavepictureinpicture", leave);
+    return () => {
+      element.removeEventListener("enterpictureinpicture", enter);
+      element.removeEventListener("leavepictureinpicture", leave);
+    };
+  }, [media]);
+  const open = () => {
+    const element = media.current;
+    if (!supported || !element || document.pictureInPictureElement) return;
+    void element.requestPictureInPicture().catch(() => undefined);
+  };
+  const close = () => {
+    if (document.pictureInPictureElement)
+      void document.exitPictureInPicture().catch(() => undefined);
+  };
+  return { supported, active, open, close };
+}
 
 /** Offsets of the small video from the workspace's right and bottom edges. */
 type Offset = { right: number; bottom: number };
@@ -348,8 +433,93 @@ function readOffset(): Offset | null {
  * Lets the small video be dragged anywhere inside the ASMR section. A press
  * that does not move opens the full player, as a click did before.
  */
-function useFloatingDrag(onClick: () => void) {
+function useFloatingBox(
+  onClick: () => void,
+  ratio: number,
+  onDropOutside: () => void,
+) {
   const [offset, setOffset] = useState<Offset | null>(readOffset);
+  const [width, setWidth] = useState(readWidth);
+  const resize = useRef<{
+    corner: Corner;
+    x: number;
+    y: number;
+    start: Offset;
+    width: number;
+    height: number;
+    maxWidth: number;
+  } | null>(null);
+  const onResizeDown = (
+    corner: Corner,
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    if (event.button !== 0) return;
+    const box = event.currentTarget.parentElement;
+    const parent = box?.offsetParent as HTMLElement | null;
+    if (!box || !parent) return;
+    // The box itself must not start a move or count this as a click.
+    event.stopPropagation();
+    const rect = box.getBoundingClientRect();
+    const area = parent.getBoundingClientRect();
+    // The corner opposite the handle stays where it is.
+    const roomX = corner.endsWith("e")
+      ? area.right - rect.left
+      : rect.right - area.left;
+    const roomY = corner.startsWith("s")
+      ? area.bottom - BAR_HEIGHT - rect.top
+      : rect.bottom - area.top;
+    resize.current = {
+      corner,
+      x: event.clientX,
+      y: event.clientY,
+      start: {
+        right: area.right - rect.right,
+        bottom: area.bottom - rect.bottom,
+      },
+      width: rect.width,
+      height: rect.height,
+      maxWidth: Math.max(MIN_WIDTH, Math.min(roomX, roomY * ratio)),
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onResizeMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const current = resize.current;
+    if (!current) return;
+    const dx =
+      (event.clientX - current.x) * (current.corner.endsWith("e") ? 1 : -1);
+    const dy =
+      (event.clientY - current.y) * (current.corner.startsWith("s") ? 1 : -1);
+    // Follow whichever direction the pointer travelled further in.
+    const wanted = Math.max(current.width + dx, (current.height + dy) * ratio);
+    const next = Math.round(
+      Math.min(Math.max(wanted, MIN_WIDTH), current.maxWidth),
+    );
+    setWidth(next);
+    setOffset({
+      right: Math.round(
+        current.start.right -
+          (current.corner.endsWith("e") ? next - current.width : 0),
+      ),
+      bottom: Math.round(
+        current.start.bottom -
+          (current.corner.startsWith("s") ? next / ratio - current.height : 0),
+      ),
+    });
+  };
+  const onResizeUp = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!resize.current) return;
+    resize.current = null;
+    setWidth((value) => {
+      store(VIDEO_WIDTH_KEY, value);
+      return value;
+    });
+    setOffset((value) => {
+      if (value) store(VIDEO_POSITION_KEY, value);
+      return value;
+    });
+  };
   const drag = useRef<{
     x: number;
     y: number;
@@ -417,24 +587,44 @@ function useFloatingDrag(onClick: () => void) {
       return;
     }
     setOffset((value) => {
-      try {
-        if (value)
-          localStorage.setItem(VIDEO_POSITION_KEY, JSON.stringify(value));
-      } catch {
-        // Not essential.
-      }
+      if (value) store(VIDEO_POSITION_KEY, value);
       return value;
     });
+    // Letting go outside the program window pops the video out of it.
+    if (
+      event.clientX < 0 ||
+      event.clientY < 0 ||
+      event.clientX > window.innerWidth ||
+      event.clientY > window.innerHeight
+    )
+      onDropOutside();
   };
+  const height = Math.round(width / ratio);
   // A narrower window keeps the box inside instead of pushing it out.
-  const style: CSSProperties | undefined = offset
-    ? {
-        right: `min(${offset.right}px, calc(100% - 320px))`,
-        bottom: `min(${offset.bottom}px, calc(100% - 180px))`,
-      }
-    : undefined;
+  const style: CSSProperties = {
+    width: `min(${width}px, 100%)`,
+    aspectRatio: String(ratio),
+    maxHeight: `calc(100% - ${BAR_HEIGHT}px)`,
+    ...(offset
+      ? {
+          right: `max(0px, min(${offset.right}px, calc(100% - ${width}px)))`,
+          bottom: `max(${BAR_HEIGHT}px, min(${offset.bottom}px, calc(100% - ${height}px)))`,
+        }
+      : {}),
+  };
   return {
     style,
+    resizeHandles: CORNERS.map((corner) => (
+      <span
+        key={corner}
+        className={`asmr-screen-resize is-${corner}`}
+        data-testid={`asmr-video-resize-${corner}`}
+        onPointerDown={(event) => onResizeDown(corner, event)}
+        onPointerMove={onResizeMove}
+        onPointerUp={onResizeUp}
+        onPointerCancel={onResizeUp}
+      />
+    )),
     handlers: {
       onPointerDown,
       onPointerMove,
@@ -475,7 +665,34 @@ export function AsmrPlayerView({
         : "audio";
   const duration = state.duration || item?.durationSeconds || 0;
   const [desktopLyrics, setDesktopLyrics] = useDesktopLyrics(item, cue);
-  const floating = useFloatingDrag(() => asmrPlayer.setExpanded(true));
+  const ratio = useVideoRatio(media);
+  const pip = usePictureInPicture(media);
+  const floating = useFloatingBox(
+    () => asmrPlayer.setExpanded(true),
+    ratio,
+    pip.open,
+  );
+  // Only a video has a picture to show outside the window.
+  useEffect(() => {
+    if (!video && document.pictureInPictureElement)
+      void document.exitPictureInPicture().catch(() => undefined);
+  }, [video]);
+  const pipButton = video && pip.supported && (
+    <button
+      className="asmr-icon-button asmr-screen-popout"
+      aria-label={pip.active ? "收回画中画" : "画中画"}
+      title={
+        pip.active
+          ? "把视频收回到程序里"
+          : "画中画：视频变成可以拖到程序外的置顶小窗"
+      }
+      data-testid="asmr-video-popout"
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={() => (pip.active ? pip.close() : pip.open())}
+    >
+      <Icon name="popout" size={18} />
+    </button>
+  );
   return (
     <>
       {item && state.expanded && (
@@ -487,11 +704,15 @@ export function AsmrPlayerView({
         />
       )}
       <div
-        className={`asmr-screen is-${mode}${video ? " is-video" : ""}`}
+        className={`asmr-screen is-${mode}${video ? " is-video" : ""}${pip.active ? " is-pip" : ""}`}
         ref={screen}
         data-testid="asmr-screen"
         style={mode === "floating" ? floating.style : undefined}
-        title={mode === "floating" ? "拖动可移动，点击展开播放器" : undefined}
+        title={
+          mode === "floating"
+            ? "拖动可移动，拖四角调整大小，点击展开播放器"
+            : undefined
+        }
         {...(mode === "floating" ? floating.handlers : {})}
       >
         <video
@@ -513,6 +734,8 @@ export function AsmrPlayerView({
           />
         )}
         {video && cue && <div className="asmr-video-cue">{cue}</div>}
+        {(mode === "floating" || mode === "expanded") && pipButton}
+        {mode === "floating" && floating.resizeHandles}
         {video && state.expanded && (
           <button
             className="asmr-icon-button asmr-screen-fullscreen"

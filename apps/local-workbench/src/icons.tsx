@@ -200,6 +200,12 @@ const paths = {
       <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
     </>
   ),
+  popout: (
+    <>
+      <path d="M11 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      <rect x="12" y="4" width="9" height="7" rx="1.5" />
+    </>
+  ),
 } as const;
 
 export function Icon({
