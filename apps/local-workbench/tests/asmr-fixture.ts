@@ -7,6 +7,7 @@ declare global {
   interface Window {
     asmrCalls: { command: string; args: Record<string, unknown> }[];
     asmrFailures: Record<string, number>;
+    asmrPlayerProgress: string | null;
   }
 }
 
@@ -117,6 +118,38 @@ export async function installAsmr(page: Page) {
       userRating: n % 2 === 0 ? 5 : null,
       marked: "2026-11-13",
     });
+    // The synthetic account's playlists; changes last until the next reload.
+    const playlists = [
+      {
+        id: "00000000-0000-4000-8000-000000000001",
+        name: "__SYS_PLAYLIST_MARKED",
+        description: "",
+        works: 25,
+        coverWork: 1000301 as number | null,
+        updated: "2026-11-13" as string | null,
+        privacy: "private",
+        members: [] as number[],
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000002",
+        name: "合成播放列表",
+        description: "合成说明",
+        works: 3,
+        coverWork: null,
+        updated: null,
+        privacy: "unlisted",
+        members: [],
+      },
+    ];
+    const listed = (workId: number | null) => ({
+      playlists: playlists.map(({ members, ...playlist }) => ({
+        ...playlist,
+        contains: workId === null ? null : members.includes(workId),
+      })),
+      page: 1,
+      pageSize: 20,
+      total: playlists.length,
+    });
     bridge.invoke = (command, args = {}) => {
       if (!command.startsWith("asmr_")) return invoke(command, args);
       window.asmrCalls.push({ command, args: structuredClone(args) });
@@ -144,7 +177,13 @@ export async function installAsmr(page: Page) {
           const id = args.id as number;
           if (id === PLAYER_WORK)
             return Promise.resolve({
-              work: work(id - 1_000_000),
+              work: signedIn()
+                ? {
+                    ...work(id - 1_000_000),
+                    progress: window.asmrPlayerProgress ?? null,
+                    userRating: null,
+                  }
+                : work(id - 1_000_000),
               tracks: playerTracks,
             });
           return Promise.resolve({
@@ -216,29 +255,50 @@ export async function installAsmr(page: Page) {
         }
         case "asmr_playlists":
           if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
-          return Promise.resolve({
-            playlists: [
-              {
-                id: "00000000-0000-4000-8000-000000000001",
-                name: "__SYS_PLAYLIST_MARKED",
-                description: "",
-                works: 25,
-                coverWork: 1000301,
-                updated: "2026-11-13",
-              },
-              {
-                id: "00000000-0000-4000-8000-000000000002",
-                name: "合成播放列表",
-                description: "合成说明",
-                works: 3,
-                coverWork: null,
-                updated: null,
-              },
-            ],
-            page: 1,
-            pageSize: 20,
-            total: 2,
+          return Promise.resolve(listed(null));
+        case "asmr_work_playlists":
+          if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
+          return Promise.resolve(listed(args.work as number));
+        case "asmr_review_set":
+        case "asmr_review_delete":
+          if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
+          return Promise.resolve(null);
+        case "asmr_playlist_change": {
+          const target = playlists.find((entry) => entry.id === args.id);
+          if (!signedIn() || !target)
+            return Promise.reject({ code: "ASMR_SIGNED_OUT" });
+          const work = args.work as number;
+          target.members = target.members.filter((id) => id !== work);
+          if (args.add) target.members.push(work);
+          target.works += args.add ? 1 : -1;
+          return Promise.resolve(null);
+        }
+        case "asmr_playlist_create":
+          playlists.push({
+            id: `00000000-0000-4000-8000-00000000000${playlists.length + 1}`,
+            name: args.name as string,
+            description: args.description as string,
+            works: 0,
+            coverWork: null,
+            updated: null,
+            privacy: args.privacy as string,
+            members: [],
           });
+          return Promise.resolve(null);
+        case "asmr_playlist_edit": {
+          const target = playlists.find((entry) => entry.id === args.id);
+          if (!target) return Promise.reject({ code: "ASMR_NOT_FOUND" });
+          target.name = args.name as string;
+          target.description = args.description as string;
+          target.privacy = args.privacy as string;
+          return Promise.resolve(null);
+        }
+        case "asmr_playlist_delete": {
+          const index = playlists.findIndex((entry) => entry.id === args.id);
+          if (index < 0) return Promise.reject({ code: "ASMR_NOT_FOUND" });
+          playlists.splice(index, 1);
+          return Promise.resolve(null);
+        }
         case "asmr_playlist_works":
           if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
           return Promise.resolve(page(500, 3, args.page as number));

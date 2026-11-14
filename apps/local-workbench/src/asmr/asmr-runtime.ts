@@ -15,6 +15,7 @@ import type {
   AsmrListQuery,
   AsmrPage,
   AsmrPlaylistPage,
+  AsmrPrivacy,
   AsmrProgress,
   AsmrRelation,
   AsmrWorkDetail,
@@ -91,6 +92,71 @@ export function loadPlaylists(page: number): Promise<AsmrPlaylistPage> {
 
 export function loadPlaylistWorks(id: string, page: number): Promise<AsmrPage> {
   return invokeDesktop("asmr_playlist_works", { id, page }).then(validatePage);
+}
+
+/** Sets the mark, the rating, or both; `null` leaves that one as it is. */
+export function setReview(
+  work: number,
+  rating: number | null,
+  progress: AsmrProgress | null,
+): Promise<void> {
+  return invokeDesktop("asmr_review_set", { work, rating, progress }).then(
+    () => undefined,
+  );
+}
+
+/** Removes both the mark and the rating. */
+export function deleteReview(work: number): Promise<void> {
+  return invokeDesktop("asmr_review_delete", { work }).then(() => undefined);
+}
+
+export function loadWorkPlaylists(
+  work: number,
+  page: number,
+): Promise<AsmrPlaylistPage> {
+  return invokeDesktop("asmr_work_playlists", { work, page }).then(
+    validatePlaylists,
+  );
+}
+
+export function changePlaylist(
+  id: string,
+  work: number,
+  add: boolean,
+): Promise<void> {
+  return invokeDesktop("asmr_playlist_change", { id, work, add }).then(
+    () => undefined,
+  );
+}
+
+export function createPlaylist(
+  name: string,
+  description: string,
+  privacy: AsmrPrivacy,
+): Promise<void> {
+  return invokeDesktop("asmr_playlist_create", {
+    name,
+    description,
+    privacy,
+  }).then(() => undefined);
+}
+
+export function editPlaylist(
+  id: string,
+  name: string,
+  description: string,
+  privacy: AsmrPrivacy,
+): Promise<void> {
+  return invokeDesktop("asmr_playlist_edit", {
+    id,
+    name,
+    description,
+    privacy,
+  }).then(() => undefined);
+}
+
+export function deletePlaylist(id: string): Promise<void> {
+  return invokeDesktop("asmr_playlist_delete", { id }).then(() => undefined);
 }
 
 export function loadWork(id: number): Promise<AsmrWorkDetail> {

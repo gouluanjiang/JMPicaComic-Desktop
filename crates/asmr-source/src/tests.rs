@@ -660,3 +660,169 @@ async fn account_lists_use_the_site_queries_and_a_rejected_token_is_reported() {
     source.set_token(None).unwrap();
     assert!(!source.signed_in());
 }
+
+#[tokio::test]
+async fn account_changes_send_the_site_requests_and_refuse_bad_input_first() {
+    let playlist_id = "4a0389f8-2434-4102-9dad-eeb6ea89ad1d";
+    let mut replies: Vec<Reply> = (0..7)
+        .map(|_| reply(200, json!({"message": "ok"})))
+        .collect();
+    replies.push(reply(
+        200,
+        json!({"playlists": [
+            {"id": playlist_id, "name": "__SYS_PLAYLIST_MARKED", "works_count": 2,
+             "privacy": 2, "exist": true},
+            {"id": "5a0389f8-2434-4102-9dad-eeb6ea89ad1d", "name": "合成列表",
+             "works_count": 0, "privacy": 9, "exist": false}
+        ], "pagination": {"page": 1, "pageSize": 20, "totalCount": 2}}),
+    ));
+    replies.push(reply(401, json!({"error": "expired"})));
+    let source = AsmrSource::scripted(replies);
+    // Nothing is sent without a session.
+    assert_eq!(
+        source.set_review(7, Some(5), None).await.unwrap_err().code,
+        "ASMR_SIGNED_OUT"
+    );
+    assert_eq!(
+        source.delete_review(7).await.unwrap_err().code,
+        "ASMR_SIGNED_OUT"
+    );
+    source.set_token(Some("aaa.bbb.ccc".into())).unwrap();
+    for (work, rating, progress) in [
+        (0, Some(5), None),
+        (7, None, None),
+        (7, Some(0), None),
+        (7, Some(6), Some(AsmrProgress::Marked)),
+    ] {
+        assert_eq!(
+            source
+                .set_review(work, rating, progress)
+                .await
+                .unwrap_err()
+                .code,
+            "ASMR_INVALID_INPUT"
+        );
+    }
+    let long = "名".repeat(121);
+    for (name, description) in [
+        ("", ""),
+        ("  ", ""),
+        ("__SYS_PLAYLIST_MARKED", ""),
+        ("列表", "a\u{0007}b"),
+        (long.as_str(), ""),
+    ] {
+        assert_eq!(
+            source
+                .playlist_create(name, description, AsmrPrivacy::Private)
+                .await
+                .unwrap_err()
+                .code,
+            "ASMR_INVALID_INPUT",
+            "{name:?}"
+        );
+    }
+    for bad in ["", "../escape"] {
+        assert_eq!(
+            source.playlist_change(bad, 7, true).await.unwrap_err().code,
+            "ASMR_INVALID_INPUT"
+        );
+        assert_eq!(
+            source.playlist_delete(bad).await.unwrap_err().code,
+            "ASMR_INVALID_INPUT"
+        );
+        assert_eq!(
+            source
+                .playlist_edit(bad, "列表", "", AsmrPrivacy::Private)
+                .await
+                .unwrap_err()
+                .code,
+            "ASMR_INVALID_INPUT"
+        );
+    }
+    assert_eq!(
+        source
+            .playlist_change(playlist_id, 0, true)
+            .await
+            .unwrap_err()
+            .code,
+        "ASMR_INVALID_INPUT"
+    );
+    assert!(source.recorded().is_empty());
+
+    source
+        .set_review(7, None, Some(AsmrProgress::Listening))
+        .await
+        .unwrap();
+    source.set_review(7, Some(4), None).await.unwrap();
+    source.delete_review(7).await.unwrap();
+    source.playlist_change(playlist_id, 7, true).await.unwrap();
+    source.playlist_change(playlist_id, 7, false).await.unwrap();
+    source
+        .playlist_create(" 新列表 ", " 第一行\n第二行 ", AsmrPrivacy::Private)
+        .await
+        .unwrap();
+    source
+        .playlist_edit(playlist_id, "改名", "", AsmrPrivacy::Unlisted)
+        .await
+        .unwrap();
+    let status = source.work_playlists(7, 1).await.unwrap();
+    assert_eq!(status.playlists[0].contains, Some(true));
+    assert_eq!(status.playlists[0].privacy, AsmrPrivacy::Public);
+    assert_eq!(status.playlists[1].contains, Some(false));
+    assert_eq!(status.playlists[1].privacy, AsmrPrivacy::Private);
+    assert_eq!(
+        source.playlist_delete(playlist_id).await.unwrap_err().code,
+        "ASMR_LOGIN_EXPIRED"
+    );
+    let api = "https://api.asmr-200.com/api";
+    assert_eq!(
+        source.recorded(),
+        vec![
+            (
+                Method::PUT,
+                format!("{api}/review"),
+                Some(json!({"work_id": 7, "progress": "listening"}))
+            ),
+            (
+                Method::PUT,
+                format!("{api}/review"),
+                Some(json!({"work_id": 7, "rating": 4}))
+            ),
+            (Method::DELETE, format!("{api}/review?work_id=7"), None),
+            (
+                Method::POST,
+                format!("{api}/playlist/add-works-to-playlist"),
+                Some(json!({"id": playlist_id, "works": [7]}))
+            ),
+            (
+                Method::POST,
+                format!("{api}/playlist/remove-works-from-playlist"),
+                Some(json!({"id": playlist_id, "works": [7]}))
+            ),
+            (
+                Method::POST,
+                format!("{api}/playlist/create-playlist"),
+                Some(json!({"name": "新列表", "privacy": 0, "locale": "zh-CN",
+                            "description": "第一行\n第二行", "works": []}))
+            ),
+            (
+                Method::POST,
+                format!("{api}/playlist/edit-playlist-metadata"),
+                Some(json!({"id": playlist_id,
+                            "data": {"name": "改名", "privacy": 1, "description": ""}}))
+            ),
+            (
+                Method::GET,
+                format!(
+                    "{api}/playlist/get-work-exist-status-in-my-playlists?workID=7&page=1&version=2"
+                ),
+                None
+            ),
+            (
+                Method::POST,
+                format!("{api}/playlist/delete-playlist"),
+                Some(json!({"id": playlist_id}))
+            ),
+        ]
+    );
+}

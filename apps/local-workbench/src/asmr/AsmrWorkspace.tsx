@@ -7,10 +7,15 @@ import {
   isSessionError,
   useAsmrAccount,
 } from "./AsmrAccount.tsx";
+import {
+  AsmrPlaylistDeleteDialog,
+  AsmrPlaylistDialog,
+} from "./AsmrAccountActions.tsx";
 import { AsmrDetailPanel } from "./AsmrDetailPanel.tsx";
 import { AsmrPlayerView } from "./AsmrPlayer.tsx";
 import { AsmrCover, AsmrWorkCard } from "./AsmrWorkCard.tsx";
 import type { OpenRelated } from "./AsmrWorkCard.tsx";
+import { onReviewChange, setMarksSignedIn } from "./asmr-marks.ts";
 import {
   loadIndex,
   loadPlaylistWorks,
@@ -23,6 +28,7 @@ import {
 } from "./asmr-runtime.ts";
 import {
   asmrErrorMessage,
+  isSystemPlaylist,
   PAGE_SIZE,
   parseWorkInput,
   playlistTitle,
@@ -206,6 +212,22 @@ function WorkList({
   const [error, setError] = useState<string | null>(null);
   const sequence = useRef(0);
   const sentinel = useRef<HTMLDivElement>(null);
+  // A mark or rating changed elsewhere shows on the cards already listed.
+  useEffect(
+    () =>
+      onReviewChange(({ id, ...change }) =>
+        setLoaded(
+          (previous) =>
+            previous && {
+              ...previous,
+              works: previous.works.map((work) =>
+                work.id === id ? { ...work, ...change } : work,
+              ),
+            },
+        ),
+      ),
+    [],
+  );
   const loadPage = (pageNumber: number, reset: boolean) => {
     const id = ++sequence.current;
     setLoading(true);
@@ -637,6 +659,9 @@ function PlaylistsView({
   const [nextPage, setNextPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // `"new"` while creating; a playlist while editing it.
+  const [editing, setEditing] = useState<AsmrPlaylist | "new" | null>(null);
+  const [deleting, setDeleting] = useState<AsmrPlaylist | null>(null);
   const load = (page: number) => {
     setLoading(true);
     setError(null);
@@ -670,6 +695,13 @@ function PlaylistsView({
           播放列表
           {playlists && <span className="asmr-count">（{total}）</span>}
         </h2>
+        <button
+          className="asmr-secondary-button"
+          data-testid="asmr-playlist-new"
+          onClick={() => setEditing("new")}
+        >
+          新建播放列表
+        </button>
       </div>
       {error && (
         <div className="asmr-error" role="alert">
@@ -693,26 +725,68 @@ function PlaylistsView({
       {playlists && playlists.length > 0 && (
         <div className="asmr-playlists" data-testid="asmr-playlists">
           {playlists.map((playlist) => (
-            <button
-              key={playlist.id}
-              className="asmr-playlist"
-              onClick={() => onOpen(playlist)}
-            >
-              {playlist.coverWork !== null ? (
-                <AsmrCover
-                  id={playlist.coverWork}
-                  code=""
-                  size="main"
-                  className="asmr-playlist-cover"
-                />
-              ) : (
-                <span className="asmr-cover asmr-playlist-cover" />
+            <div key={playlist.id} className="asmr-playlist-item">
+              <button
+                className="asmr-playlist"
+                onClick={() => onOpen(playlist)}
+              >
+                {playlist.coverWork !== null ? (
+                  <AsmrCover
+                    id={playlist.coverWork}
+                    code=""
+                    size="main"
+                    className="asmr-playlist-cover"
+                  />
+                ) : (
+                  <span className="asmr-cover asmr-playlist-cover" />
+                )}
+                <strong>{playlistTitle(playlist.name)}</strong>
+                <span className="asmr-muted">{playlist.works} 部作品</span>
+              </button>
+              {/* The site's own lists cannot be renamed or deleted. */}
+              {!isSystemPlaylist(playlist.name) && (
+                <div className="asmr-playlist-actions">
+                  <button
+                    className="asmr-text-button"
+                    aria-label={`编辑 ${playlist.name}`}
+                    onClick={() => setEditing(playlist)}
+                  >
+                    编辑
+                  </button>
+                  <button
+                    className="asmr-text-button"
+                    aria-label={`删除 ${playlist.name}`}
+                    onClick={() => setDeleting(playlist)}
+                  >
+                    删除
+                  </button>
+                </div>
               )}
-              <strong>{playlistTitle(playlist.name)}</strong>
-              <span className="asmr-muted">{playlist.works} 部作品</span>
-            </button>
+            </div>
           ))}
         </div>
+      )}
+      {editing && (
+        <AsmrPlaylistDialog
+          playlist={editing === "new" ? null : editing}
+          onError={onError}
+          onClose={() => setEditing(null)}
+          onDone={() => {
+            setEditing(null);
+            load(1);
+          }}
+        />
+      )}
+      {deleting && (
+        <AsmrPlaylistDeleteDialog
+          playlist={deleting}
+          onError={onError}
+          onClose={() => setDeleting(null)}
+          onDone={() => {
+            setDeleting(null);
+            load(1);
+          }}
+        />
       )}
       {playlists && playlists.length < total && !error && (
         <button
@@ -758,6 +832,7 @@ export function AsmrWorkspace({
   const onListError = (reason: unknown) => {
     if (isSessionError(reason)) refresh();
   };
+  useEffect(() => setMarksSignedIn(signedIn), [signedIn]);
   useEffect(() => {
     setHistory([viewFor(destination)]);
     setSelected(null);
@@ -985,6 +1060,8 @@ export function AsmrWorkspace({
             // Signing in or out changes what a work's details carry.
             key={`${selected}:${account?.name ?? ""}`}
             id={selected}
+            signedIn={signedIn}
+            onAccountError={onListError}
             onClose={() => setSelected(null)}
             onOpenWork={setSelected}
             onRelated={openRelated}

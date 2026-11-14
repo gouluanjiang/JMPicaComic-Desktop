@@ -25,7 +25,7 @@ commands.allow = ["workbench_update_check", "workbench_update_install"]
 [[permission]]
 identifier = "workbench-asmr"
 description = "Read the ASMR catalog: listings, search, circles, voice actors, tags, work details, file trees, covers as data URLs and subtitle text by file id. Audio and video stream through the main-window-only media protocol. Sign in to and out of the listener account and read its marked works and playlists; the session token stays native and only the account name is returned. No media URLs, downloads or paths."
-commands.allow = ["asmr_works", "asmr_popular", "asmr_search", "asmr_related", "asmr_index", "asmr_work", "asmr_cover", "asmr_subtitle", "asmr_account", "asmr_login", "asmr_logout", "asmr_reviews", "asmr_playlists", "asmr_playlist_works", "asmr_lyrics_open", "asmr_lyrics_hide", "asmr_lyrics_close", "asmr_lyrics_line"]
+commands.allow = ["asmr_works", "asmr_popular", "asmr_search", "asmr_related", "asmr_index", "asmr_work", "asmr_cover", "asmr_subtitle", "asmr_account", "asmr_login", "asmr_logout", "asmr_reviews", "asmr_playlists", "asmr_playlist_works", "asmr_review_set", "asmr_review_delete", "asmr_work_playlists", "asmr_playlist_change", "asmr_playlist_create", "asmr_playlist_edit", "asmr_playlist_delete","asmr_lyrics_open", "asmr_lyrics_hide", "asmr_lyrics_close", "asmr_lyrics_line"]
 
 [[permission]]
 identifier = "workbench-asmr-lyrics"

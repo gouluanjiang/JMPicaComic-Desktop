@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { autoMarkEnabled, setAutoMark } from "./asmr-marks.ts";
 import { loadAccount, signIn, signOut } from "./asmr-runtime.ts";
 import { asmrErrorMessage } from "./asmr-types.ts";
 import type { AsmrAccount } from "./asmr-types.ts";
@@ -101,7 +102,7 @@ export function AsmrLoginDialog({
       >
         <h2>登录 asmr.one</h2>
         <p className="asmr-muted">
-          登录后可以看到你的收藏、标记和播放列表。密码只发给
+          登录后可以查看和修改你的收藏、标记和播放列表。密码只发给
           asmr.one，不会保存；登录状态保存在 Windows 凭据管理器里。
         </p>
         <label className="asmr-field">
@@ -161,6 +162,7 @@ export function AsmrAccountButton({
   onLogout(): void;
 }) {
   const [open, setOpen] = useState(false);
+  const [auto, setAuto] = useState(autoMarkEnabled);
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -200,6 +202,21 @@ export function AsmrAccountButton({
               登录状态没能保存，关闭程序后需要重新登录。
             </p>
           )}
+          <label
+            className="asmr-account-option"
+            title="开始播放时标为“在听”，播完最后一个文件时标为“听过”；不会改动“重听”和“搁置”"
+          >
+            <input
+              type="checkbox"
+              checked={auto}
+              data-testid="asmr-auto-mark"
+              onChange={(event) => {
+                setAutoMark(event.target.checked);
+                setAuto(event.target.checked);
+              }}
+            />
+            播放时自动标记
+          </label>
           <button
             role="menuitem"
             data-testid="asmr-logout"

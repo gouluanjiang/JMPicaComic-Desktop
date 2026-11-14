@@ -1,12 +1,12 @@
 //! Read-only asmr.one catalog client: listings, search, circles, voice actors,
 //! tags, work details, file trees, covers, and bounded pieces of media files
-//! for online playback. With a session token it also reads the listener's
-//! marks, ratings and playlists. No downloads or filesystem access.
+//! for online playback. With a session token it also reads and changes the
+//! listener's marks, ratings and playlists. No downloads or filesystem access.
 
 mod account;
 mod types;
 
-pub use account::{is_token, AsmrPlaylist, AsmrPlaylistPage, AsmrSession};
+pub use account::{is_token, AsmrPlaylist, AsmrPlaylistPage, AsmrPrivacy, AsmrSession};
 pub use types::{
     is_work_code, parse_work_input, AsmrCircle, AsmrEdition, AsmrFileKind, AsmrIndexEntry,
     AsmrMedia, AsmrPage, AsmrProgress, AsmrTag, AsmrTrack, AsmrVoiceActor, AsmrWork,
@@ -436,18 +436,23 @@ impl AsmrSource {
         Err(last)
     }
 
-    async fn json(&self, request: ApiRequest) -> AsmrResult<Value> {
+    /// The body of a successful answer.
+    async fn answer(&self, request: ApiRequest) -> AsmrResult<Vec<u8>> {
         let (status, bytes) = self.fetch(&request, MAX_RESPONSE).await?;
         match status {
-            200..=299 => {}
-            404 => return Err(error("ASMR_NOT_FOUND")),
-            429 => return Err(error("ASMR_RATE_LIMITED")),
+            200..=299 => Ok(bytes),
+            404 => Err(error("ASMR_NOT_FOUND")),
+            429 => Err(error("ASMR_RATE_LIMITED")),
             // With a token, 401 means the site no longer accepts it.
-            401 if self.signed_in() => return Err(error("ASMR_LOGIN_EXPIRED")),
-            401 | 403 => return Err(error("ASMR_REFUSED")),
-            _ => return Err(error("ASMR_REQUEST_FAILED")),
+            401 if self.signed_in() => Err(error("ASMR_LOGIN_EXPIRED")),
+            401 | 403 => Err(error("ASMR_REFUSED")),
+            _ => Err(error("ASMR_REQUEST_FAILED")),
         }
-        serde_json::from_slice(&bytes).map_err(|_| error("ASMR_RESPONSE_INVALID"))
+    }
+
+    async fn json(&self, request: ApiRequest) -> AsmrResult<Value> {
+        serde_json::from_slice(&self.answer(request).await?)
+            .map_err(|_| error("ASMR_RESPONSE_INVALID"))
     }
 
     /// The whole catalog in the requested order.

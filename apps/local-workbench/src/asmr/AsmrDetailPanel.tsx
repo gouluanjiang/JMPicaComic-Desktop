@@ -1,5 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Icon } from "../icons.tsx";
+import { AsmrMyReview, AsmrPlaylistPicker } from "./AsmrAccountActions.tsx";
+import { noteProgress } from "./asmr-marks.ts";
 import { chooseGroup, playGroups, seKind } from "./asmr-media.ts";
 import type { PlayGroup } from "./asmr-media.ts";
 import {
@@ -14,7 +16,6 @@ import {
   formatDuration,
   formatSize,
   parseWorkInput,
-  progressLabels,
 } from "./asmr-types.ts";
 import type { AsmrTrack, AsmrWork, AsmrWorkDetail } from "./asmr-types.ts";
 import { AsmrChips, AsmrCover, AsmrStars } from "./AsmrWorkCard.tsx";
@@ -221,11 +222,16 @@ function PlaySection({
 
 export function AsmrDetailPanel({
   id,
+  signedIn,
+  onAccountError,
   onClose,
   onOpenWork,
   onRelated,
 }: {
   id: number;
+  /** Signed in, the panel shows and changes the listener's mark and lists. */
+  signedIn: boolean;
+  onAccountError(reason: unknown): void;
   onClose(): void;
   onOpenWork(id: number): void;
   onRelated: OpenRelated;
@@ -239,7 +245,10 @@ export function AsmrDetailPanel({
     setError(null);
     loadWork(id)
       .then((value) => {
-        if (active) setDetail(value);
+        if (!active) return;
+        // Only a signed-in read says what the listener's mark really is.
+        if (signedIn) noteProgress(value.work.id, value.work.progress);
+        setDetail(value);
       })
       .catch((reason) => {
         if (active) setError(asmrErrorMessage(reason));
@@ -247,6 +256,8 @@ export function AsmrDetailPanel({
     return () => {
       active = false;
     };
+    // The panel is remounted when the account changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, attempt]);
   const work = detail?.work;
   const duration = formatDuration(work?.durationSeconds ?? null);
@@ -331,21 +342,13 @@ export function AsmrDetailPanel({
             )}
             <dt>字幕</dt>
             <dd>{work.hasSubtitle ? "有" : "无"}</dd>
-            {work.progress && (
-              <>
-                <dt>我的标记</dt>
-                <dd data-testid="asmr-my-progress">
-                  {progressLabels[work.progress]}
-                </dd>
-              </>
-            )}
-            {work.userRating !== null && (
-              <>
-                <dt>我的评分</dt>
-                <dd data-testid="asmr-my-rating">{work.userRating} 星</dd>
-              </>
-            )}
           </dl>
+          {signedIn && (
+            <>
+              <AsmrMyReview work={work} onError={onAccountError} />
+              <AsmrPlaylistPicker workId={work.id} onError={onAccountError} />
+            </>
+          )}
           <AsmrChips work={work} onRelated={onRelated} tagLimit={80} />
           {work.editions.length > 1 && (
             <div className="asmr-editions" aria-label="其他语言版本">
