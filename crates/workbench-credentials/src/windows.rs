@@ -198,6 +198,116 @@ impl Vault for WindowsVault {
     }
 }
 
+const ASMR_SESSION_TARGET: &str = "MangaMonitor/WorkbenchPreview/v1/Asmr/Session";
+
+/// The one fixed slot for the ASMR listening session. It is separate from the
+/// comic source slots and holds an opaque blob the application encodes itself.
+/// No caller can choose the target.
+#[derive(Clone, Default)]
+pub struct WindowsAsmrSession {
+    #[cfg(test)]
+    test_target: Option<String>,
+}
+
+impl WindowsAsmrSession {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    fn target(&self) -> Vec<u16> {
+        let target = ASMR_SESSION_TARGET;
+        #[cfg(test)]
+        let target = self.test_target.as_deref().unwrap_or(target);
+        target.encode_utf16().chain(Some(0)).collect()
+    }
+
+    pub fn load(&self) -> Result<Option<zeroize::Zeroizing<Vec<u8>>>> {
+        let target = self.target();
+        let mut pointer = ptr::null_mut();
+        // SAFETY: target is a live, NUL-terminated UTF-16 name; pointer is an
+        // initialized output parameter owned exclusively by this synchronous call.
+        if unsafe { CredReadW(target.as_ptr(), CRED_TYPE_GENERIC, 0, &mut pointer) } == 0 {
+            // SAFETY: Read the thread-local error immediately after the failed call.
+            let error = unsafe { GetLastError() };
+            return if error == ERROR_NOT_FOUND {
+                Ok(None)
+            } else {
+                Err(native_error(error))
+            };
+        }
+        let owned = CredentialBuffer(ptr::NonNull::new(pointer).ok_or(VaultError::CORRUPT)?);
+        // SAFETY: CredReadW succeeded and the guard owns its non-null allocation.
+        let native = unsafe { owned.0.as_ref() };
+        if native.Type != CRED_TYPE_GENERIC
+            || native.CredentialBlobSize == 0
+            || native.CredentialBlob.is_null()
+        {
+            return Err(VaultError::CORRUPT);
+        }
+        let size = native.CredentialBlobSize as usize;
+        if size > MAX_CREDENTIAL_BYTES {
+            return Err(VaultError::TOO_LARGE);
+        }
+        // SAFETY: The API returns a blob of CredentialBlobSize bytes in the same
+        // live allocation. The copy is made before the guard frees it.
+        let bytes = unsafe { slice::from_raw_parts(native.CredentialBlob, size) };
+        Ok(Some(zeroize::Zeroizing::new(bytes.to_vec())))
+    }
+
+    pub fn save(&self, blob: &[u8]) -> Result<()> {
+        if blob.is_empty() || blob.len() > MAX_CREDENTIAL_BYTES {
+            return Err(VaultError::TOO_LARGE);
+        }
+        let mut blob = zeroize::Zeroizing::new(blob.to_vec());
+        let mut target = self.target();
+        let mut username: Vec<u16> = "MangaMonitor".encode_utf16().chain(Some(0)).collect();
+        let credential = CREDENTIALW {
+            Flags: 0,
+            Type: CRED_TYPE_GENERIC,
+            TargetName: target.as_mut_ptr(),
+            Comment: ptr::null_mut(),
+            LastWritten: FILETIME {
+                dwLowDateTime: 0,
+                dwHighDateTime: 0,
+            },
+            CredentialBlobSize: blob.len() as u32,
+            CredentialBlob: blob.as_mut_ptr(),
+            Persist: CRED_PERSIST_LOCAL_MACHINE,
+            AttributeCount: 0,
+            Attributes: ptr::null_mut(),
+            TargetAlias: ptr::null_mut(),
+            UserName: username.as_mut_ptr(),
+        };
+        // SAFETY: All pointers reference live, correctly terminated/bounded buffers
+        // for this synchronous call. Windows copies the supplied credential.
+        if unsafe { CredWriteW(&credential, 0) } == 0 {
+            // SAFETY: Read the thread-local error immediately after the failed call.
+            return Err(native_error(unsafe { GetLastError() }));
+        }
+        Ok(())
+    }
+
+    /// Deleting a missing slot succeeds.
+    pub fn delete(&self) -> Result<()> {
+        let target = self.target();
+        // SAFETY: The fixed target is NUL-terminated and remains live for the call.
+        if unsafe { CredDeleteW(target.as_ptr(), CRED_TYPE_GENERIC, 0) } == 0 {
+            // SAFETY: Read the thread-local error immediately after the failed call.
+            let error = unsafe { GetLastError() };
+            if error != ERROR_NOT_FOUND {
+                return Err(native_error(error));
+            }
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for WindowsAsmrSession {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("WindowsAsmrSession { [REDACTED] }")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -357,5 +467,42 @@ mod tests {
         assert_eq!(vault.load(Source::Jm).unwrap(), None);
         vault.delete(Source::Pica).unwrap();
         assert_eq!(vault.load(Source::Pica).unwrap(), None);
+    }
+
+    #[test]
+    #[ignore = "Requires a disposable Windows GitHub Actions runner"]
+    fn windows_credential_manager_roundtrip_uses_only_random_ci_slots_for_asmr() {
+        assert_eq!(std::env::var("CI").as_deref(), Ok("true"));
+        assert_eq!(std::env::var("GITHUB_ACTIONS").as_deref(), Ok("true"));
+        let mut random = [0u8; 16];
+        rand::rngs::OsRng.fill_bytes(&mut random);
+        let suffix: String = random.iter().map(|byte| format!("{byte:02x}")).collect();
+        let slot = WindowsAsmrSession {
+            test_target: Some(format!(
+                "MangaMonitor/WorkbenchPreview/CI/{suffix}/Asmr/Session"
+            )),
+        };
+        struct Cleanup(WindowsAsmrSession);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = self.0.delete();
+            }
+        }
+        let _cleanup = Cleanup(slot.clone());
+        assert_eq!(slot.load().unwrap().map(|bytes| bytes.to_vec()), None);
+        slot.delete().unwrap();
+        slot.save(b"first").unwrap();
+        slot.save(b"second").unwrap();
+        assert_eq!(
+            slot.load().unwrap().map(|bytes| bytes.to_vec()),
+            Some(b"second".to_vec())
+        );
+        assert_eq!(slot.save(b""), Err(VaultError::TOO_LARGE));
+        assert_eq!(
+            slot.save(&vec![1; MAX_CREDENTIAL_BYTES + 1]),
+            Err(VaultError::TOO_LARGE)
+        );
+        slot.delete().unwrap();
+        assert_eq!(slot.load().unwrap().map(|bytes| bytes.to_vec()), None);
     }
 }

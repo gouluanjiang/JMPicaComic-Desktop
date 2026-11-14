@@ -1318,3 +1318,177 @@ button.asmr-track:hover {
     right: calc(280px + 24px);
   }
 }
+
+/* Account: the top bar entry, the sign-in dialog and the listener's lists. */
+.asmr-account {
+  position: relative;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-account-button {
+  max-width: 160px;
+  height: 32px;
+  padding: 0 14px;
+  overflow: hidden;
+  border: 1px solid #ffffff59;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--asmr-topbar-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-account-button:hover {
+  background: var(--asmr-topbar-field);
+}
+.asmr-account-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 220px;
+  padding: 8px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 8px;
+  background: var(--asmr-raised);
+  box-shadow: var(--asmr-shadow-hover);
+  color: var(--asmr-text);
+}
+.asmr-account-menu p {
+  margin: 0;
+  font-size: 13px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-account-menu button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--asmr-text);
+  text-align: left;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-account-menu button:hover {
+  background: var(--asmr-chip);
+}
+.asmr-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: #00000073;
+}
+.asmr-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(380px, calc(100% - 32px));
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--asmr-raised);
+  box-shadow: var(--asmr-shadow-hover);
+  color: var(--asmr-text);
+}
+.asmr-dialog h2,
+.asmr-dialog p {
+  margin: 0;
+}
+.asmr-dialog p.asmr-muted {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.asmr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-field input {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 6px;
+  background: var(--asmr-surface);
+  color: var(--asmr-text);
+}
+.asmr-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-primary-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.asmr-sign-in {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  border: 1px dashed var(--asmr-line);
+  border-radius: 10px;
+}
+.asmr-sign-in p {
+  margin: 0;
+}
+.asmr-tabs {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--asmr-line);
+  border-radius: 16px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-tabs button {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--asmr-surface);
+  color: var(--asmr-muted);
+}
+.app-shell.ui-refined .asmr-workspace .asmr-tabs button[aria-pressed="true"] {
+  background: var(--asmr-primary);
+  color: #fff;
+}
+.asmr-playlists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-playlist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 0 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: var(--asmr-surface);
+  box-shadow: var(--asmr-shadow);
+  color: var(--asmr-text);
+  text-align: left;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-playlist:hover {
+  box-shadow: var(--asmr-shadow-hover);
+}
+.asmr-playlist-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+.asmr-playlist strong,
+.asmr-playlist span.asmr-muted {
+  padding: 0 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.asmr-playlist span.asmr-muted {
+  font-size: 12px;
+}
+.asmr-badge-progress {
+  bottom: 6px;
+  left: 6px;
+  background: #7e57c2;
+}
+.asmr-my-rating {
+  color: var(--asmr-primary);
+}

@@ -39,6 +39,13 @@ const asmrGroups: { label: string; entries: AsmrEntry[] }[] = [
     ],
   },
   {
+    label: "我的",
+    entries: [
+      { id: "asmr-favourites", label: "我的收藏", icon: "heart" },
+      { id: "asmr-playlists", label: "播放列表", icon: "list" },
+    ],
+  },
+  {
     label: "分类",
     entries: [
       { id: "asmr-circles", label: "社团", icon: "people" },

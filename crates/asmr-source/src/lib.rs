@@ -1,12 +1,16 @@
 //! Read-only asmr.one catalog client: listings, search, circles, voice actors,
 //! tags, work details, file trees, covers, and bounded pieces of media files
-//! for online playback. No accounts, downloads or filesystem access.
+//! for online playback. With a session token it also reads the listener's
+//! marks, ratings and playlists. No downloads or filesystem access.
 
+mod account;
 mod types;
 
+pub use account::{is_token, AsmrPlaylist, AsmrPlaylistPage, AsmrSession};
 pub use types::{
     is_work_code, parse_work_input, AsmrCircle, AsmrEdition, AsmrFileKind, AsmrIndexEntry,
-    AsmrMedia, AsmrPage, AsmrTag, AsmrTrack, AsmrVoiceActor, AsmrWork, ASMR_MEDIA_HOST_SUFFIXES,
+    AsmrMedia, AsmrPage, AsmrProgress, AsmrTag, AsmrTrack, AsmrVoiceActor, AsmrWork,
+    ASMR_MEDIA_HOST_SUFFIXES,
 };
 
 use base64::Engine as _;
@@ -274,6 +278,8 @@ struct ApiRequest {
     query: Option<AsmrListQuery>,
     extra_query: Vec<(&'static str, String)>,
     body: Option<Value>,
+    /// Sent without the session token, as signing in must be.
+    anonymous: bool,
 }
 
 impl ApiRequest {
@@ -287,6 +293,7 @@ impl ApiRequest {
             query: None,
             extra_query: Vec::new(),
             body: None,
+            anonymous: false,
         }
     }
 
@@ -321,6 +328,8 @@ type Reply = Result<(u16, Vec<u8>), &'static str>;
 pub struct AsmrSource {
     client: Client,
     preferred: AtomicUsize,
+    /// The listener's session token. Sent to the pinned API hosts only.
+    token: std::sync::RwLock<Option<String>>,
     #[cfg(test)]
     script: Option<std::sync::Mutex<std::collections::VecDeque<Reply>>>,
     #[cfg(test)]
@@ -340,6 +349,7 @@ impl AsmrSource {
         Ok(Self {
             client,
             preferred: AtomicUsize::new(0),
+            token: std::sync::RwLock::new(None),
             #[cfg(test)]
             script: None,
             #[cfg(test)]
@@ -377,6 +387,13 @@ impl AsmrSource {
             .client
             .request(request.method.clone(), url)
             .header(reqwest::header::ACCEPT, "application/json, image/*");
+        if !request.anonymous {
+            // Every URL here is on a pinned host; media hosts never see it.
+            let token = self.token.read().map_err(|_| "ASMR_CLIENT_FAILED")?.clone();
+            if let Some(token) = token {
+                builder = builder.bearer_auth(token);
+            }
+        }
         if let Some(body) = &request.body {
             builder = builder.json(body);
         }
@@ -425,6 +442,8 @@ impl AsmrSource {
             200..=299 => {}
             404 => return Err(error("ASMR_NOT_FOUND")),
             429 => return Err(error("ASMR_RATE_LIMITED")),
+            // With a token, 401 means the site no longer accepts it.
+            401 if self.signed_in() => return Err(error("ASMR_LOGIN_EXPIRED")),
             401 | 403 => return Err(error("ASMR_REFUSED")),
             _ => return Err(error("ASMR_REQUEST_FAILED")),
         }
@@ -524,7 +543,9 @@ impl AsmrSource {
             return Err(error("ASMR_INVALID_INPUT"));
         }
         let id = id.to_string();
-        let work = types::work(&self.json(ApiRequest::get(&["workInfo", &id])).await?)?;
+        // Only the signed-in endpoint carries the listener's mark and rating.
+        let endpoint = if self.signed_in() { "work" } else { "workInfo" };
+        let work = types::work(&self.json(ApiRequest::get(&[endpoint, &id])).await?)?;
         let mut tracks = ApiRequest::get(&["tracks", &id]);
         tracks.extra_query.push(("v", "2".to_owned()));
         let (tracks, media) = types::tracks(&self.json(tracks).await?, work.id)?;

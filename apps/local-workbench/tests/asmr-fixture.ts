@@ -102,6 +102,21 @@ export async function installAsmr(page: Page) {
       pageSize: 48,
       total,
     });
+    // A synthetic account: the session survives reloads like a stored token.
+    const SESSION_KEY = "synthetic-asmr-session";
+    const signedIn = () => localStorage.getItem(SESSION_KEY) !== null;
+    const account = () => ({
+      signedIn: signedIn(),
+      name: localStorage.getItem(SESSION_KEY),
+      remembered: true,
+    });
+    const marks = ["marked", "listening", "listened", "replay", "postponed"];
+    const reviewed = (n: number, progress: string | null) => ({
+      ...work(n),
+      progress: progress ?? marks[n % marks.length],
+      userRating: n % 2 === 0 ? 5 : null,
+      marked: "2026-11-13",
+    });
     bridge.invoke = (command, args = {}) => {
       if (!command.startsWith("asmr_")) return invoke(command, args);
       window.asmrCalls.push({ command, args: structuredClone(args) });
@@ -133,7 +148,10 @@ export async function installAsmr(page: Page) {
               tracks: playerTracks,
             });
           return Promise.resolve({
-            work: work(id - 1_000_000),
+            // Signed in, a work's details carry the listener's mark.
+            work: signedIn()
+              ? reviewed(id - 1_000_000, "replay")
+              : work(id - 1_000_000),
             tracks: [
               {
                 type: "folder",
@@ -165,6 +183,65 @@ export async function installAsmr(page: Page) {
             ],
           });
         }
+        case "asmr_account":
+          return Promise.resolve(account());
+        case "asmr_login":
+          if (args.name !== "synthetic" || args.password !== "secret")
+            return Promise.reject({ code: "ASMR_LOGIN_FAILED" });
+          localStorage.setItem(SESSION_KEY, "synthetic");
+          return Promise.resolve(account());
+        case "asmr_logout":
+          localStorage.removeItem(SESSION_KEY);
+          return Promise.resolve(account());
+        case "asmr_reviews": {
+          if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
+          // The site pages this list by 20.
+          const total = args.progress ? 2 : 25;
+          const pageNumber = args.page as number;
+          const length = Math.min(
+            20,
+            Math.max(0, total - (pageNumber - 1) * 20),
+          );
+          return Promise.resolve({
+            works: Array.from({ length }, (_, i) =>
+              reviewed(
+                300 + (pageNumber - 1) * 20 + i,
+                (args.progress as string | null) ?? null,
+              ),
+            ),
+            page: pageNumber,
+            pageSize: 20,
+            total,
+          });
+        }
+        case "asmr_playlists":
+          if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
+          return Promise.resolve({
+            playlists: [
+              {
+                id: "00000000-0000-4000-8000-000000000001",
+                name: "__SYS_PLAYLIST_MARKED",
+                description: "",
+                works: 25,
+                coverWork: 1000301,
+                updated: "2026-11-13",
+              },
+              {
+                id: "00000000-0000-4000-8000-000000000002",
+                name: "合成播放列表",
+                description: "合成说明",
+                works: 3,
+                coverWork: null,
+                updated: null,
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 2,
+          });
+        case "asmr_playlist_works":
+          if (!signedIn()) return Promise.reject({ code: "ASMR_SIGNED_OUT" });
+          return Promise.resolve(page(500, 3, args.page as number));
         case "asmr_cover":
           return Promise.resolve({ id: args.id, dataUrl: null });
         case "asmr_subtitle":

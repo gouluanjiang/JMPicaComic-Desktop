@@ -14,6 +14,7 @@ import {
   formatDuration,
   formatSize,
   parseWorkInput,
+  progressLabels,
 } from "./asmr-types.ts";
 import type { AsmrTrack, AsmrWork, AsmrWorkDetail } from "./asmr-types.ts";
 import { AsmrChips, AsmrCover, AsmrStars } from "./AsmrWorkCard.tsx";
@@ -330,6 +331,20 @@ export function AsmrDetailPanel({
             )}
             <dt>字幕</dt>
             <dd>{work.hasSubtitle ? "有" : "无"}</dd>
+            {work.progress && (
+              <>
+                <dt>我的标记</dt>
+                <dd data-testid="asmr-my-progress">
+                  {progressLabels[work.progress]}
+                </dd>
+              </>
+            )}
+            {work.userRating !== null && (
+              <>
+                <dt>我的评分</dt>
+                <dd data-testid="asmr-my-rating">{work.userRating} 星</dd>
+              </>
+            )}
           </dl>
           <AsmrChips work={work} onRelated={onRelated} tagLimit={80} />
           {work.editions.length > 1 && (

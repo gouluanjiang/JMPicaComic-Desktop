@@ -1,5 +1,38 @@
 # Current development handoff
 
+## ASMR account, step 1: sign-in and read-only lists (2026-11-13)
+
+The user dropped the planned follows feature: the asmr.one account already has
+marks and playlists, and that is enough. The account is connected instead. Scope
+agreed with the user: keep the session as long as possible, auto-marking on,
+playlists as on the site, "收藏" means works carrying a mark. This step reads only.
+
+- Seen read-only in the user's signed-in browser (shapes only, no values kept):
+  the token is a JWT valid for 365 days; `GET auth/me`; `GET review?order=
+  updated_at&sort=&page=[&filter=<mark>]` with `progress`, `userRating`,
+  `updated_at` per work and pages of 20; `GET playlist/get-playlists`,
+  `get-playlist-works` (pagination key `page`) and
+  `get-work-exist-status-in-my-playlists`; `GET work/<id>` carries the mark and
+  rating while `workInfo/<id>` does not; list works carry `userRating` only.
+  The sign-in request (`POST auth/me` with name and password) and every write
+  endpoint are unverified.
+- `asmr-source` sends the token as a bearer header to the pinned API hosts only,
+  never to media hosts, and not with the sign-in request. A 401 while signed in is
+  `ASMR_LOGIN_EXPIRED`; the desktop then forgets the session.
+- The session (`{"version":1,"name","token"}`) lives in its own fixed Windows
+  credential slot, `WindowsAsmrSession`, separate from the comic source slots. No
+  password is stored. The renderer learns only the account name.
+- Commands `asmr_account`, `asmr_login`, `asmr_logout`, `asmr_reviews`,
+  `asmr_playlists`, `asmr_playlist_works`, main window only.
+- UI: an account button in the ASMR top bar with a sign-in dialog, sidebar entries
+  "我的收藏" and "播放列表", mark badges on cards and the mark and rating in details.
+- Next (step 2, writes to the real account, to be opened separately): change
+  marks and ratings, add to and remove from playlists, create/rename/delete
+  playlists, and auto-marking that never overwrites 重听 or 搁置.
+- Rust was not compiled locally. The browser specs were not run locally either:
+  the installed Playwright browser is older than the project's and was not
+  downloaded.
+
 ## ASMR small video: resize and picture-in-picture (2026-11-12)
 
 First roadmap item after 1.2.0, frontend only (`AsmrPlayer.tsx`, `asmr.css`).
@@ -14,11 +47,9 @@ First roadmap item after 1.2.0, frontend only (`AsmrPlayer.tsx`, `asmr.css`).
   `document.pictureInPictureEnabled` is true. Releasing a drag outside the program
   window also asks for it. While it is active the small box is hidden; stopping the
   player or switching to audio leaves it.
-- Not verified: whether WebView2 offers picture-in-picture and accepts the request
-  from a pointer release. The Playwright test replaces the API with a stand-in, and
-  the browser specs were not run locally (3.1 GiB free RAM), only type-checked. If
-  the button never appears in the desktop app, the fallbacks are Document
-  Picture-in-Picture or an own native video window.
+- The user tested the candidate built from `fc17e4f` on 2026-11-12: resizing, the
+  button and releasing a drag outside the window all work in WebView2. Merged as
+  PR #55; not released yet.
 
 ## 1.2.0 release preparation and roadmap (2026-11-11)
 

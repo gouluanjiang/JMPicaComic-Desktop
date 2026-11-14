@@ -1,24 +1,42 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
 import { Icon } from "../icons.tsx";
+import {
+  AsmrAccountButton,
+  AsmrLoginDialog,
+  isSessionError,
+  useAsmrAccount,
+} from "./AsmrAccount.tsx";
 import { AsmrDetailPanel } from "./AsmrDetailPanel.tsx";
 import { AsmrPlayerView } from "./AsmrPlayer.tsx";
-import { AsmrWorkCard } from "./AsmrWorkCard.tsx";
+import { AsmrCover, AsmrWorkCard } from "./AsmrWorkCard.tsx";
 import type { OpenRelated } from "./AsmrWorkCard.tsx";
 import {
   loadIndex,
+  loadPlaylistWorks,
+  loadPlaylists,
   loadPopular,
   loadRelated,
+  loadReviews,
   loadWorks,
   searchWorks,
 } from "./asmr-runtime.ts";
-import { asmrErrorMessage, PAGE_SIZE, parseWorkInput } from "./asmr-types.ts";
+import {
+  asmrErrorMessage,
+  PAGE_SIZE,
+  parseWorkInput,
+  playlistTitle,
+  PROGRESS,
+  progressLabels,
+} from "./asmr-types.ts";
 import type {
   AsmrIndexEntry,
   AsmrIndexKind,
   AsmrListQuery,
   AsmrOrder,
   AsmrPage,
+  AsmrPlaylist,
+  AsmrProgress,
   AsmrRelation,
   AsmrWork,
 } from "./asmr-types.ts";
@@ -30,6 +48,8 @@ export type AsmrDestination =
   | "asmr-home"
   | "asmr-popular"
   | "asmr-random"
+  | "asmr-favourites"
+  | "asmr-playlists"
   | "asmr-circles"
   | "asmr-tags"
   | "asmr-voice-actors";
@@ -38,6 +58,9 @@ type View =
   | { kind: "home" }
   | { kind: "popular" }
   | { kind: "random" }
+  | { kind: "favourites" }
+  | { kind: "playlists" }
+  | { kind: "playlist"; id: string; name: string }
   | { kind: "search"; keyword: string }
   | { kind: "related"; relation: AsmrRelation; id: string; name: string }
   | { kind: "index"; index: AsmrIndexKind };
@@ -90,6 +113,10 @@ export function viewFor(destination: AsmrDestination): View {
       return { kind: "popular" };
     case "asmr-random":
       return { kind: "random" };
+    case "asmr-favourites":
+      return { kind: "favourites" };
+    case "asmr-playlists":
+      return { kind: "playlists" };
     case "asmr-circles":
       return { kind: "index", index: "circles" };
     case "asmr-tags":
@@ -109,6 +136,12 @@ function titleFor(view: View): string {
       return "热门作品";
     case "random":
       return "随机听";
+    case "favourites":
+      return "我的收藏";
+    case "playlists":
+      return "播放列表";
+    case "playlist":
+      return `播放列表：${view.name}`;
     case "search":
       return `搜索：${view.keyword}`;
     case "related":
@@ -144,6 +177,9 @@ function WorkList({
   onOpen,
   onRelated,
   scrollRoot,
+  filters,
+  plain = false,
+  onError,
 }: {
   title: string;
   loader: Loader;
@@ -158,6 +194,11 @@ function WorkList({
   onOpen(work: AsmrWork): void;
   onRelated: OpenRelated;
   scrollRoot: RefObject<HTMLDivElement | null>;
+  /** Extra controls for this list, shown in its toolbar. */
+  filters?: ReactNode;
+  /** Hides the subtitle switch where the list cannot use it. */
+  plain?: boolean;
+  onError?(reason: unknown): void;
 }) {
   const [order, setOrder] = useState<AsmrOrder>(defaultOrder);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -193,13 +234,16 @@ function WorkList({
             nextPage: pageNumber + 1,
             done:
               result.works.length === 0 ||
-              pageNumber * PAGE_SIZE >= result.total ||
+              // Account lists come in the site's own page size.
+              pageNumber * (result.pageSize || PAGE_SIZE) >= result.total ||
               works.length >= MAX_LOADED,
           };
         });
       })
       .catch((reason) => {
-        if (id === sequence.current) setError(asmrErrorMessage(reason));
+        if (id !== sequence.current) return;
+        setError(asmrErrorMessage(reason));
+        onError?.(reason);
       })
       .finally(() => {
         if (id === sequence.current) setLoading(false);
@@ -263,15 +307,18 @@ function WorkList({
             </select>
           </label>
         )}
-        <label className="asmr-toggle">
-          <input
-            type="checkbox"
-            checked={subtitleOnly}
-            data-testid="asmr-subtitle-only"
-            onChange={(event) => onSubtitleOnly(event.target.checked)}
-          />
-          <span>带字幕</span>
-        </label>
+        {filters}
+        {!plain && (
+          <label className="asmr-toggle">
+            <input
+              type="checkbox"
+              checked={subtitleOnly}
+              data-testid="asmr-subtitle-only"
+              onChange={(event) => onSubtitleOnly(event.target.checked)}
+            />
+            <span>带字幕</span>
+          </label>
+        )}
         <div className="asmr-view-modes" role="group" aria-label="显示方式">
           <button
             aria-pressed={viewMode === "grid"}
@@ -507,6 +554,179 @@ function IndexView({
   );
 }
 
+function SignInPrompt({ what, onLogin }: { what: string; onLogin(): void }) {
+  return (
+    <section className="asmr-list" aria-label={what}>
+      <div className="asmr-sign-in" data-testid="asmr-sign-in">
+        <p>登录 asmr.one 账号后可以查看{what}。</p>
+        <button className="asmr-primary-button" onClick={onLogin}>
+          登录
+        </button>
+      </div>
+    </section>
+  );
+}
+
+type ListProps = Omit<
+  Parameters<typeof WorkList>[0],
+  "title" | "loader" | "loaderKey" | "sortable" | "defaultOrder" | "filters"
+>;
+
+/** Works the listener marked or rated, as the site's favourites page shows. */
+function FavouritesView({ listProps }: { listProps: ListProps }) {
+  const [progress, setProgress] = useState<AsmrProgress | null>(null);
+  const [ascending, setAscending] = useState(false);
+  const filters = (
+    <>
+      <div
+        className="asmr-tabs"
+        role="group"
+        aria-label="按标记筛选"
+        data-testid="asmr-progress-filter"
+      >
+        <button
+          aria-pressed={progress === null}
+          onClick={() => setProgress(null)}
+        >
+          全部
+        </button>
+        {PROGRESS.map((value) => (
+          <button
+            key={value}
+            aria-pressed={progress === value}
+            onClick={() => setProgress(value)}
+          >
+            {progressLabels[value]}
+          </button>
+        ))}
+      </div>
+      <button
+        className="asmr-text-button"
+        data-testid="asmr-review-order"
+        title="按标记时间排序"
+        onClick={() => setAscending((value) => !value)}
+      >
+        {ascending ? "最早标记在前" : "最近标记在前"}
+      </button>
+    </>
+  );
+  return (
+    <WorkList
+      key={`reviews:${progress}:${ascending}`}
+      {...listProps}
+      title="我的收藏"
+      loaderKey={`reviews:${progress}:${ascending}`}
+      loader={(listQuery) => loadReviews(progress, ascending, listQuery.page)}
+      sortable={false}
+      defaultOrder="added"
+      filters={filters}
+      plain
+    />
+  );
+}
+
+function PlaylistsView({
+  onOpen,
+  onError,
+}: {
+  onOpen(playlist: AsmrPlaylist): void;
+  onError(reason: unknown): void;
+}) {
+  const [playlists, setPlaylists] = useState<AsmrPlaylist[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [nextPage, setNextPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = (page: number) => {
+    setLoading(true);
+    setError(null);
+    loadPlaylists(page)
+      .then((result) => {
+        setPlaylists((previous) => {
+          const base = page === 1 || !previous ? [] : previous;
+          const seen = new Set(base.map((playlist) => playlist.id));
+          return [
+            ...base,
+            ...result.playlists.filter((playlist) => !seen.has(playlist.id)),
+          ];
+        });
+        setTotal(result.total);
+        setNextPage(page + 1);
+      })
+      .catch((reason) => {
+        setError(asmrErrorMessage(reason));
+        onError(reason);
+      })
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <section className="asmr-list" aria-label="播放列表">
+      <div className="asmr-list-toolbar">
+        <h2>
+          播放列表
+          {playlists && <span className="asmr-count">（{total}）</span>}
+        </h2>
+      </div>
+      {error && (
+        <div className="asmr-error" role="alert">
+          {error}
+          <button
+            className="asmr-text-button"
+            onClick={() => load(playlists ? nextPage : 1)}
+          >
+            重试
+          </button>
+        </div>
+      )}
+      {!playlists && !error && (
+        <p className="asmr-muted" role="status">
+          正在读取…
+        </p>
+      )}
+      {playlists && playlists.length === 0 && (
+        <p className="asmr-muted">还没有播放列表。</p>
+      )}
+      {playlists && playlists.length > 0 && (
+        <div className="asmr-playlists" data-testid="asmr-playlists">
+          {playlists.map((playlist) => (
+            <button
+              key={playlist.id}
+              className="asmr-playlist"
+              onClick={() => onOpen(playlist)}
+            >
+              {playlist.coverWork !== null ? (
+                <AsmrCover
+                  id={playlist.coverWork}
+                  code=""
+                  size="main"
+                  className="asmr-playlist-cover"
+                />
+              ) : (
+                <span className="asmr-cover asmr-playlist-cover" />
+              )}
+              <strong>{playlistTitle(playlist.name)}</strong>
+              <span className="asmr-muted">{playlist.works} 部作品</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {playlists && playlists.length < total && !error && (
+        <button
+          className="asmr-load-more"
+          disabled={loading}
+          onClick={() => load(nextPage)}
+        >
+          {loading ? "正在读取…" : "加载更多"}
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function AsmrWorkspace({
   destination,
   navigationKey,
@@ -531,6 +751,13 @@ export function AsmrWorkspace({
   );
   const content = useRef<HTMLDivElement>(null);
   const view = history[history.length - 1];
+  const { account, refresh, login, logout } = useAsmrAccount();
+  const [loginOpen, setLoginOpen] = useState(false);
+  const signedIn = account?.signedIn === true;
+  // A session the site or the program dropped shows as signed out at once.
+  const onListError = (reason: unknown) => {
+    if (isSessionError(reason)) refresh();
+  };
   useEffect(() => {
     setHistory([viewFor(destination)]);
     setSelected(null);
@@ -567,6 +794,7 @@ export function AsmrWorkspace({
     onOpen: openWork,
     onRelated: openRelated,
     scrollRoot: content,
+    onError: onListError,
   };
   // Each list is keyed by what it loads, so page and order start fresh.
   let body: ReactNode = null;
@@ -619,6 +847,49 @@ export function AsmrWorkspace({
           sortable={false}
           defaultOrder="random"
         />
+      );
+      break;
+    case "favourites":
+      body = !account ? null : signedIn ? (
+        <FavouritesView key={account.name} listProps={listProps} />
+      ) : (
+        <SignInPrompt
+          what="你的收藏和标记"
+          onLogin={() => setLoginOpen(true)}
+        />
+      );
+      break;
+    case "playlists":
+      body = !account ? null : signedIn ? (
+        <PlaylistsView
+          key={account.name}
+          onError={onListError}
+          onOpen={(playlist) =>
+            go({
+              kind: "playlist",
+              id: playlist.id,
+              name: playlistTitle(playlist.name),
+            })
+          }
+        />
+      ) : (
+        <SignInPrompt what="你的播放列表" onLogin={() => setLoginOpen(true)} />
+      );
+      break;
+    case "playlist":
+      body = signedIn ? (
+        <WorkList
+          key={`playlist:${view.id}`}
+          {...listProps}
+          title={view.name}
+          loaderKey={`playlist:${view.id}`}
+          loader={(listQuery) => loadPlaylistWorks(view.id, listQuery.page)}
+          sortable={false}
+          defaultOrder="added"
+          plain
+        />
+      ) : (
+        <SignInPrompt what="这个播放列表" onLogin={() => setLoginOpen(true)} />
       );
       break;
     case "search":
@@ -690,6 +961,11 @@ export function AsmrWorkspace({
             onChange={(event) => setQuery(event.target.value)}
           />
         </form>
+        <AsmrAccountButton
+          account={account}
+          onLogin={() => setLoginOpen(true)}
+          onLogout={() => void logout()}
+        />
         <button
           className="asmr-icon-button"
           data-testid="asmr-theme"
@@ -706,6 +982,8 @@ export function AsmrWorkspace({
         </div>
         {selected !== null && (
           <AsmrDetailPanel
+            // Signing in or out changes what a work's details carry.
+            key={`${selected}:${account?.name ?? ""}`}
             id={selected}
             onClose={() => setSelected(null)}
             onOpenWork={setSelected}
@@ -714,6 +992,9 @@ export function AsmrWorkspace({
         )}
       </div>
       <AsmrPlayerView hidden={hidden} onOpenWork={setSelected} />
+      {loginOpen && (
+        <AsmrLoginDialog onLogin={login} onClose={() => setLoginOpen(false)} />
+      )}
     </div>
   );
 }

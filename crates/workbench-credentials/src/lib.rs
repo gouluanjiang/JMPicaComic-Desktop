@@ -11,7 +11,7 @@ mod windows;
 #[cfg(windows)]
 mod windows_lock;
 #[cfg(windows)]
-pub use windows::WindowsVault;
+pub use windows::{WindowsAsmrSession, WindowsVault};
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
