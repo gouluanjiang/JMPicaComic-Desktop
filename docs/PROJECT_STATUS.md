@@ -1,8 +1,8 @@
 # JMPicaComic-Desktop 项目状态
 
-更新日期：2026-11-14。**当前正式版为 [1.2.0](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.2.0)**。变化见[版本说明](RELEASE_NOTES_1.2.0.md)。
+更新日期：2026-11-14。**当前正式版为 [1.3.0](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.3.0)**。变化见[版本说明](RELEASE_NOTES_1.3.0.md)。
 
-## 下一个版本（已合并或在审，未发布）
+## 1.3.0 新增
 
 ASMR 视频小窗可以按比例调整大小，并能以画中画弹出到程序之外；接入 asmr.one 账号：登录（只保存令牌，不保存密码）、我的收藏、标记和评分、播放列表的查看与管理、播放时自动标记（不改动“重听”“搁置”）。
 
