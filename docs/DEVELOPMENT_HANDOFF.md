@@ -28,8 +28,10 @@ restart, favourites, playlists, marks, sign-out all fine) and PR #56 merged.
   work starts, none/想听 → 在听; when the last file of the queue ends, none/想听/在听
   → 听过. Only works whose mark was read signed in from the details panel are
   touched; 听过, 重听 and 搁置 are never changed.
-- Not yet verified against the real site: every write request. The user should
-  test on a work and a scratch playlist first.
+- Live-tested by the user on candidate `baa5d5b` (2026-11-14) against the real
+  account: changing marks, rating and clearing, adding to and removing from a
+  playlist, creating, editing and deleting a scratch playlist, and auto-marking
+  (unmarked → 在听, 重听/搁置 untouched) all matched the site.
 
 ## ASMR account, step 1: sign-in and read-only lists (2026-11-13)
 
