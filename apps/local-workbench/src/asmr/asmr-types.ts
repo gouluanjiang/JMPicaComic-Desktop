@@ -80,6 +80,18 @@ export type AsmrPlaylist = {
   works: number;
   coverWork: number | null;
   updated: string | null;
+  privacy: AsmrPrivacy;
+  /** Whether the work that was asked about is in this list. */
+  contains: boolean | null;
+};
+
+/** Who can see a playlist. */
+export type AsmrPrivacy = "private" | "unlisted" | "public";
+export const PRIVACY: AsmrPrivacy[] = ["private", "unlisted", "public"];
+export const privacyLabels: Record<AsmrPrivacy, string> = {
+  private: "私享（只有你能看）",
+  unlisted: "不公开（知道链接的人能看）",
+  public: "公开（任何人都能看）",
 };
 
 export type AsmrPlaylistPage = {
@@ -254,12 +266,36 @@ export function validatePlaylists(value: unknown): AsmrPlaylistPage {
         works: count(playlist.works),
         coverWork,
         updated: optional(playlist.updated, date),
+        privacy: PRIVACY.includes(playlist.privacy as AsmrPrivacy)
+          ? (playlist.privacy as AsmrPrivacy)
+          : invalid(),
+        contains: optional(playlist.contains, (raw) =>
+          typeof raw === "boolean" ? raw : invalid(),
+        ),
       };
     }),
     page: count(page.page),
     pageSize: count(page.pageSize),
     total: count(page.total),
   };
+}
+
+/** The site's own lists, which cannot be renamed or deleted. */
+export function isSystemPlaylist(name: string): boolean {
+  return name.startsWith("__SYS_PLAYLIST_");
+}
+
+/**
+ * The mark playback sets by itself, or `null` to leave the work alone. It
+ * only moves a work forward and never touches "replay" or "postponed".
+ */
+export function nextAutoMark(
+  current: AsmrProgress | null,
+  stage: "started" | "finished",
+): AsmrProgress | null {
+  if (current === null || current === "marked")
+    return stage === "started" ? "listening" : "listened";
+  return current === "listening" && stage === "finished" ? "listened" : null;
 }
 
 /** The site's default list has a reserved name instead of a title. */

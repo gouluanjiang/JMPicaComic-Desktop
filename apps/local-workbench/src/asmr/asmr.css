@@ -1492,3 +1492,107 @@ button.asmr-track:hover {
 .asmr-my-rating {
   color: var(--asmr-primary);
 }
+.asmr-my-review {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.asmr-my-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.asmr-my-label {
+  flex: none;
+  width: 4.5em;
+  color: var(--asmr-muted);
+  font-size: 13px;
+}
+.asmr-my-review .asmr-tabs {
+  flex-wrap: wrap;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-my-review .asmr-tabs button {
+  padding: 0 9px;
+}
+.asmr-my-stars {
+  display: flex;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-my-stars button {
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--asmr-primary);
+  font-size: 19px;
+  line-height: 1;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-my-review button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.asmr-playlist-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.asmr-playlist-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: stretch;
+  padding: 10px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 8px;
+}
+.asmr-playlist-choices p {
+  margin: 0;
+}
+.asmr-playlist-choices label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.asmr-playlist-choices label span:first-of-type {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.asmr-playlist-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.asmr-playlist-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 4px;
+  font-size: 13px;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-field textarea,
+.app-shell.ui-refined .asmr-workspace .asmr-field select {
+  padding: 8px 10px;
+  border: 1px solid var(--asmr-line);
+  border-radius: 6px;
+  background: var(--asmr-surface);
+  color: var(--asmr-text);
+  font: inherit;
+  resize: vertical;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-danger-button {
+  background: #c62828;
+}
+.asmr-account-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}

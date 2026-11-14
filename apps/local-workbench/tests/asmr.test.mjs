@@ -5,6 +5,8 @@ import {
   chineseLabel,
   formatDuration,
   formatSize,
+  isSystemPlaylist,
+  nextAutoMark,
   parseWorkInput,
   playlistTitle,
   PROGRESS,
@@ -342,9 +344,13 @@ test("marks, ratings, accounts and playlists are validated", () => {
     works: 3,
     coverWork: 1000301,
     updated: "2026-11-13",
+    privacy: "unlisted",
+    contains: null,
   };
   const page = { playlists: [playlist], page: 1, pageSize: 20, total: 1 };
   assert.deepEqual(validatePlaylists(page), page);
+  const withWork = { ...page, playlists: [{ ...playlist, contains: true }] };
+  assert.deepEqual(validatePlaylists(withWork), withWork);
   for (const bad of [
     { id: "../escape" },
     { name: "" },
@@ -352,6 +358,9 @@ test("marks, ratings, accounts and playlists are validated", () => {
     { coverWork: 0 },
     { description: 5 },
     { updated: "soon" },
+    { privacy: "friends" },
+    { privacy: undefined },
+    { contains: "yes" },
   ])
     assert.throws(
       () =>
@@ -360,6 +369,19 @@ test("marks, ratings, accounts and playlists are validated", () => {
     );
   assert.equal(playlistTitle("__SYS_PLAYLIST_MARKED"), "我标记的");
   assert.equal(playlistTitle("合成播放列表"), "合成播放列表");
+  assert.equal(isSystemPlaylist("__SYS_PLAYLIST_LIKED"), true);
+  assert.equal(isSystemPlaylist("合成播放列表"), false);
+
+  // Automatic marks only move forward and never touch replay or postponed.
+  const auto = (current, stage) => nextAutoMark(current, stage);
+  assert.equal(auto(null, "started"), "listening");
+  assert.equal(auto("marked", "started"), "listening");
+  assert.equal(auto(null, "finished"), "listened");
+  assert.equal(auto("listening", "finished"), "listened");
+  for (const current of ["listening", "listened", "replay", "postponed"])
+    assert.equal(auto(current, "started"), null, current);
+  for (const current of ["listened", "replay", "postponed"])
+    assert.equal(auto(current, "finished"), null, current);
   assert.match(asmrErrorMessage({ code: "ASMR_LOGIN_FAILED" }), /账号和密码/);
   assert.match(asmrErrorMessage({ code: "ASMR_LOGIN_EXPIRED" }), /重新登录/);
 });

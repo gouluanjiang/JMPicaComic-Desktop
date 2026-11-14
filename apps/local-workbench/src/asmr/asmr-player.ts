@@ -2,6 +2,7 @@
 // player view attaches, so playback continues while the section is hidden.
 
 import { invokeDesktop } from "../runtime.ts";
+import { autoMark } from "./asmr-marks.ts";
 import { extensionOf, mediaUrl, parseSubtitle } from "./asmr-media.ts";
 import type {
   Cue,
@@ -288,6 +289,7 @@ export class AsmrPlayer {
       : null;
     this.set({ queue, index: start });
     this.load(start, true, resumeAt);
+    autoMark(work.id, "started");
   }
 
   private load(index: number, autoplay: boolean, resumeAt: number | null) {
@@ -376,7 +378,11 @@ export class AsmrPlayer {
     }
     if (this.state.index < this.state.queue.length - 1)
       this.load(this.state.index + 1, true, null);
-    else this.set({ playing: false });
+    else {
+      this.set({ playing: false });
+      // The last file of the queue played to its end.
+      if (item) autoMark(item.workId, "finished");
+    }
   }
 
   toggle = () => {

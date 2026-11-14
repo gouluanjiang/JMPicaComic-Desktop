@@ -8,8 +8,8 @@
 use crate::require_main;
 use asmr_source::{
     AsmrByteRange, AsmrCoverSize, AsmrError, AsmrIndexEntry, AsmrIndexKind, AsmrListQuery,
-    AsmrMedia, AsmrMediaChunk, AsmrPage, AsmrPlaylistPage, AsmrProgress, AsmrRelation, AsmrSource,
-    AsmrWorkDetail,
+    AsmrMedia, AsmrMediaChunk, AsmrPage, AsmrPlaylistPage, AsmrPrivacy, AsmrProgress, AsmrRelation,
+    AsmrSource, AsmrWorkDetail,
 };
 use serde::Serialize;
 use std::{
@@ -359,6 +359,109 @@ pub(crate) async fn asmr_playlist_works<R: Runtime>(
         return Err(signed_out());
     }
     state.settle(source.playlist_works(&id, page, PLAYLIST_PAGE_SIZE).await)
+}
+
+/// The source for a command that changes the account or reads the
+/// listener's own lists: main window only, and only while signed in.
+fn account_source<R: Runtime>(
+    window: &WebviewWindow<R>,
+    state: &DesktopAsmr,
+) -> Result<Arc<AsmrSource>, AsmrError> {
+    main_window(window)?;
+    let source = state.source()?;
+    if source.signed_in() {
+        Ok(source)
+    } else {
+        Err(signed_out())
+    }
+}
+
+/// Sets the listener's mark, rating, or both on a work.
+#[tauri::command]
+pub(crate) async fn asmr_review_set<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    work: u64,
+    rating: Option<u8>,
+    progress: Option<AsmrProgress>,
+) -> Result<(), AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(source.set_review(work, rating, progress).await)
+}
+
+/// Removes the listener's mark and rating from a work.
+#[tauri::command]
+pub(crate) async fn asmr_review_delete<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    work: u64,
+) -> Result<(), AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(source.delete_review(work).await)
+}
+
+/// The listener's own playlists, each saying whether it holds the work.
+#[tauri::command]
+pub(crate) async fn asmr_work_playlists<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    work: u64,
+    page: u64,
+) -> Result<AsmrPlaylistPage, AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(source.work_playlists(work, page).await)
+}
+
+/// Adds one work to a playlist, or removes it.
+#[tauri::command]
+pub(crate) async fn asmr_playlist_change<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    id: String,
+    work: u64,
+    add: bool,
+) -> Result<(), AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(source.playlist_change(&id, work, add).await)
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_playlist_create<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    name: String,
+    description: String,
+    privacy: AsmrPrivacy,
+) -> Result<(), AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(source.playlist_create(&name, &description, privacy).await)
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_playlist_edit<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    id: String,
+    name: String,
+    description: String,
+    privacy: AsmrPrivacy,
+) -> Result<(), AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(
+        source
+            .playlist_edit(&id, &name, &description, privacy)
+            .await,
+    )
+}
+
+#[tauri::command]
+pub(crate) async fn asmr_playlist_delete<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, Arc<DesktopAsmr>>,
+    id: String,
+) -> Result<(), AsmrError> {
+    let source = account_source(&window, &state)?;
+    state.settle(source.playlist_delete(&id).await)
 }
 
 #[derive(Serialize)]

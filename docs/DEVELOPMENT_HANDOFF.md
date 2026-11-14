@@ -1,5 +1,36 @@
 # Current development handoff
 
+## ASMR account, step 2: marks, ratings, playlists, auto-marking (2026-11-14)
+
+Opened by the user after step 1 was live-tested (sign-in, session kept across
+restart, favourites, playlists, marks, sign-out all fine) and PR #56 merged.
+
+- Write endpoints were read from the site's own JavaScript bundles in the user's
+  signed-in browser; nothing was clicked and no write request was sent:
+  `PUT review {work_id, rating?, progress?}` (the site sends only the changed
+  field), `DELETE review?work_id=`, `POST playlist/add-works-to-playlist` and
+  `remove-works-from-playlist {id, works:[ids]}`, `POST playlist/create-playlist
+  {name, privacy, locale, description, works}`, `POST playlist/edit-playlist-metadata
+  {id, data:{name, privacy, description}}`, `POST playlist/delete-playlist {id}`.
+  Privacy is 0 private, 1 unlisted, 2 public. `__SYS_PLAYLIST_MARKED` / `_LIKED`
+  are the site's reserved lists, shown as 我标记的 / 我喜欢的 (now confirmed).
+- `asmr-source`: `set_review`, `delete_review`, `work_playlists`,
+  `playlist_change`, `playlist_create`, `playlist_edit`, `playlist_delete`. All are
+  refused locally while signed out and validate before any request; reserved list
+  names cannot be created. New commands `asmr_review_set`, `asmr_review_delete`,
+  `asmr_work_playlists`, `asmr_playlist_change`, `asmr_playlist_create`,
+  `asmr_playlist_edit`, `asmr_playlist_delete`, main window only.
+- UI: the details panel has mark buttons, 1–5 stars and 清除 (removes both), plus
+  a playlist picker with a checkbox per list. The playlists page creates, edits and
+  deletes the listener's own lists; deletion asks first. A change updates cards
+  already listed.
+- Auto-marking (`asmr-marks.ts`, on by default, switch in the account menu): when a
+  work starts, none/想听 → 在听; when the last file of the queue ends, none/想听/在听
+  → 听过. Only works whose mark was read signed in from the details panel are
+  touched; 听过, 重听 and 搁置 are never changed.
+- Not yet verified against the real site: every write request. The user should
+  test on a work and a scratch playlist first.
+
 ## ASMR account, step 1: sign-in and read-only lists (2026-11-13)
 
 The user dropped the planned follows feature: the asmr.one account already has

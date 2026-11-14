@@ -558,6 +558,28 @@ fn asmr_commands_keep_the_main_window_and_reject_bad_input_before_the_network() 
             "asmr_playlist_works",
             json!({"id":"4a0389f8-2434-4102-9dad-eeb6ea89ad1d","page":1}),
         ),
+        (
+            "asmr_review_set",
+            json!({"work":1,"rating":5,"progress":"listened"}),
+        ),
+        ("asmr_review_delete", json!({"work":1})),
+        ("asmr_work_playlists", json!({"work":1,"page":1})),
+        (
+            "asmr_playlist_change",
+            json!({"id":"4a0389f8-2434-4102-9dad-eeb6ea89ad1d","work":1,"add":true}),
+        ),
+        (
+            "asmr_playlist_create",
+            json!({"name":"x","description":"","privacy":"private"}),
+        ),
+        (
+            "asmr_playlist_edit",
+            json!({"id":"4a0389f8-2434-4102-9dad-eeb6ea89ad1d","name":"x","description":"","privacy":"private"}),
+        ),
+        (
+            "asmr_playlist_delete",
+            json!({"id":"4a0389f8-2434-4102-9dad-eeb6ea89ad1d"}),
+        ),
     ];
     for (command, body) in commands {
         for other in [&secondary, &reader] {
@@ -629,6 +651,30 @@ fn asmr_account_commands_stay_signed_out_and_refuse_bad_input_before_the_network
         (
             "asmr_playlist_works",
             json!({"id": "4a0389f8-2434-4102-9dad-eeb6ea89ad1d", "page": 1}),
+        ),
+        // Changes are refused the same way, before any validation.
+        (
+            "asmr_review_set",
+            json!({"work": 1, "rating": 5, "progress": null}),
+        ),
+        ("asmr_review_delete", json!({"work": 1})),
+        ("asmr_work_playlists", json!({"work": 1, "page": 1})),
+        (
+            "asmr_playlist_change",
+            json!({"id": "4a0389f8-2434-4102-9dad-eeb6ea89ad1d", "work": 1, "add": false}),
+        ),
+        (
+            "asmr_playlist_create",
+            json!({"name": "x", "description": "", "privacy": "public"}),
+        ),
+        (
+            "asmr_playlist_edit",
+            json!({"id": "4a0389f8-2434-4102-9dad-eeb6ea89ad1d", "name": "x",
+                   "description": "", "privacy": "unlisted"}),
+        ),
+        (
+            "asmr_playlist_delete",
+            json!({"id": "4a0389f8-2434-4102-9dad-eeb6ea89ad1d"}),
         ),
     ] {
         assert_eq!(
