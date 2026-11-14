@@ -324,7 +324,7 @@ test("playing marks a work as listening unless that is switched off", async ({
     .getByRole("button")
     .first()
     .click();
-  await expect(page.getByTestId("asmr-queue")).toBeAttached();
+  await expect(page.getByTestId("asmr-now-title")).toHaveText("01.wav");
   expect(await calls(page, "asmr_review_set")).toEqual([]);
 
   // Switched off, an unmarked work is left alone too.
