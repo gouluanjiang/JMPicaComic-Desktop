@@ -1,5 +1,21 @@
 # Current development handoff
 
+## 1.3.0 release preparation (2026-11-14)
+
+The user chose to release before starting ASMR downloads. 1.3.0 ships what main
+holds after PR #57: the resizable small video with picture-in-picture (PR #55)
+and the asmr.one account (PR #56 sign-in and lists, PR #57 marks, ratings,
+playlists and auto-marking), all live-tested by the user. Comic behaviour and
+document formats are unchanged.
+
+- Version 1.3.0 in `package.json`, `src-tauri/Cargo.toml`/`Cargo.lock`,
+  `tauri.conf.json` (which now bundles `RELEASE_NOTES_1.3.0.md`) and the bug
+  report template. README, project status, docs index and user guide name 1.3.0.
+- This is the first in-app update between two public versions (1.2.0 → 1.3.0).
+  Release steps follow `UPDATER_RELEASE.md` and the 1.2.0 record.
+- Next after the release: ASMR downloads and local library, which need
+  `DOWNLOAD_EXECUTOR_THAW_GATE.md` first.
+
 ## ASMR account, step 2: marks, ratings, playlists, auto-marking (2026-11-14)
 
 Opened by the user after step 1 was live-tested (sign-in, session kept across
