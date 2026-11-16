@@ -8,12 +8,15 @@ the existing top bar.
 - `tauri.conf.json` sets `decorations: false` for the main window only; reader
   windows keep their title bar. The main capability gains
   `core:window:allow-start-dragging`, `allow-internal-toggle-maximize`,
-  `allow-minimize`, `allow-toggle-maximize` and `allow-close`.
+  `allow-minimize`, `allow-toggle-maximize`, `allow-close`, `allow-is-maximized`
+  and `allow-is-fullscreen`.
 - `WindowControls.tsx` draws minimize, maximize/restore and close fixed in the
   top-right corner over the comic or ASMR top bar (white on the ASMR bar, with a
   dark ground over the in-app reader, hidden in fullscreen). Close sends the same
   close request as the system button, so reader-window handling is unchanged. The
-  maximized state is read from window and screen sizes, without a native call.
+  window is asked whether it is maximized or fullscreen at start and after each
+  resize (screen sizes cannot tell them apart with an auto-hidden taskbar); test
+  bridges lack window metadata, so there the buttons stay in the normal state.
 - The comic top bar and the ASMR top bar (and their title text) carry
   `data-tauri-drag-region`: dragging moves the window, double-click maximizes.
   Both bars keep clear of the buttons.

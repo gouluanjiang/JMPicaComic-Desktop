@@ -9,17 +9,29 @@ import "./window-controls.css";
 
 type WindowShape = "normal" | "maximized" | "fullscreen";
 
-/** Read from the page alone, so no native call is made while just looking. */
-function windowShape(): WindowShape {
-  const { screen } = window;
-  if (window.outerWidth >= screen.width && window.outerHeight >= screen.height)
-    return "fullscreen";
-  if (
-    window.outerWidth >= screen.availWidth &&
-    window.outerHeight >= screen.availHeight
-  )
-    return "maximized";
-  return "normal";
+function ask(name: "is_fullscreen" | "is_maximized"): Promise<boolean> {
+  return invokeDesktop<boolean>(`plugin:window|${name}`, {
+    label: "main",
+  }).then((value) => value === true);
+}
+
+/** Asked from the window itself; screen sizes cannot tell these apart. */
+async function windowShape(): Promise<WindowShape> {
+  if (await ask("is_fullscreen")) return "fullscreen";
+  return (await ask("is_maximized")) ? "maximized" : "normal";
+}
+
+/**
+ * Only the real desktop runtime describes its window; the test bridges do not,
+ * and there the buttons simply stay in their normal state.
+ */
+function realWindow(): boolean {
+  const internals = (
+    window as unknown as {
+      __TAURI_INTERNALS__?: { metadata?: { currentWindow?: unknown } };
+    }
+  ).__TAURI_INTERNALS__;
+  return Boolean(internals?.metadata?.currentWindow);
 }
 
 function command(name: "minimize" | "toggle_maximize" | "close") {
@@ -29,11 +41,29 @@ function command(name: "minimize" | "toggle_maximize" | "close") {
 }
 
 export function WindowControls({ overReader }: { overReader: boolean }) {
-  const [shape, setShape] = useState<WindowShape>(windowShape);
+  const [shape, setShape] = useState<WindowShape>("normal");
   useEffect(() => {
-    const update = () => setShape(windowShape());
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    if (!realWindow()) return;
+    let active = true;
+    let timer: number | undefined;
+    const update = () =>
+      windowShape()
+        .then((next) => {
+          if (active) setShape(next);
+        })
+        .catch(() => undefined);
+    // Resizing fires many events; ask once it settles.
+    const onResize = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(update, 120);
+    };
+    update();
+    window.addEventListener("resize", onResize);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
   // A fullscreen window has no title bar either.
   if (shape === "fullscreen") return null;
