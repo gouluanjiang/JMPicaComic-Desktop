@@ -1,0 +1,70 @@
+/* Title bar buttons drawn by the main window itself (see WindowControls.tsx). */
+:root {
+  --window-controls-width: 138px;
+}
+.window-controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 130;
+  display: flex;
+  height: 36px;
+  color: var(--muted, #b8b2c4);
+}
+.window-controls button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+}
+.window-controls svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.window-controls button:hover {
+  background: #ffffff1f;
+  color: var(--text, #f5f3fa);
+}
+.window-controls button:active {
+  background: #ffffff33;
+}
+.window-controls button.window-close:hover,
+.window-controls button.window-close:active {
+  background: #e81123;
+  color: #fff;
+}
+.window-controls button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
+}
+
+/* On the blue ASMR bar the buttons are white, in both ASMR themes. */
+.app-shell[data-section="asmr"] ~ .window-controls {
+  color: #ffffffd9;
+}
+.app-shell[data-section="asmr"] ~ .window-controls button:hover {
+  color: #fff;
+}
+/* Over the in-app reader the page may be bright, so the buttons get a ground. */
+.window-controls.over-reader {
+  color: #f5f3fa;
+  background: #080809b3;
+}
+
+/* Each top bar keeps clear of the buttons. */
+.app-shell.ui-refined.has-window-controls .topbar {
+  margin-right: calc(var(--window-controls-width) + 12px);
+}
+.app-shell.has-window-controls .asmr-topbar {
+  padding-right: calc(var(--window-controls-width) + 8px);
+}

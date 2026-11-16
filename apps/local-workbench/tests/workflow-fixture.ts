@@ -572,6 +572,11 @@ export async function installWorkflow(
                     (id) => batches.get(id)!.plans,
                   ),
                 );
+              // The main window's own title bar buttons.
+              case "plugin:window|minimize":
+              case "plugin:window|toggle_maximize":
+              case "plugin:window|close":
+                return null;
               default:
                 hooks.unexpectedCommands.push(command);
                 throw new Error(

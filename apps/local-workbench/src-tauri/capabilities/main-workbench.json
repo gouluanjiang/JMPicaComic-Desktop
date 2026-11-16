@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-workbench",
-  "description": "Main local workbench documents, background chooser, source accounts and favorites.",
+  "description": "Main local workbench documents, background chooser, source accounts and favorites, and its own title bar controls.",
   "local": true,
   "windows": ["main"],
   "permissions": [
@@ -14,6 +14,11 @@
     "workbench-reader-host",
     "core:event:allow-listen",
     "core:event:allow-unlisten",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
     "workbench-downloads"
   ]
 }
