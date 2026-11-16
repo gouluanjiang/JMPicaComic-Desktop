@@ -45,11 +45,14 @@ test("the main window draws its own title bar buttons in both sections", async (
   await controls.getByRole("button", { name: "最小化" }).click();
   await controls.getByRole("button", { name: /最大化|向下还原/ }).click();
   await controls.getByRole("button", { name: "关闭" }).click();
-  expect(await windowCalls(page)).toEqual([
-    ["plugin:window|minimize", { label: "main" }],
-    ["plugin:window|toggle_maximize", { label: "main" }],
-    ["plugin:window|close", { label: "main" }],
-  ]);
+  // Requests go out asynchronously; wait for all three.
+  await expect
+    .poll(() => windowCalls(page))
+    .toEqual([
+      ["plugin:window|minimize", { label: "main" }],
+      ["plugin:window|toggle_maximize", { label: "main" }],
+      ["plugin:window|close", { label: "main" }],
+    ]);
 
   // On the ASMR bar the buttons stay in the corner, clear of its controls.
   await page.getByTestId("section-asmr").click();
