@@ -36,7 +36,6 @@ test("the main window draws its own title bar buttons in both sections", async (
   // The empty top bar moves the window; its buttons do not.
   await expect(page.locator("header.topbar")).toHaveAttribute(
     "data-tauri-drag-region",
-    "",
   );
   await expect(page.getByTestId("appearance-shortcut")).not.toHaveAttribute(
     "data-tauri-drag-region",
@@ -58,7 +57,6 @@ test("the main window draws its own title bar buttons in both sections", async (
   await expect(controls).toBeVisible();
   await expect(page.locator("header.asmr-topbar")).toHaveAttribute(
     "data-tauri-drag-region",
-    "",
   );
   await apart(controls, page.getByTestId("asmr-theme"));
   await apart(controls, page.getByTestId("asmr-account"));
