@@ -560,3 +560,54 @@ test("simultaneous reader download requests wait for the queue recheck and enque
   await expect(first.getByLabel("当前页码")).toHaveText("1 / 6");
   await expect(second.getByLabel("当前页码")).toHaveText("1 / 6");
 });
+
+test("a small reader window's own title bar appears at the top edge and closes like the system button", async ({
+  page,
+}) => {
+  const harness = harnesses.get(page)!;
+  await openOnlineWindow(page);
+  const child = await harness.child(1);
+  const bar = child.getByTestId("reader-titlebar");
+  const buttons = bar.getByTestId("window-controls");
+  // Hidden while reading; the pointer at the top edge brings it in.
+  await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "0");
+  await child.mouse.move(200, 3);
+  await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "1");
+  await expect(bar.locator(".reader-titlebar")).toHaveAttribute(
+    "data-tauri-drag-region",
+  );
+  await expect(buttons.getByRole("button")).toHaveCount(3);
+  // The buttons act on this reader window only.
+  await buttons.getByRole("button", { name: "最小化" }).click();
+  await buttons.getByRole("button", { name: /最大化|向下还原/ }).click();
+  await expect
+    .poll(() =>
+      child.evaluate(() =>
+        window.workflowTest.calls
+          .filter(({ command }) =>
+            /^plugin:window\|(minimize|toggle_maximize|close)$/.test(command),
+          )
+          .map(({ command, args }) => [command, args]),
+      ),
+    )
+    .toEqual([
+      ["plugin:window|minimize", { label: "reader-window-1" }],
+      ["plugin:window|toggle_maximize", { label: "reader-window-1" }],
+    ]);
+  // Closing saves the reading position first, as the system close does.
+  await child.getByTestId("reader-viewport").focus();
+  await child.keyboard.press("ArrowRight");
+  await expect(child.getByLabel("当前页码")).toHaveText(/^2 \//);
+  await child.mouse.move(200, 3);
+  const start = harness.calls.length;
+  await buttons.getByRole("button", { name: "关闭" }).click();
+  await expect.poll(() => harness.closed.has("reader-window-1")).toBe(true);
+  const closing = harness.calls
+    .slice(start)
+    .filter(({ label }) => label === "reader-window-1")
+    .map(({ command }) => command);
+  expect(closing.indexOf("reader_save_position")).toBeGreaterThanOrEqual(0);
+  expect(closing.indexOf("reader_window_close")).toBeGreaterThan(
+    closing.indexOf("reader_save_position"),
+  );
+});

@@ -68,3 +68,59 @@
 .app-shell.has-window-controls .asmr-topbar {
   padding-right: calc(var(--window-controls-width) + 8px);
 }
+
+/* Inside a bar the buttons follow the bar instead of the window corner. */
+.window-controls.embedded {
+  position: static;
+  height: 100%;
+  color: inherit;
+}
+
+/* A small reader window's title bar: a thin edge zone that opens into a bar. */
+.reader-titlebar-zone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 130;
+  height: 10px;
+}
+.reader-titlebar-zone.is-visible,
+.reader-titlebar-zone:focus-within {
+  height: 34px;
+}
+.reader-titlebar {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding-left: 14px;
+  background: #19151eed;
+  border-bottom: 1px solid #493c5b;
+  box-shadow: 0 10px 40px #0008;
+  color: #d9d4e2;
+  font-size: 12px;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+  pointer-events: none;
+}
+.reader-titlebar-zone.is-visible .reader-titlebar,
+.reader-titlebar-zone:focus-within .reader-titlebar {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.reader-titlebar-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader-titlebar {
+    transition: none;
+  }
+}

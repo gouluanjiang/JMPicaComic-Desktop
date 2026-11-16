@@ -350,6 +350,8 @@ fn create_child<R: Runtime>(
     )
     .visible(false)
     .resizable(true)
+    // The reader draws its own title bar (`ReaderTitleBar`).
+    .decorations(false)
     .always_on_top(false)
     .disable_drag_drop_handler()
     .on_navigation(|url| trusted_navigation(url, cfg!(dev)))

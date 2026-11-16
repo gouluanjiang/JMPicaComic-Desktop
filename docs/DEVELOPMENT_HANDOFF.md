@@ -5,8 +5,13 @@
 User request after 1.3.0: hide the Windows title bar and put the window buttons in
 the existing top bar.
 
-- `tauri.conf.json` sets `decorations: false` for the main window only; reader
-  windows keep their title bar. The main capability gains
+- `tauri.conf.json` sets `decorations: false` for the main window, and
+  `reader_windows.rs` for small reader windows (added after the user's candidate
+  test: they asked for the reader windows too). `ReaderTitleBar` gives each reader
+  window a bar that slides in when the pointer reaches the top 10 px: drag area,
+  minimize, maximize and close; close runs the window's own close path, so the
+  reading position is saved first. The reader capability gains the same window
+  permissions except close. The main capability gains
   `core:window:allow-start-dragging`, `allow-internal-toggle-maximize`,
   `allow-minimize`, `allow-toggle-maximize`, `allow-close`, `allow-is-maximized`
   and `allow-is-fullscreen`.
