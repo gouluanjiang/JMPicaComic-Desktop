@@ -582,13 +582,11 @@ test("a small reader window's own title bar appears at the top edge and closes l
   await buttons.getByRole("button", { name: /最大化|向下还原/ }).click();
   await expect
     .poll(() =>
-      child.evaluate(() =>
-        window.workflowTest.calls
-          .filter(({ command }) =>
-            /^plugin:window\|(minimize|toggle_maximize|close)$/.test(command),
-          )
-          .map(({ command, args }) => [command, args]),
-      ),
+      harness.calls
+        .filter(({ command }) =>
+          /^plugin:window\|(minimize|toggle_maximize|close)$/.test(command),
+        )
+        .map(({ command, args }) => [command, args]),
     )
     .toEqual([
       ["plugin:window|minimize", { label: "reader-window-1" }],

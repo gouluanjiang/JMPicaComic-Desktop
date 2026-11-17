@@ -365,6 +365,15 @@ export async function installReaderWindows(
           });
           return null;
         }
+        // A reader window's own title bar (WindowControls).
+        case "plugin:window|is_maximized":
+        case "plugin:window|is_fullscreen":
+          expect(args.label).toBe(label);
+          return false;
+        case "plugin:window|minimize":
+        case "plugin:window|toggle_maximize":
+          expect(args.label).toBe(label);
+          return null;
         default:
           violations.push(`unexpected command: ${command}`);
           throw new Error("Unexpected reader-window command " + command);
