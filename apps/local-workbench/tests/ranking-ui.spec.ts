@@ -322,9 +322,11 @@ test("weekly and Pica ranks share receipt filters while details preserve the sel
     "已入库 1 条 · 未入库 1 条",
   );
   await expect(rankingPanel(page).getByLabel("排行类型")).toHaveValue("manga");
+  // JM's "2026第42期09.11 - 09.04" reads in date order with spacing.
   await expect(page.getByLabel("每周必看期数")).toContainText(
-    "2026第42期09.11 - 09.04",
+    "2026 年第 42 期 · 09.04–09.11",
   );
+  await expect(page.getByLabel("每周必看期数")).toContainText("合成第41期");
   await mkdir("visual-evidence", { recursive: true });
   await page.screenshot({ path: "visual-evidence/jm-weekly.png" });
   await rankingPanel(page).getByLabel("排行类型").selectOption("hanman");

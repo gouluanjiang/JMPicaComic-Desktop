@@ -84,6 +84,11 @@ body[data-ui-refined="true"] :is(.dialog, .reader-cover-actions)::backdrop {
   .ui-refined select::picker(select) {
     appearance: base-select;
   }
+  /* A customizable select lays out as a flex box: without this, a select
+     whose height comes from min-height shows its text at the top. */
+  .ui-refined select {
+    align-items: center;
+  }
   .ui-refined select::picker(select) {
     background: #152034;
     color: #f0f2f4;

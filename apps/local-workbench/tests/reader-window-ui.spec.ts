@@ -573,6 +573,14 @@ test("a small reader window's own title bar appears at the top edge and closes l
   await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "0");
   await child.mouse.move(200, 3);
   await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "1");
+  // The pointer need not hit the very edge: anywhere near the top opens it,
+  // and it closes once the pointer is well below.
+  await child.mouse.move(200, 300);
+  await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "0");
+  await child.mouse.move(200, 40);
+  await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "1");
+  await child.mouse.move(200, 80);
+  await expect(bar.locator(".reader-titlebar")).toHaveCSS("opacity", "1");
   await expect(bar.locator(".reader-titlebar")).toHaveAttribute(
     "data-tauri-drag-region",
   );
