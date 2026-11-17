@@ -85,8 +85,8 @@ body[data-ui-refined="true"] :is(.dialog, .reader-cover-actions)::backdrop {
     appearance: base-select;
   }
   .ui-refined select::picker(select) {
-    background: #202026;
-    color: #f1eff5;
+    background: #152034;
+    color: #f0f2f4;
     border: 1px solid #ffffff24;
     border-radius: 12px;
     padding: 6px;
@@ -118,11 +118,11 @@ body[data-ui-refined="true"] :is(.dialog, .reader-cover-actions)::backdrop {
     min-height: 36px;
   }
   .ui-refined select option:checked {
-    background: #a78bfa24;
-    color: #e3d7ff;
+    background: #eac88024;
+    color: #f1e3c4;
   }
   .ui-refined select option:focus-visible {
-    outline: 2px solid #b59cff;
+    outline: 2px solid #e7ce98;
     outline-offset: -2px;
   }
   @starting-style {

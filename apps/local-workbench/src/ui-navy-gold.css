@@ -1,0 +1,335 @@
+/*
+ * Navy and gold theme (accepted 2026-11-17). Loaded last, after the September
+ * refinement layers. One accent (gold), one control shape (pill), one badge
+ * style, and the ASMR section in the same theme as the comic pages.
+ * Page explanations stay out of the main screen until the page's (i) button
+ * opens them; see PageHelp.tsx.
+ */
+
+/* Brand mark: gold square, same weight in both sections. */
+.app-shell.ui-refined .ui-sidebar .brand-mark,
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .brand-mark {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font:
+    700 20px Georgia,
+    serif;
+}
+
+/* ---- Controls: one pill shape ---------------------------------------- */
+.app-shell.ui-refined :is(.primary-button, .button.primary) {
+  min-height: 36px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  box-shadow: none;
+}
+.app-shell.ui-refined
+  :is(.primary-button, .button.primary):hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+.app-shell.ui-refined
+  :is(
+    .completion-controls,
+    .completion-change-summary,
+    .source-page-tools,
+    .source-toolbar,
+    .source-notice,
+    .source-actions,
+    .library-read-controls,
+    .source-account-block,
+    .settings-card,
+    .download-queue-actions,
+    .native-downloads > .download-controls,
+    .author-workspace-tools
+  )
+  :is(button:not(.primary-button, .button.primary, [role="tab"]), select),
+.app-shell.ui-refined .source-toolbar-leading > .text-button,
+.app-shell.ui-refined .button.secondary {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff0f;
+  color: var(--text);
+  text-decoration: none;
+}
+.app-shell.ui-refined
+  :is(
+    .completion-controls,
+    .completion-change-summary,
+    .source-page-tools,
+    .source-toolbar,
+    .source-notice,
+    .source-actions,
+    .library-read-controls,
+    .source-account-block,
+    .settings-card,
+    .author-workspace-tools
+  )
+  :is(
+    button:not(.primary-button, .button.primary, [role="tab"]),
+    select
+  ):hover:not(:disabled),
+.app-shell.ui-refined .button.secondary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: #ffffff17;
+}
+.app-shell.ui-refined
+  :is(.completion-controls, .source-page-tools, .author-workspace-tools)
+  input,
+.app-shell.ui-refined
+  main.content
+  :is(.source-search, .search-box, .library-search),
+.app-shell.ui-refined
+  main.content
+  :is(input[type="search"], input[type="text"], select):not(
+    .source-search input,
+    .search-box input
+  ) {
+  border-radius: 999px;
+}
+/* Two-way source switches read as one segmented pill. */
+.app-shell.ui-refined .source-page-tools .source-tabs button[aria-pressed] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+.app-shell.ui-refined
+  .source-page-tools
+  .source-tabs
+  button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+/* Underlined page tabs use the accent for the active line. */
+.app-shell.ui-refined
+  .source-tabs:not(.source-page-tools .source-tabs)
+  button:is([aria-pressed="true"], .active) {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.app-shell.ui-refined .completion-change-summary {
+  border-color: var(--line);
+  border-radius: 16px;
+  background: #ffffff0a;
+}
+
+/* ---- Badges: one rounded label style ---------------------------------- */
+.source-language-badge[data-language-kind],
+.source-language-badge[data-language-kind="chinese"],
+.source-language-badge[data-language-kind="untranslated"] {
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: #070b14c7;
+  color: #f3f5f9;
+}
+.source-language-badge.source-language-inline[data-language-kind] {
+  background: #ffffff14;
+}
+.browsing-new-badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---- Page explanations: hidden until the page's (i) is opened --------- */
+.app-shell.ui-refined .page-heading .product-name {
+  display: none;
+}
+.app-shell.ui-refined main.content h1:has(+ .page-help) {
+  display: inline-block;
+  vertical-align: middle;
+}
+.app-shell.ui-refined .page-help {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0 0 0 12px;
+  padding: 0;
+  vertical-align: middle;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff0f;
+  color: var(--muted);
+  font:
+    600 13px/1 Georgia,
+    serif;
+}
+.app-shell.ui-refined .page-help:hover,
+.app-shell.ui-refined .page-help[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+}
+.app-shell.ui-refined
+  main.content
+  > :not([data-help-open])
+  :is(
+    .page-heading > div > p:not(.source-muted),
+    .page-heading > p:not(.source-muted),
+    .source-workbench > p.source-muted:not(.source-empty),
+    .source-workbench > p.page-summary,
+    .source-results-heading > span,
+    .browsing-marker-note,
+    .library-workbench > p.source-muted,
+    .library-list-heading > p,
+    .library-read-controls > p.source-muted:not(.library-path),
+    .native-downloads > p.quiet,
+    .download-queue-summary > p.quiet,
+    .author-workspace-tools > p.source-muted,
+    .completion-panel > p:not(.source-empty),
+    .completion-change-summary
+      > p:not([data-testid="completion-change-counts"]),
+    .completion-change-summary > .source-muted,
+    .completion-panel > .source-notice > span,
+    .settings-copy,
+    p.settings-help:not(
+        [role="status"],
+        [aria-live],
+        [data-testid="diagnostics-version"]
+      ),
+    .source-account-info > p.source-muted,
+    .source-detail-info > p.source-muted:not(:first-child),
+    .source-detail section > p.source-muted
+  ):not(
+    [role="alert"],
+    [role="status"],
+    [aria-live],
+    .settings-feedback,
+    :has(button, a, input, select)
+  ) {
+  display: none;
+}
+/* ---- ASMR: the same navy and gold as the comic pages ------------------ */
+.asmr-workspace,
+.asmr-workspace[data-theme="dark"] {
+  --asmr-primary: var(--accent, #d9b45f);
+  --asmr-primary-strong: var(--accent, #d9b45f);
+  --asmr-topbar: #0b1222;
+  --asmr-topbar-text: #eef1f6;
+  --asmr-topbar-field: #ffffff0f;
+  --asmr-bg: #0b1222;
+  --asmr-surface: #121b2e;
+  --asmr-raised: #18233a;
+  --asmr-text: #eef1f6;
+  --asmr-muted: #98a3b6;
+  --asmr-line: #ffffff17;
+  --asmr-chip: #ffffff0f;
+  --asmr-chip-hover: #ffffff1c;
+  --asmr-chip-text: #b9c2d2;
+  --asmr-voice: #ffffff0f;
+  --asmr-voice-text: #eef1f6;
+  --asmr-cover: #18233a;
+  --asmr-cover-text: #6f7b90;
+  --asmr-star-empty: #ffffff2e;
+  --asmr-shadow: none;
+  --asmr-shadow-hover: 0 0 0 1px #ffffff26;
+  --asmr-error-bg: #3a1d1b;
+  --asmr-error-text: #f4a49c;
+  --asmr-selected: #d9b45f29;
+  color-scheme: dark;
+}
+.asmr-workspace .asmr-topbar {
+  border-bottom: 1px solid var(--asmr-line);
+  box-shadow: none;
+}
+.asmr-workspace .asmr-card {
+  border: 1px solid var(--asmr-line);
+  border-radius: 12px;
+}
+.asmr-workspace .asmr-badge {
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: #070b14c7;
+}
+.asmr-workspace .asmr-badge-language {
+  background: var(--asmr-primary);
+  color: #14110a;
+}
+.asmr-workspace .asmr-chip {
+  border-radius: 999px;
+}
+.asmr-workspace .asmr-stars {
+  color: var(--asmr-primary);
+}
+.app-shell.ui-refined .asmr-workspace .asmr-primary-button {
+  border-radius: 999px;
+  color: #14110a;
+}
+.app-shell.ui-refined .asmr-workspace .asmr-secondary-button {
+  border-radius: 999px;
+}
+.app-shell.ui-refined .asmr-workspace :is(input, select) {
+  border-radius: 999px !important;
+}
+/* The sidebar keeps the comic look while ASMR is shown. */
+.app-shell.ui-refined .ui-sidebar,
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar {
+  border-right-color: var(--line);
+  background: #070c18eb;
+  color: var(--text);
+  color-scheme: dark;
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  :is(.brand, .ui-brand-name) {
+  color: var(--text);
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  :is(.ui-nav-heading, small, .ui-connection) {
+  color: var(--subtle);
+}
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .ui-nav-item {
+  color: var(--muted);
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item:hover:not(:disabled) {
+  background: #ffffff0f;
+  color: var(--text);
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item:is(.active, [aria-current="page"]) {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-nav-item.active::before {
+  background: var(--accent);
+}
+.app-shell.ui-refined .ui-sidebar .ui-section-switch,
+.app-shell.ui-refined[data-section="asmr"] .ui-sidebar .ui-section-switch {
+  border-radius: 999px;
+  background: #ffffff0f;
+}
+.app-shell.ui-refined .ui-sidebar .ui-section-switch > button,
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-section-switch
+  > button {
+  border-radius: 999px;
+  color: var(--muted);
+}
+.app-shell.ui-refined
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"],
+.app-shell.ui-refined[data-section="asmr"]
+  .ui-sidebar
+  .ui-section-switch
+  > button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}

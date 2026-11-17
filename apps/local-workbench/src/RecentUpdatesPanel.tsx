@@ -46,6 +46,7 @@ import {
   BrowsingNewBadge,
   useRecentBrowsingMarkers,
 } from "./useBrowsingMarkers.tsx";
+import { PageHelp } from "./PageHelp.tsx";
 
 const noRecentSources: RecentViewState["sources"] = [];
 
@@ -381,6 +382,7 @@ export function RecentUpdatesPanel({
       <div className="page-heading source-heading">
         <div>
           <h1>最近更新</h1>
+          <PageHelp />
           <p>浏览 JM 与哔咔的新近作品，翻页时保留已显示作品的位置。</p>
         </div>
       </div>

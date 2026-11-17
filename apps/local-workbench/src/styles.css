@@ -1,13 +1,13 @@
 :root {
   font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
   color: #e9e7e3;
-  background: #17181b;
+  background: #0f1725;
   font-synthesis: none;
   font-weight: 400;
   font-size: 14px;
   --muted: #909195;
   --subtle: #626469;
-  --accent: #dfa580;
+  --accent: #d9b45f;
   --line: #2c2d31;
   --green: #96b7a2;
   --warning: #e0b47c;
@@ -101,8 +101,8 @@ input {
 .sidebar {
   width: 218px;
   flex-shrink: 0;
-  background: #131416;
-  border-right: 1px solid #25262a;
+  background: #0c131e;
+  border-right: 1px solid #18243a;
   display: flex;
   flex-direction: column;
   padding: 31px 16px 0;
@@ -123,7 +123,7 @@ input {
   display: grid;
   place-items: center;
   background: var(--accent);
-  color: #252428;
+  color: #172338;
   border-radius: 10px;
   width: 34px;
   height: 36px;
@@ -134,7 +134,7 @@ input {
 }
 .brand-mark span {
   position: absolute;
-  background: #131416;
+  background: #0c131e;
   bottom: 8px;
   left: 12px;
   width: 11px;
@@ -182,11 +182,11 @@ nav {
   text-align: left;
 }
 .nav-item:hover {
-  background: #202125;
+  background: #151f33;
   color: #eeece8;
 }
 .nav-item.active {
-  background: #2d2622;
+  background: #18243a;
   color: #e7b18a;
 }
 .nav-item.active:before {
@@ -323,7 +323,7 @@ nav {
   align-items: center;
   gap: 27px;
   padding: 0 38px;
-  background: #17181b;
+  background: #0f1725;
 }
 .breadcrumb {
   color: #8d8f95;
@@ -344,7 +344,7 @@ nav {
   align-items: center;
   gap: 10px;
   margin-left: auto;
-  background: #202125;
+  background: #151f33;
   border: 1px solid #2c2e32;
   border-radius: 6px;
   width: 240px;
@@ -442,7 +442,7 @@ h1 {
   letter-spacing: 0.5px;
 }
 .library-summary {
-  background: linear-gradient(100deg, #252321, #232426);
+  background: linear-gradient(100deg, #152034, #162136);
   border: 1px solid #33302d;
   border-radius: 7px;
   padding: 16px 19px;
@@ -532,7 +532,7 @@ h1 {
 }
 .toolbar-selects select {
   border: 0;
-  background: #17181b;
+  background: #0f1725;
   color: #868990;
   font-size: 10px;
   padding: 7px 5px;
@@ -580,7 +580,7 @@ h1 {
   border-radius: 6px;
   overflow: hidden;
   position: relative;
-  background: #282a2c;
+  background: #19263e;
 }
 .cover-button img {
   width: 100%;
@@ -598,7 +598,7 @@ h1 {
   justify-content: center;
   gap: 8px;
   align-items: center;
-  background: linear-gradient(transparent, #111c);
+  background: linear-gradient(transparent, #0a0f19cc);
   padding: 35px 10px 17px;
   color: white;
   font-size: 11px;
@@ -656,7 +656,7 @@ h1 {
 .card-select input:checked + span {
   background: var(--accent);
   border-color: var(--accent);
-  color: #272320;
+  color: #152034;
 }
 .card-select input:disabled {
   cursor: not-allowed;
@@ -734,7 +734,7 @@ h1 {
   justify-content: space-between;
   color: #575b62;
   font-size: 9px;
-  border-top: 1px solid #27292d;
+  border-top: 1px solid #19263e;
   margin-top: 33px;
   padding-top: 16px;
   gap: 20px;
@@ -748,7 +748,7 @@ h1 {
   align-items: center;
   gap: 14px;
   border: 1px solid #6a5240;
-  background: #2a2522f5;
+  background: #172338f5;
   backdrop-filter: blur(16px);
   padding: 13px 18px;
   border-radius: 8px;
@@ -795,7 +795,7 @@ h1 {
 }
 .button.primary {
   background: #dda47b;
-  color: #28221e;
+  color: #152034;
   border: 1px solid #e3b08a;
   box-shadow: 0 2px 5px #0002;
 }
@@ -803,7 +803,7 @@ h1 {
   background: #ecb994;
 }
 .button.secondary {
-  background: #222429;
+  background: #172237;
   border: 1px solid #36383e;
   color: #c0c0c2;
 }
@@ -833,10 +833,10 @@ h1 {
   gap: 15px;
   align-items: center;
   padding: 0 26px;
-  border-top: 1px solid #282a2e;
+  border-top: 1px solid #1a2740;
   font-size: 9px;
   color: #626771;
-  background: #151619;
+  background: #0e1522;
 }
 .statusbar > span {
   display: flex;
@@ -938,7 +938,7 @@ h1 {
 .tags > span {
   border: 1px solid #373837;
   border-radius: 4px;
-  background: #222325;
+  background: #152034;
   padding: 4px 8px;
   font-size: 9px;
   color: #a0a19e;
@@ -992,16 +992,16 @@ h1 {
   align-items: flex-start;
   gap: 12px;
   padding: 14px;
-  background: #212624;
+  background: #152034;
   border: 1px solid #344038;
   border-radius: 5px;
 }
 .inline-message.warning {
-  background: #2c2620;
+  background: #172338;
   border-color: #4c3b2a;
 }
 .inline-message.muted {
-  background: #222429;
+  background: #172237;
   border-color: #34373c;
   align-items: center;
 }
@@ -1070,7 +1070,7 @@ h1 {
 }
 .detail-aside {
   align-self: start;
-  background: #202124;
+  background: #151f32;
   border: 1px solid #303236;
   border-radius: 7px;
   padding: 24px;
@@ -1121,7 +1121,7 @@ h1 {
   margin: 12px 0;
 }
 .file-info pre {
-  background: #202227;
+  background: #152034;
   padding: 20px;
   border: 1px solid #31343a;
   border-radius: 6px;
@@ -1144,7 +1144,7 @@ h1 {
 }
 .queue-overview {
   border: 1px solid #303935;
-  background: #202622;
+  background: #152034;
   border-radius: 6px;
   padding: 17px 19px;
   display: flex;
@@ -1199,13 +1199,13 @@ h1 {
   align-items: center;
   gap: 17px;
   padding: 18px;
-  background: #1e2024;
+  background: #141e31;
   border: 1px solid #2e3136;
   border-radius: 7px;
 }
 .task-error {
   border-color: #494034;
-  background: #24221f;
+  background: #141e31;
 }
 .task-cover {
   padding: 0;
@@ -1281,7 +1281,7 @@ h1 {
   height: 22px;
 }
 .destination-panel {
-  background: #202124;
+  background: #151f32;
   border: 1px solid #303238;
   border-radius: 7px;
   padding: 22px;
@@ -1322,7 +1322,7 @@ h1 {
   left: 0;
   top: -2px;
   border: 1px solid #49463e;
-  background: #2c2b28;
+  background: #19263e;
   border-radius: 50%;
   width: 16px;
   height: 16px;
@@ -1353,7 +1353,7 @@ h1 {
 }
 .demo-controls {
   border: 1px dashed #3e3a34;
-  background: #24222055;
+  background: #151f3255;
   border-radius: 7px;
   margin-top: 16px;
   padding: 19px;
@@ -1428,7 +1428,7 @@ h1 {
   align-items: center;
   text-align: left;
   border: 1px solid #303338;
-  background: #1f2125;
+  background: #151f32;
   border-radius: 6px;
   gap: 15px;
 }
@@ -1459,7 +1459,7 @@ h1 {
 }
 .settings-section {
   max-width: 850px;
-  background: #1e2024;
+  background: #141e31;
   border: 1px solid #303238;
   border-radius: 7px;
   padding: 25px;
@@ -1504,7 +1504,7 @@ h1 {
 .dialog {
   border: 1px solid #51453a;
   border-radius: 12px;
-  background: #222326;
+  background: #162135;
   color: #dedbd4;
   padding: 26px;
   width: min(530px, calc(100vw - 30px));
@@ -2017,7 +2017,7 @@ h1 {
     border-top: 1px solid #343332;
     padding: 0 7px;
     flex-direction: row;
-    background: #171719;
+    background: #0e1623;
     z-index: 8;
   }
   .brand {
@@ -2145,7 +2145,7 @@ h1 {
   .toolbar-selects {
     width: 100%;
     justify-content: flex-end;
-    border-top: 1px solid #27292e;
+    border-top: 1px solid #1a273f;
     padding-top: 6px;
     margin-top: 0;
     gap: 10px;
@@ -2153,7 +2153,7 @@ h1 {
   .toolbar-selects select {
     font-size: 9px;
     max-width: 100px;
-    background: #17181b;
+    background: #0f1725;
     padding-bottom: 7px;
   }
   .results-heading {

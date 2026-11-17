@@ -15,8 +15,8 @@
   padding: 3px 7px;
   border: 1px solid #ffffff38;
   border-radius: 4px;
-  background: #15141beb;
-  color: #ddd9e5;
+  background: #0e1523eb;
+  color: #dcdee2;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.4;
@@ -26,9 +26,9 @@
 }
 
 .source-language-badge[data-language-kind="chinese"] {
-  border-color: #aa96d673;
-  background: #312346f0;
-  color: #edddff;
+  border-color: #d4b97e73;
+  background: #232f46f0;
+  color: #f1e3c5;
 }
 
 .source-language-badge[data-language-kind="untranslated"] {

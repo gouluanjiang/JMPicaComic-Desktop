@@ -174,37 +174,36 @@ test("searching a work code opens it and failures can be retried", async ({
   await expect(page.locator(".asmr-title")).toHaveText("搜索：rj01000005");
 });
 
-test("the ASMR theme switches between light and dark, and the sidebar follows it", async ({
+test("the ASMR section uses the app's navy theme and keeps the comic sidebar", async ({
   page,
 }) => {
   await installAsmr(page);
   const shell = page.locator(".app-shell");
   const workspace = page.getByTestId("asmr-workspace");
-  await openAsmr(page);
-  await expect(workspace).toHaveAttribute("data-theme", "light");
-  await expect(shell).toHaveAttribute("data-section", "asmr");
   const sidebarBackground = () =>
     page
       .locator(".ui-sidebar")
       .evaluate((element) => getComputedStyle(element).backgroundColor);
-  expect(await sidebarBackground()).toBe("rgb(255, 255, 255)");
+  const comicSidebar = await sidebarBackground();
+  await openAsmr(page);
+  await expect(workspace).toHaveAttribute("data-theme", "dark");
+  await expect(shell).toHaveAttribute("data-section", "asmr");
+  // One theme for the whole program: no separate ASMR light/dark switch.
+  await expect(
+    page.getByRole("button", { name: /切换到(暗色|浅色)主题/ }),
+  ).toHaveCount(0);
+  expect(await sidebarBackground()).toBe(comicSidebar);
+  const workspaceBackground = await workspace.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  expect(workspaceBackground).toBe("rgb(11, 18, 34)");
   // Fields use the ASMR palette, not the comic theme's dark inputs.
   const searchBackground = await page
     .getByTestId("asmr-search")
     .evaluate((element) => getComputedStyle(element).backgroundColor);
   expect(searchBackground).toBe("rgba(0, 0, 0, 0)");
-  await page.getByRole("button", { name: "切换到暗色主题" }).click();
-  await expect(workspace).toHaveAttribute("data-theme", "dark");
-  await expect(shell).toHaveAttribute("data-asmr-theme", "dark");
-  expect(await sidebarBackground()).toBe("rgb(22, 24, 28)");
-  await page.reload();
-  await expect(workspace).toHaveAttribute("data-theme", "dark");
-  await expect(
-    page.getByRole("button", { name: "切换到浅色主题" }),
-  ).toBeVisible();
-  // The comic section keeps its own sidebar.
   await page.getByTestId("section-comic").click();
-  expect(await sidebarBackground()).not.toBe("rgb(22, 24, 28)");
+  expect(await sidebarBackground()).toBe(comicSidebar);
   // A collapsed sidebar stacks the section switch inside its width.
   await page.getByTestId("sidebar-toggle").click();
   const sidebar = (await page.locator(".ui-sidebar").boundingBox())!;

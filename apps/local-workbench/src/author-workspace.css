@@ -51,7 +51,7 @@
   border-radius: 8px 0 0 8px;
 }
 .author-tab > [aria-selected="true"] {
-  background: var(--accent-soft, #342647);
+  background: var(--accent-soft, #263247);
 }
 .author-tab-close {
   flex: 0 0 36px;

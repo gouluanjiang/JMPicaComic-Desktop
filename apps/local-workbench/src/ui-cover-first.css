@@ -5,18 +5,18 @@
  * owned by the layout styles and VirtualSourceGrid measurements.
  */
 .app-shell.ui-refined {
-  --accent: #a48cf8;
+  --accent: #e9c880;
   --line: #ffffff14;
-  --muted: #b7b5c1;
+  --muted: #b8babe;
   --subtle: #a3a4b0;
-  --text: #f3f3f6;
-  --canvas: #0c0c0f;
+  --text: #f4f4f5;
+  --canvas: #080c14;
   --sidebar-width: 212px;
   --background-fallback:
     radial-gradient(
       ellipse 70% 90% at 82% -10%,
-      #5a4597 0%,
-      #2a2145 42%,
+      #576785 0%,
+      #212e45 42%,
       transparent 72%
     ),
     radial-gradient(ellipse 50% 70% at 18% -20%, #2d3560 0%, transparent 70%);
@@ -37,7 +37,7 @@
   --background-fallback: radial-gradient(
     ellipse 70% 90% at 82% -10%,
     #b56a80 0%,
-    #4a2a4a 45%,
+    #2a354a 45%,
     transparent 74%
   );
 }
@@ -53,18 +53,18 @@
 }
 .app-shell.ui-refined[data-background-mode="B"] .workbench-background::after {
   background:
-    linear-gradient(90deg, rgb(12 12 15 / 0.6) 0%, rgb(12 12 15 / 0) 58%),
+    linear-gradient(90deg, rgb(8 12 20 / 0.6) 0%, rgb(8 12 20 / 0) 58%),
     linear-gradient(
       180deg,
-      rgb(12 12 15 / calc(var(--background-shade) * 0.45)) 0%,
-      rgb(12 12 15 / var(--background-shade)) 82%
+      rgb(8 12 20 / calc(var(--background-shade) * 0.45)) 0%,
+      rgb(8 12 20 / var(--background-shade)) 82%
     );
 }
 
 /* Narrow icon rail. Expanding it for labels stays available. */
 .app-shell.ui-refined .ui-sidebar {
   padding: 16px 10px 12px;
-  background: #08080ad9;
+  background: #05080dd9;
   border-right-color: #ffffff0d;
 }
 .app-shell.ui-refined .ui-sidebar .brand {
@@ -79,8 +79,8 @@
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: #2f2559;
-  color: #dcd2ff;
+  background: #253759;
+  color: #f0e1c0;
   font:
     800 18px "Segoe UI",
     "Microsoft YaHei",
@@ -146,7 +146,7 @@
   padding: 0 3px;
   border-radius: 8px;
   background: var(--accent);
-  color: #0c0c0f;
+  color: #080c14;
   font-size: 10px;
   font-weight: 700;
   line-height: 16px;
@@ -237,7 +237,7 @@
 /* Once it sticks above the covers it must stay opaque and readable. */
 .app-shell.ui-refined .library-workbench .library-toolbar.is-stuck {
   padding-inline: 8px;
-  background: #141419f2;
+  background: #0e1421f2;
 }
 .app-shell.ui-refined .library-toolbar .search-box {
   flex: 0 1 380px;
@@ -246,7 +246,7 @@
   min-height: 42px;
   border-radius: 21px;
   border-color: #ffffff33;
-  background: #0c0c0fc7;
+  background: #080c14c7;
   backdrop-filter: blur(10px);
 }
 .app-shell.ui-refined .library-toolbar .search-box input {
@@ -273,7 +273,7 @@
 .app-shell.ui-refined .source-density {
   padding: 4px 10px;
   border-radius: 10px;
-  background: #0c0c0fc7;
+  background: #080c14c7;
   color: var(--muted);
   font-size: 13px;
 }
@@ -484,8 +484,8 @@
 .app-shell.ui-refined .content .author-workspace-tools form input,
 .app-shell.ui-refined .content .download-history-toolbar > input {
   border: 1px solid #ffffff24;
-  border-radius: 8px;
-  background: #0c0c0fd1;
+  border-radius: 999px;
+  background: #080c14d1;
   color: var(--text);
 }
 
@@ -497,8 +497,8 @@
   .completion-controls
   > button:not(.primary-button) {
   border: 1px solid #ffffff1f;
-  border-radius: 8px;
-  background: #1a1a20d9;
+  border-radius: 999px;
+  background: #111a2bd9;
   color: var(--text);
 }
 .app-shell.ui-refined .content .button.secondary:hover:not(:disabled),
@@ -510,12 +510,12 @@
   .content
   .completion-controls
   > button:not(.primary-button):hover:not(:disabled) {
-  background: #26262ee6;
+  background: #19263ee6;
 }
 .app-shell.ui-refined .content .button.primary,
 .app-shell.ui-refined .completion-panel .primary-button {
   border-color: transparent;
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--accent) !important;
   color: var(--canvas);
   font-weight: 600;
@@ -523,7 +523,7 @@
 }
 .app-shell.ui-refined .content .button.primary:disabled,
 .app-shell.ui-refined .completion-panel .primary-button:disabled {
-  background: #a48cf866 !important;
+  background: #e9c88066 !important;
 }
 
 /* Filters read as tabs. The JM / Pica switch stays a small segmented control. */
@@ -563,7 +563,7 @@
 }
 .app-shell.ui-refined .content .source-page-tools > .source-tabs > button {
   border-radius: 8px;
-  background: #0c0c0fd1;
+  background: #080c14d1;
 }
 
 /* Explanations */
@@ -603,7 +603,7 @@
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #15151bcc;
+  background: #0e1623cc;
 }
 
 /* Selection stays off the covers, and now only as tall as its one button. */
@@ -666,7 +666,7 @@
 .app-shell.ui-refined .content .source-authors {
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #15151bcc;
+  background: #0e1623cc;
   overflow: hidden;
 }
 .app-shell.ui-refined .content .source-author-head {
@@ -710,7 +710,7 @@
 .app-shell.ui-refined .content .source-accounts > div {
   border-color: var(--line);
   border-radius: 12px;
-  background: #15151bcc;
+  background: #0e1623cc;
 }
 
 @media (max-width: 760px) {
@@ -902,9 +902,9 @@
   gap: 18px;
   max-width: min(440px, calc(100vw - 48px));
   padding: 14px 16px;
-  border: 1px solid #a48cf855;
+  border: 1px solid #e9c88055;
   border-radius: 10px;
-  background: #1b1824f2;
+  background: #181c24f2;
   box-shadow: 0 16px 48px #0008;
   color: var(--text);
   font-size: 14px;

@@ -33,6 +33,7 @@ import { SourceCover } from "./SourceWorkbench.tsx";
 import { SourceLanguageBadge } from "./SourceLanguageBadge.tsx";
 import { VirtualSourceGrid } from "./VirtualSourceGrid.tsx";
 import { SourceIssues } from "./SourceIssues.tsx";
+import { PageHelp } from "./PageHelp.tsx";
 
 export function RankingPanel({
   active = true,
@@ -223,6 +224,7 @@ export function RankingPanel({
       <div className="page-heading source-heading">
         <div>
           <h1>{source === "JM" ? "JM · 每周必看" : "哔咔 · 排行榜"}</h1>
+          <PageHelp />
           <p>浏览网站推荐与榜单，筛选漫画库中尚未入库的作品。</p>
         </div>
       </div>

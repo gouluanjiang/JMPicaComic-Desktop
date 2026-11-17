@@ -57,6 +57,7 @@ import {
   libraryAddedAt,
 } from "./library-matching.ts";
 import type { LibraryFilter, LibrarySort } from "./library-matching.ts";
+import { PageHelp } from "./PageHelp.tsx";
 
 export function useLibrary(adapter: LibraryAdapter, enabled: boolean) {
   const [controller] = useState(() => new LibraryController(adapter));
@@ -865,6 +866,7 @@ export function LibraryWorkbench({
             <div>
               <div className="product-name">JMPicaComic-Desktop</div>
               <h1>漫画库</h1>
+              <PageHelp />
               <p>浏览电脑漫画库中的作品与文件信息</p>
             </div>
           </div>
