@@ -65,15 +65,37 @@ function normalizedLabel(tag: string): string {
     .replace(/\s+/gu, " ")
     .trim();
 }
+const BL = 1,
+  AI = 2,
+  JM_FEMALE = 4,
+  JM_ENGLISH = 8;
+// The same few thousand tag strings recur across every list, so each one is
+// classified once. Normalizing on every check cost hundreds of milliseconds
+// per render with a large catalog. Bounded so stray input cannot grow it.
+const TAG_CACHE_LIMIT = 50_000;
+const tagKinds = new Map<string, number>();
+function tagKind(tag: string): number {
+  let kind = tagKinds.get(tag);
+  if (kind !== undefined) return kind;
+  const label = normalizedLabel(tag);
+  kind =
+    (blLabels.has(label) ? BL : 0) |
+    // Only separators within a complete known label are optional; no substring match.
+    (aiLabels.has(label.replace(/[ _-]/gu, "")) ? AI : 0) |
+    (label === "女性向" ? JM_FEMALE : 0) |
+    (label === "english manga" ? JM_ENGLISH : 0);
+  if (tagKinds.size >= TAG_CACHE_LIMIT) tagKinds.clear();
+  tagKinds.set(tag, kind);
+  return kind;
+}
 export function isBlTag(tag: string): boolean {
-  return blLabels.has(normalizedLabel(tag));
+  return (tagKind(tag) & BL) !== 0;
 }
 export function isAiTag(tag: string): boolean {
-  // Only separators within a complete known label are optional; no substring match.
-  return aiLabels.has(normalizedLabel(tag).replace(/[ _-]/gu, ""));
+  return (tagKind(tag) & AI) !== 0;
 }
 export function isBlockedTag(tag: string): boolean {
-  return isBlTag(tag) || isAiTag(tag);
+  return (tagKind(tag) & (BL | AI)) !== 0;
 }
 export function isBlTagged(tags?: readonly string[]): boolean {
   return tags?.some(isBlTag) ?? false;
@@ -82,10 +104,10 @@ export function isBlockedTagged(tags?: readonly string[]): boolean {
   return tags?.some(isBlockedTag) ?? false;
 }
 export function isJmFemaleTag(tag: string): boolean {
-  return normalizedLabel(tag) === "女性向";
+  return (tagKind(tag) & JM_FEMALE) !== 0;
 }
 export function isJmEnglishCategory(tag: string): boolean {
-  return normalizedLabel(tag) === "english manga";
+  return (tagKind(tag) & JM_ENGLISH) !== 0;
 }
 
 /** Compact catalogs keep at most two language labels and one label per blocked kind. */
@@ -150,15 +172,16 @@ const listeners = new Set<() => void>();
 let revision = 0,
   notificationQueued = false;
 const key = (work: ContentWork) => JSON.stringify([work.source, work.workId]);
+function anyKind(work: ContentWork, mask: number): boolean {
+  for (const list of [work.tags, work.categories])
+    if (list) for (const tag of list) if (tagKind(tag) & mask) return true;
+  return false;
+}
 const excludedByMetadata = (work: ContentWork) =>
-  isBlockedTagged(work.tags) ||
-  isBlockedTagged(work.categories) ||
-  (work.source === "JM" &&
-    [...(work.tags ?? []), ...(work.categories ?? [])].some(isJmFemaleTag));
+  anyKind(work, BL | AI) || (work.source === "JM" && anyKind(work, JM_FEMALE));
 /** The accepted JM author/search scope is narrower than general browsing. */
 export const isOutsideJmAuthorScope = (work: ContentWork) =>
-  work.source === "JM" &&
-  [...(work.tags ?? []), ...(work.categories ?? [])].some(isJmEnglishCategory);
+  work.source === "JM" && anyKind(work, JM_ENGLISH);
 export function rememberContentWork(work: ContentWork): void {
   if (!excludedByMetadata(work) || known.has(key(work))) return;
   known.add(key(work));

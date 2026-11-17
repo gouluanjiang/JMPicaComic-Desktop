@@ -9,11 +9,11 @@ import { AuthorSearchProvider } from "./AuthorLinks.tsx";
 import { DownloadFeedbackContext } from "./DownloadWorkButton.tsx";
 import { downloadActionState } from "./download-runtime.ts";
 import { downloadMetadataCode } from "./download-metadata-problems.ts";
-import { RankingPanel } from "./RankingPanel.tsx";
+import { RankingPanel as RankingPage } from "./RankingPanel.tsx";
 import { ReaderAccessProvider, useReaderHost } from "./reader-access.tsx";
 import { ReaderDownloadError } from "./reader/runtime.ts";
-import { RecentUpdatesPanel } from "./RecentUpdatesPanel.tsx";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RecentUpdatesPanel as RecentUpdatesPage } from "./RecentUpdatesPanel.tsx";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { works, activeFixture } from "./catalog.ts";
 import {
@@ -51,7 +51,7 @@ import { UiSidebar } from "./UiSidebar.tsx";
 import { WindowControls } from "./WindowControls.tsx";
 import { isDesktopRuntime } from "./runtime.ts";
 import type { UiSection } from "./UiSidebar.tsx";
-import { AsmrWorkspace } from "./asmr/AsmrWorkspace.tsx";
+import { AsmrWorkspace as AsmrWorkspacePage } from "./asmr/AsmrWorkspace.tsx";
 import type { AsmrDestination } from "./asmr/AsmrWorkspace.tsx";
 
 const SECTION_KEY = "jmpicacomic.section";
@@ -81,11 +81,23 @@ import {
   SourceLanguageBadge,
   SourceLanguageProvider,
 } from "./SourceLanguageBadge.tsx";
-import { CompletionPanel } from "./CompletionPanel.tsx";
-import { AuthorWorkspace } from "./AuthorWorkspace.tsx";
-import { SpecialFollowsPanel } from "./SpecialFollowsPanel.tsx";
-import { ViewingHistoryPanel } from "./ViewingHistoryPanel.tsx";
-import { useViewingHistory } from "./useViewingHistory.ts";
+import { CompletionPanel as CompletionPage } from "./CompletionPanel.tsx";
+import { AuthorWorkspace as AuthorWorkspacePage } from "./AuthorWorkspace.tsx";
+import { SpecialFollowsPanel as SpecialFollowsPage } from "./SpecialFollowsPanel.tsx";
+import { ViewingHistoryPanel as ViewingHistoryPage } from "./ViewingHistoryPanel.tsx";
+import { dormantWhileHidden } from "./dormant.ts";
+
+// Pages kept mounted while hidden skip the main window's re-renders until
+// shown; with a large catalog each one cost hundreds of milliseconds per
+// keystroke or click elsewhere.
+const RankingPanel = dormantWhileHidden(RankingPage);
+const RecentUpdatesPanel = dormantWhileHidden(RecentUpdatesPage);
+const CompletionPanel = dormantWhileHidden(CompletionPage);
+const AuthorWorkspace = dormantWhileHidden(AuthorWorkspacePage);
+const SpecialFollowsPanel = dormantWhileHidden(SpecialFollowsPage);
+const ViewingHistoryPanel = dormantWhileHidden(ViewingHistoryPage);
+// Its props are all plain values, so it re-renders only when they change.
+const AsmrWorkspace = memo(AsmrWorkspacePage);
 import type { HistoryIdentity } from "./history-runtime.ts";
 import {
   SpecialFollowsContext,
@@ -539,7 +551,6 @@ export default function App() {
   );
   const [notice, setNotice] = useState("");
   const special = useSpecialFollows(accounts, persistence.native, setNotice);
-  const viewingHistory = useViewingHistory(persistence.native);
   const [downloadNotice, setDownloadNotice] = useState<{
     message: string;
     sequence: number;
@@ -2719,7 +2730,6 @@ export default function App() {
           {persistence.native && (
             <ViewingHistoryPanel
               active={page === "history" && !embeddedSourceDetail}
-              history={viewingHistory}
               sourceAdapter={sourceAdapter}
               accounts={accounts}
               libraryAdapter={libraryAdapter}

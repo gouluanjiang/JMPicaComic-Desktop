@@ -9,6 +9,7 @@ import { useBrowseSession, useBrowseSessionState } from "./useBrowseSession.ts";
 import type { ReactNode } from "react";
 import {
   useCallback,
+  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -617,8 +618,11 @@ export function LibraryWorkbench({
     [library.snapshot.items, contentRevision],
   );
   const inventoryFailed = Boolean(library.error);
+  // Typing stays responsive: the search box shows each key at once and the
+  // list follows as soon as the browser has a moment.
+  const searchQuery = useDeferredValue(query);
   const searched = useMemo(() => {
-    const result = searchLibraryItems(visibleItems, query);
+    const result = searchLibraryItems(visibleItems, searchQuery);
     return inventoryFailed
       ? {
           ...result,
@@ -629,7 +633,7 @@ export function LibraryWorkbench({
           },
         }
       : result;
-  }, [visibleItems, query, inventoryFailed]);
+  }, [visibleItems, searchQuery, inventoryFailed]);
   const items = useMemo(
     () =>
       sortLibraryItems(

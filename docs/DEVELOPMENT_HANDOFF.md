@@ -1,5 +1,34 @@
 # Current development handoff
 
+## Main window responsiveness (2026-11-17)
+
+The user reported stalls after 1.4.0, worst with several small reader windows
+open. Measured in the user's installed program over the WebView2 debug port
+(read-only browsing; the port was closed afterwards):
+
+- Scrolling and reader page turns were smooth. Every main-window state change
+  froze it for 250-800 ms: page switches, details, sort, opening and closing
+  readers, and each keystroke in the library search (up to 785 ms).
+- CPU profiles: typing in the library search kept the window busy 2.1 s, 1.8 s
+  of it in the hidden recent-updates page re-filtering its retained list, mostly
+  `normalize("NFKC")` and three regex passes per tag in `content-filter.ts`.
+  Opening a reader window sent `mangamonitor-history-changed`; the main window
+  re-read history and re-rendered everything twice (~200 ms each).
+
+Changes:
+1. `content-filter.ts` classifies each tag string once (bounded cache, 50k).
+2. `dormant.ts`: recent updates, ranking, author updates/search, special
+   follows and viewing history skip main-window re-renders while hidden and
+   catch up when shown. Only pages whose callbacks run from clicks; the source
+   page, downloads and library are left as they were. The ASMR workspace is
+   memoized (its props are plain values).
+3. The library list follows the search text with `useDeferredValue`.
+4. `useViewingHistory` moved from `App` into `ViewingHistoryPanel`, so a
+   history change re-renders that page only.
+
+Whether the slowdown grew with the retained recent-updates list rather than
+with 1.4.0 itself was not compared against 1.3.0.
+
 ## 1.4.0 release preparation (2026-11-17)
 
 The user chose to release before discussing ASMR downloads. 1.4.0 ships what
