@@ -76,11 +76,9 @@
   left: 0;
   right: 0;
   z-index: 130;
-  height: 10px;
-}
-.reader-titlebar-zone.is-visible,
-.reader-titlebar-zone:focus-within {
   height: 34px;
+  /* Only the bar itself takes the pointer, and only while shown. */
+  pointer-events: none;
 }
 .reader-titlebar {
   display: flex;
