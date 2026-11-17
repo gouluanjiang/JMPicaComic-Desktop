@@ -1,5 +1,22 @@
 # Current development handoff
 
+## 1.4.0 release preparation (2026-11-17)
+
+The user chose to release before discussing ASMR downloads. 1.4.0 ships what
+main holds after 1.3.0: the navy and gold theme with page help behind an (i)
+button (PR #62, from the homepage session), the README rebuilt around
+per-feature sections (PR #61), and no Windows title bar on the main and small
+reader windows (PR #60). Functions and data formats are unchanged.
+
+- The user live-tested the build of main's tree `7971704` (same as merge
+  `1c8815b`) on 2026-11-17: new theme, window buttons, dragging, snapping,
+  resizing, maximize, and the reader windows' title bar all fine.
+- Version 1.4.0 in `package.json`, `src-tauri/Cargo.toml`/`Cargo.lock`,
+  `tauri.conf.json` (bundling `RELEASE_NOTES_1.4.0.md`) and the bug report
+  template; docs index, project status and user guide name 1.4.0.
+- Known gap: the README screenshots (attached to the v1.3.0 release) still show
+  the 1.3.0 colours.
+
 ## Navy and gold theme, explanations behind (i) (2026-11-17)
 
 The user compared a live mockup of the installed 1.3.0 program in two palettes

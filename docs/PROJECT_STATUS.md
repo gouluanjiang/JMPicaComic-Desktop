@@ -1,6 +1,10 @@
 # JMPicaComic-Desktop 项目状态
 
-更新日期：2026-11-14。**当前正式版为 [1.3.0](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.3.0)**。变化见[版本说明](RELEASE_NOTES_1.3.0.md)。
+更新日期：2026-11-17。**当前正式版为 [1.4.0](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.4.0)**。变化见[版本说明](RELEASE_NOTES_1.4.0.md)。
+
+## 1.4.0 新增
+
+藏青＋金色界面，按钮、下拉框和角标统一样式，ASMR 分区跟随同一套配色；页面说明收进标题旁的 i 按钮；主窗口和阅读小窗去掉 Windows 标题栏，改由程序自己画的按钮和可拖动的顶栏代替。功能和数据格式没有变化。
 
 ## 1.3.0 新增
 
