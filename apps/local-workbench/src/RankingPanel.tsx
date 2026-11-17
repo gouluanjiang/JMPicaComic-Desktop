@@ -35,6 +35,28 @@ import { VirtualSourceGrid } from "./VirtualSourceGrid.tsx";
 import { SourceIssues } from "./SourceIssues.tsx";
 import { PageHelp } from "./PageHelp.tsx";
 
+/**
+ * JM names an issue like "2026第265期11.13 - 11.06": the later date first and
+ * no spacing. Shown as "2026 年第 265 期 · 11.06–11.13"; other text unchanged.
+ */
+export function issueLabel(label: string): string {
+  const match =
+    /^(\d{4})\s*第\s*(\d+)\s*期\s*(\d{1,2})\.(\d{1,2})\s*[-–~至]\s*(\d{1,2})\.(\d{1,2})$/.exec(
+      label.trim(),
+    );
+  if (!match) return label;
+  const [, year, issue, m1, d1, m2, d2] = match;
+  const pad = (value: string) => value.padStart(2, "0");
+  let first = `${pad(m1)}.${pad(d1)}`;
+  let second = `${pad(m2)}.${pad(d2)}`;
+  // A week spanning New Year runs from December into January.
+  const newYear = (from: string, to: string) =>
+    from.startsWith("12.") && to.startsWith("01.");
+  const reversed =
+    newYear(second, first) || (first > second && !newYear(first, second));
+  if (reversed) [first, second] = [second, first];
+  return `${year} 年第 ${issue} 期 · ${first}–${second}`;
+}
 export function RankingPanel({
   active = true,
   source,
@@ -251,7 +273,7 @@ export function RankingPanel({
                   >
                     {options?.categories.map((option) => (
                       <option key={option.id} value={option.id}>
-                        {option.label}
+                        {issueLabel(option.label)}
                       </option>
                     ))}
                   </select>

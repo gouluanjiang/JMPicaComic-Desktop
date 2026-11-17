@@ -140,6 +140,11 @@ export function WindowControls({
   );
 }
 
+/** Pointer distance from the top, in CSS pixels, that opens the bar. */
+const REVEAL_BAND = 48;
+/** Once open, the bar stays until the pointer is below this. */
+const KEEP_BAND = 96;
+
 /**
  * A small reader window's title bar. The comic fills the window, so the bar
  * slides in when the pointer reaches the top edge, like the bottom toolbar.
@@ -148,16 +153,29 @@ export function ReaderTitleBar({ onClose }: { onClose(): void }) {
   const label = currentWindowLabel();
   const shape = useWindowShape(label ?? "");
   const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    // Watched on the whole window, so the reveal band does not cover the
+    // comic and catch its clicks. The bar opens near the top and stays until
+    // the pointer is well below it or leaves the window.
+    const onMove = (event: PointerEvent) => {
+      if (event.clientY <= REVEAL_BAND) setVisible(true);
+      else if (event.clientY > KEEP_BAND) setVisible(false);
+    };
+    const onLeave = (event: MouseEvent) => {
+      if (!event.relatedTarget) setVisible(false);
+    };
+    window.addEventListener("pointermove", onMove);
+    document.addEventListener("mouseout", onLeave);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("mouseout", onLeave);
+    };
+  }, []);
   if (!label || shape === "fullscreen") return null;
   return (
     <div
       className={`reader-titlebar-zone${visible ? " is-visible" : ""}`}
       data-testid="reader-titlebar"
-      // Movement inside the edge also opens it: a pointer that is already
-      // in the top edge (a new window under the cursor) never "enters" it.
-      onPointerEnter={() => setVisible(true)}
-      onPointerMove={() => setVisible(true)}
-      onPointerLeave={() => setVisible(false)}
     >
       <div className="reader-titlebar" data-tauri-drag-region>
         <span className="reader-titlebar-title" data-tauri-drag-region>
