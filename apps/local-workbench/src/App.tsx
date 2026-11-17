@@ -48,6 +48,8 @@ import {
 } from "./preferences.ts";
 import type { WorkbenchPreferences } from "./preferences.ts";
 import { UiSidebar } from "./UiSidebar.tsx";
+import { WindowControls } from "./WindowControls.tsx";
+import { isDesktopRuntime } from "./runtime.ts";
 import type { UiSection } from "./UiSidebar.tsx";
 import { AsmrWorkspace } from "./asmr/AsmrWorkspace.tsx";
 import type { AsmrDestination } from "./asmr/AsmrWorkspace.tsx";
@@ -2472,9 +2474,11 @@ export default function App() {
       )}
     </label>
   );
+  // The desktop main window draws its own title bar buttons.
+  const ownTitleBar = isDesktopRuntime();
   const content = (
     <div
-      className={`app-shell ui-refined${sidebar.collapsed ? " sidebar-collapsed" : ""}`}
+      className={`app-shell ui-refined${sidebar.collapsed ? " sidebar-collapsed" : ""}${ownTitleBar ? " has-window-controls" : ""}`}
       inert={readerHost.isOpen}
       data-section={section}
       data-background-mode={appearance.backgroundMode}
@@ -2523,8 +2527,9 @@ export default function App() {
         inert={section === "asmr"}
         aria-hidden={section === "asmr" ? true : undefined}
       >
-        <header className="topbar">
-          <div className="breadcrumb">
+        {/* Without a Windows title bar, the empty top bar moves the window. */}
+        <header className="topbar" data-tauri-drag-region>
+          <div className="breadcrumb" data-tauri-drag-region>
             我的空间 <span>/</span> {pageTitle}
             {detail && (
               <>
@@ -2545,6 +2550,7 @@ export default function App() {
           <div
             className="demo-label"
             data-testid="demo-label"
+            data-tauri-drag-region
             data-native={persistence.native}
           >
             <span />
@@ -3067,6 +3073,9 @@ export default function App() {
               <SpecialFollowsContext.Provider value={special}>
                 {content}
                 {readerHost.layer}
+                {ownTitleBar && (
+                  <WindowControls overReader={readerHost.isOpen} />
+                )}
               </SpecialFollowsContext.Provider>
             </ReaderAccessProvider>
           </DownloadFeedbackContext.Provider>

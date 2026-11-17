@@ -24,6 +24,34 @@ layout, cover geometry and navigation order from that baseline are unchanged.
 - Tests: the ASMR theme test now checks the single theme; one colour expectation
   in the selection-dock test follows the new surface colour.
 
+## Main window without the Windows title bar (2026-11-16)
+
+User request after 1.3.0: hide the Windows title bar and put the window buttons in
+the existing top bar.
+
+- `tauri.conf.json` sets `decorations: false` for the main window, and
+  `reader_windows.rs` for small reader windows (added after the user's candidate
+  test: they asked for the reader windows too). `ReaderTitleBar` gives each reader
+  window a bar that slides in when the pointer reaches the top 10 px: drag area,
+  minimize, maximize and close; close runs the window's own close path, so the
+  reading position is saved first. The reader capability gains the same window
+  permissions except close. The main capability gains
+  `core:window:allow-start-dragging`, `allow-internal-toggle-maximize`,
+  `allow-minimize`, `allow-toggle-maximize`, `allow-close`, `allow-is-maximized`
+  and `allow-is-fullscreen`.
+- `WindowControls.tsx` draws minimize, maximize/restore and close fixed in the
+  top-right corner over the comic or ASMR top bar (white on the ASMR bar, with a
+  dark ground over the in-app reader, hidden in fullscreen). Close sends the same
+  close request as the system button, so reader-window handling is unchanged. The
+  window is asked whether it is maximized or fullscreen at start and after each
+  resize (screen sizes cannot tell them apart with an auto-hidden taskbar); test
+  bridges lack window metadata, so there the buttons stay in the normal state.
+- The comic top bar and the ASMR top bar (and their title text) carry
+  `data-tauri-drag-region`: dragging moves the window, double-click maximizes.
+  Both bars keep clear of the buttons.
+- Not verifiable in CI: snapping, edge resizing and the Windows 11 snap layout
+  menu on a real undecorated window; the user checks these on the candidate.
+
 ## 1.3.0 release preparation (2026-11-14)
 
 The user chose to release before starting ASMR downloads. 1.3.0 ships what main

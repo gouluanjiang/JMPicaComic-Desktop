@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ReaderTitleBar } from "../WindowControls.tsx";
 import { ComicReader } from "./ComicReader.tsx";
 import type { ComicReaderHandle } from "./ComicReader.tsx";
 import { nativeReaderWindowAdapter } from "./window-runtime.ts";
@@ -101,53 +102,68 @@ export function ReaderWindow({
       setPinBusy(false);
     }
   };
-  return request ? (
-    <ComicReader
-      ref={reader}
-      request={request}
-      onClose={closeWindow}
-      onDownload={async (_source, readerId) => {
-        try {
-          await adapter.download(readerId);
-        } catch {
-          throw new ReaderDownloadError("暂时无法在主界面准备下载，请重试。");
-        }
-      }}
-      windowControls={{
-        pinned,
-        pinBusy,
-        notice: notice || (error ? readerErrorMessage(error) : ""),
-        onPinnedChange: (value) => {
-          void pin(value);
-        },
-        onShowMain: showMain,
+  // No Windows title bar: the reader draws its own, and its close button
+  // saves the position first, like the system close request.
+  const titleBar = (
+    <ReaderTitleBar
+      onClose={() => {
+        void requestClose();
       }}
     />
+  );
+  return request ? (
+    <>
+      {titleBar}
+      <ComicReader
+        ref={reader}
+        request={request}
+        onClose={closeWindow}
+        onDownload={async (_source, readerId) => {
+          try {
+            await adapter.download(readerId);
+          } catch {
+            throw new ReaderDownloadError("暂时无法在主界面准备下载，请重试。");
+          }
+        }}
+        windowControls={{
+          pinned,
+          pinBusy,
+          notice: notice || (error ? readerErrorMessage(error) : ""),
+          onPinnedChange: (value) => {
+            void pin(value);
+          },
+          onShowMain: showMain,
+        }}
+      />
+    </>
   ) : (
-    <section
-      className="comic-reader"
-      aria-label="独立阅读窗口"
-      data-testid="reader-window-loading"
-    >
-      <div className="reader-message" role="status">
-        <p>{error ? readerErrorMessage(error) : "正在打开阅读窗口…"}</p>
-        {notice && <p role="alert">{notice}</p>}
-        {Boolean(error) && (
-          <button onClick={() => setAttempt((value) => value + 1)}>
-            重试打开
+    <>
+      {titleBar}
+      <section
+        className="comic-reader"
+        aria-label="独立阅读窗口"
+        data-testid="reader-window-loading"
+      >
+        <div className="reader-message" role="status">
+          <p>{error ? readerErrorMessage(error) : "正在打开阅读窗口…"}</p>
+          {notice && <p role="alert">{notice}</p>}
+          {Boolean(error) && (
+            <button onClick={() => setAttempt((value) => value + 1)}>
+              重试打开
+            </button>
+          )}
+          <button aria-label="显示主界面" onClick={showMain}>
+            主界面
           </button>
-        )}
-        <button aria-label="显示主界面" onClick={showMain}>
-          主界面
-        </button>
-        <button
-          onClick={() => {
-            void requestClose();
-          }}
-        >
-          关闭阅读窗口
-        </button>
-      </div>
-    </section>
+          <button
+            onClick={() => {
+              void requestClose();
+            }}
+          >
+            关闭阅读窗口
+          </button>
+        </div>
+      </section>
+    </>
   );
 }

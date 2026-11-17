@@ -1002,7 +1002,7 @@ export function AsmrWorkspace({
       data-theme={theme}
       hidden={hidden}
     >
-      <header className="asmr-topbar">
+      <header className="asmr-topbar" data-tauri-drag-region>
         <button
           className="asmr-icon-button"
           aria-label="返回"
@@ -1015,7 +1015,9 @@ export function AsmrWorkspace({
         >
           <Icon name="back" size={19} />
         </button>
-        <h1 className="asmr-title">{titleFor(view)}</h1>
+        <h1 className="asmr-title" data-tauri-drag-region>
+          {titleFor(view)}
+        </h1>
         <form
           className="asmr-search"
           role="search"

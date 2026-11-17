@@ -24,6 +24,7 @@ export default defineConfig({
     "**/asmr-ui.spec.ts",
     "**/asmr-player-ui.spec.ts",
     "**/asmr-account-ui.spec.ts",
+    "**/window-controls-ui.spec.ts",
   ],
   outputDir: "test-results",
   fullyParallel: false,
