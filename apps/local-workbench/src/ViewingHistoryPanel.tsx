@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { useViewingHistory } from "./useViewingHistory.ts";
+import { useViewingHistory } from "./useViewingHistory.ts";
 import type { HistoryIdentity } from "./history-runtime.ts";
 import type { LibraryAdapter, LibrarySnapshot } from "./library-types.ts";
 import type { AccountSummary, SourceAdapter } from "./source-types.ts";
@@ -21,7 +21,6 @@ import "./viewing-history.css";
 import { PageHelp } from "./PageHelp.tsx";
 export function ViewingHistoryPanel({
   active,
-  history,
   sourceAdapter,
   accounts,
   libraryAdapter,
@@ -29,13 +28,16 @@ export function ViewingHistoryPanel({
   onOpen,
 }: {
   active: boolean;
-  history: ReturnType<typeof useViewingHistory>;
   sourceAdapter: SourceAdapter;
   accounts: AccountSummary[];
   libraryAdapter: LibraryAdapter;
   librarySnapshot: LibrarySnapshot;
   onOpen: (identity: HistoryIdentity) => void;
 }) {
+  // Kept here rather than in the main window: a history change (every reader
+  // that opens) then re-renders this page only. Mounted with the desktop app,
+  // so visits are still recorded while it is hidden.
+  const history = useViewingHistory(true);
   const root = useRef<HTMLDivElement>(null);
   const [confirm, setConfirm] = useState(false);
   const [enabledDraft, setEnabledDraft] = useState<boolean | null>(null);
