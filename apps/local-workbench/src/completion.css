@@ -11,7 +11,7 @@
   padding: 0.5rem;
 }
 .completion-panel .source-card.is-selected {
-  outline: 2px solid #8560f2;
+  outline: 2px solid #e0b65b;
   border-radius: 8px;
 }
 .completion-panel h1 {
@@ -36,9 +36,9 @@
 }
 .completion-panel select,
 .completion-panel input:not([type="checkbox"]) {
-  background: var(--surface, #1e1b24);
+  background: var(--surface, #131d2f);
   color: inherit;
-  border: 1px solid #48414f;
+  border: 1px solid #41464f;
   border-radius: 6px;
   padding: 0.65rem;
   max-width: 100%;
@@ -47,21 +47,21 @@
   button:not(.source-cover-button, .text-button, .browse-author-link, .button) {
   color: inherit;
   cursor: pointer;
-  border: 1px solid #48414f;
+  border: 1px solid #41464f;
   border-radius: 6px;
   padding: 0.5rem 0.8rem;
-  background: var(--surface, #1e1b24);
+  background: var(--surface, #131d2f);
 }
 .completion-panel button:disabled {
   opacity: 0.45;
   cursor: default;
 }
 .completion-panel .primary-button {
-  background: #6942dc !important;
+  background: #c89e42 !important;
 }
 .completion-progress {
   padding: 1rem;
-  background: #282130;
+  background: #212630;
   border-radius: 8px;
 }
 .completion-ranges {
@@ -74,13 +74,13 @@
   flex-wrap: wrap;
 }
 .completion-status {
-  color: #c7b3ff;
+  color: #ebd6a9;
 }
 .completion-change-summary {
   margin: 1rem 0;
   padding: 0.9rem 0;
-  border-top: 1px solid #37313e;
-  border-bottom: 1px solid #37313e;
+  border-top: 1px solid #31363e;
+  border-bottom: 1px solid #31363e;
 }
 .completion-change-heading {
   display: flex;
@@ -94,8 +94,8 @@
   line-height: 1.55;
 }
 .completion-change-summary button[aria-pressed="true"] {
-  border-color: #8560f2;
-  background: #372566;
+  border-color: #e0b65b;
+  background: #253c66;
 }
 
 .completion-panel .source-card-open {
@@ -116,6 +116,6 @@
   max-width: 100%;
 }
 .completion-panel .source-tabs button[aria-pressed="true"] {
-  border-color: #8560f2;
-  background: #372566;
+  border-color: #e0b65b;
+  background: #253c66;
 }

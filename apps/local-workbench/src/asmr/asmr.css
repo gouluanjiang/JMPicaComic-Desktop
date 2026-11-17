@@ -15,7 +15,7 @@
   --asmr-bg: #f3f5f8;
   --asmr-surface: #ffffff;
   --asmr-raised: #ffffff;
-  --asmr-text: #1f2329;
+  --asmr-text: #162135;
   --asmr-muted: #6b7280;
   --asmr-line: #e3e6eb;
   --asmr-chip: #eef1f5;
@@ -46,12 +46,12 @@
 .asmr-workspace[data-theme="dark"] {
   --asmr-primary: #42a5f5;
   --asmr-primary-strong: #90caf9;
-  --asmr-topbar: #1d2026;
+  --asmr-topbar: #141e31;
   --asmr-topbar-text: #e8eaed;
   --asmr-topbar-field: #ffffff14;
-  --asmr-bg: #121316;
-  --asmr-surface: #1c1e23;
-  --asmr-raised: #24272d;
+  --asmr-bg: #0c121e;
+  --asmr-surface: #131d2f;
+  --asmr-raised: #18253c;
   --asmr-text: #e8eaed;
   --asmr-muted: #9aa0a9;
   --asmr-line: #2e3238;
@@ -633,14 +633,14 @@
   cursor: pointer;
 }
 .app-shell.ui-refined .ui-sidebar .ui-section-switch > button:hover {
-  color: #e7dbff;
+  color: #f1e3c5;
 }
 .app-shell.ui-refined
   .ui-sidebar
   .ui-section-switch
   > button[aria-pressed="true"] {
-  background: #a78add30;
-  color: #f3eeff;
+  background: #d3b77b30;
+  color: #f1e3c5;
   font-weight: 600;
 }
 .app-shell.ui-refined.sidebar-collapsed .ui-sidebar .ui-section-switch {
@@ -659,13 +659,13 @@
 .app-shell.ui-refined[data-section="asmr"] .ui-sidebar {
   background: #ffffff;
   border-right-color: #e3e6eb;
-  color: #1f2329;
+  color: #162135;
   color-scheme: light;
 }
 .app-shell.ui-refined[data-section="asmr"]
   .ui-sidebar
   :is(.brand, .ui-brand-name) {
-  color: #1f2329;
+  color: #162135;
 }
 .app-shell.ui-refined[data-section="asmr"] .ui-sidebar .brand-mark {
   background: #1e88e5;
@@ -683,7 +683,7 @@
   .ui-sidebar
   .ui-nav-item:hover:not(:disabled) {
   background: #f1f4f8;
-  color: #1f2329;
+  color: #162135;
 }
 .app-shell.ui-refined[data-section="asmr"]
   .ui-sidebar
@@ -714,7 +714,7 @@
 }
 
 .app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"] .ui-sidebar {
-  background: #16181c;
+  background: #0f1725;
   border-right-color: #2e3238;
   color: #e8eaed;
   color-scheme: dark;
@@ -743,7 +743,7 @@
 .app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
   .ui-sidebar
   .ui-nav-item:hover:not(:disabled) {
-  background: #23262c;
+  background: #18243a;
   color: #e8eaed;
 }
 .app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
@@ -760,7 +760,7 @@
 .app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
   .ui-sidebar
   .ui-section-switch {
-  background: #23262c;
+  background: #18243a;
 }
 .app-shell.ui-refined[data-section="asmr"][data-asmr-theme="dark"]
   .ui-sidebar
@@ -1487,7 +1487,7 @@ button.asmr-track:hover {
 .asmr-badge-progress {
   bottom: 6px;
   left: 6px;
-  background: #7e57c2;
+  background: #c19944;
 }
 .asmr-my-rating {
   color: var(--asmr-primary);

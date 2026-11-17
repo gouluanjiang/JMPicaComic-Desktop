@@ -53,7 +53,7 @@ async function expectReservedDock(page: Page) {
       }),
     )
     .toBe(true);
-  await expect(dock).toHaveCSS("background-color", "rgb(27, 28, 32)");
+  await expect(dock).toHaveCSS("background-color", "rgb(18, 27, 46)");
 }
 
 test("selection stays in an opaque reserved band at wide, intermediate and narrow widths without covering the manga canvas", async ({

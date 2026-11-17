@@ -87,6 +87,7 @@ import {
   BrowsingNewBadge,
   useAuthorBrowsingMarkers,
 } from "./useBrowsingMarkers.tsx";
+import { PageHelp } from "./PageHelp.tsx";
 
 const nativeAdapter = createCompletionAdapter();
 type ReadRequest = { kind: "full" | "progress"; includeOther: boolean };
@@ -873,6 +874,7 @@ export function CompletionPanel({
     >
       <header className="page-heading">
         <h1>{mode === "search" ? "作者搜索" : "作者更新"}</h1>
+        <PageHelp />
         <p>
           {mode === "search"
             ? "输入作者名，读取 JM 与哔咔的完整查询结果，无需先关注。"

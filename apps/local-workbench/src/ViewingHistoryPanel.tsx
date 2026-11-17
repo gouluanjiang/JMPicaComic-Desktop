@@ -18,6 +18,7 @@ import { LibraryCover } from "./LibraryWorkbench.tsx";
 import { useBrowseSession } from "./useBrowseSession.ts";
 import { formatTimestamp } from "./work-dates.ts";
 import "./viewing-history.css";
+import { PageHelp } from "./PageHelp.tsx";
 export function ViewingHistoryPanel({
   active,
   history,
@@ -66,6 +67,7 @@ export function ViewingHistoryPanel({
       <header className="page-heading source-heading">
         <div>
           <h1>浏览历史</h1>
+          <PageHelp />
           <p>最近打开的 100 本漫画。只有打开详情或成功进入阅读器才会记录。</p>
         </div>
       </header>

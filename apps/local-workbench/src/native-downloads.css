@@ -14,10 +14,10 @@
 .native-download-add select {
   flex: 1;
   min-width: 180px;
-  border: 1px solid var(--line, #35303d);
+  border: 1px solid var(--line, #30353d);
   border-radius: 7px;
   padding: 12px 14px;
-  background: #17141c;
+  background: #14171c;
   color: inherit;
 }
 .native-download-add textarea {
@@ -45,7 +45,7 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: #17141c;
+  background: #14171c;
   color: inherit;
   font: inherit;
 }
@@ -68,8 +68,8 @@
   display: grid;
   place-items: center;
   border-radius: 7px;
-  background: rgba(100, 72, 151, 0.15);
-  color: #b79bfa;
+  background: rgba(90, 105, 133, 0.15);
+  color: #ecce8c;
 }
 .native-downloads .task-complete {
   padding: 16px 20px;
@@ -117,7 +117,7 @@
 }
 .download-confirmation progress {
   width: 100%;
-  accent-color: #8560f2;
+  accent-color: #e0b65b;
 }
 .download-confirmation .dialog-actions {
   margin-top: 24px;

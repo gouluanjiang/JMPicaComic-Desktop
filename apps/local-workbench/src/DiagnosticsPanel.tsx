@@ -262,7 +262,7 @@ export function DiagnosticsPanel({
         </p>
       )}
       {copyReceipt && copyReceipt.text !== report && (
-        <p className="settings-help">
+        <p className="settings-help settings-feedback">
           {copyReceipt.success
             ? "状态已有变化，刚才复制的是点击时的摘要。"
             : "下方保留本次复制的摘要，当前状态已有变化。"}

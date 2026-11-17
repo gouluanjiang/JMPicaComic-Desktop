@@ -1206,7 +1206,8 @@ test("both recent feeds preserve source order, language and unknown dates and di
   await expect(recentCard(page, "JM", 2)).toBeVisible();
   await expect(recentCard(page, "JM", 1)).toHaveCount(0);
   await expect(page.getByTestId("recent-counts")).toContainText("20");
-  await page.getByTestId("recent-counts").scrollIntoViewIfNeeded();
+  // The counts line sits behind the page's (i); scroll the feed itself.
+  await recentCard(page, "JM", 2).scrollIntoViewIfNeeded();
   await expect(recentCard(page, "JM", 2)).toBeInViewport();
   await mkdir("visual-evidence", { recursive: true });
   await page.screenshot({ path: "visual-evidence/recent-updates-jm.png" });

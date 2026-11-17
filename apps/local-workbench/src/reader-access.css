@@ -1,9 +1,9 @@
 .reader-cover-actions {
   position: fixed;
   z-index: 120;
-  color: #f5f3fa;
-  background: var(--surface, #201d27);
-  border: 1px solid var(--line, #484052);
+  color: #f5f6f8;
+  background: var(--surface, #151f32);
+  border: 1px solid var(--line, #404652);
   border-radius: 10px;
   width: min(320px, calc(100vw - 16px));
   max-height: calc(100vh - 16px);
@@ -26,7 +26,7 @@
   margin: 0;
   padding: 6px 9px;
   font-size: 12px;
-  color: var(--muted, #b5abbf);
+  color: var(--muted, #b0b3ba);
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.5;
@@ -43,7 +43,7 @@
   cursor: pointer;
 }
 .reader-cover-actions [role="menuitem"]:focus-visible {
-  outline: 2px solid var(--accent, #926cff);
+  outline: 2px solid var(--accent, #e7c06b);
   outline-offset: -2px;
 }
 .reader-cover-actions [role="menuitem"]:disabled {
@@ -56,7 +56,7 @@
   border-radius: 6px;
 }
 .cover-interaction:focus {
-  outline-color: var(--accent, #926cff);
+  outline-color: var(--accent, #e7c06b);
 }
 .cover-interaction[data-cover-retry] {
   cursor: pointer;
@@ -71,17 +71,17 @@
   transform: translateX(-50%);
   max-width: calc(100% - 16px);
   padding: 4px 6px;
-  border: 1px solid #77658e;
+  border: 1px solid #6e7685;
   border-radius: 5px;
-  background: #2f293b;
-  color: #eee7fa;
+  background: #292f3b;
+  color: #f1e3c5;
   font-size: 11px;
   line-height: 1.4;
   white-space: nowrap;
   pointer-events: none;
 }
 .source-card:has(.cover-interaction:focus) h3 {
-  color: var(--text, #f5f3fa);
+  color: var(--text, #f5f6f8);
 }
 @media (hover: hover) and (pointer: fine) {
   .reader-cover-actions [role="menuitem"]:hover:not(:disabled) {

@@ -94,6 +94,7 @@ import {
 } from "./work-dates.ts";
 import type { CoverLease, CoverResult } from "./source-cover-cache.ts";
 import "./source-workbench.css";
+import { PageHelp } from "./PageHelp.tsx";
 
 export interface SourceWorkbenchProps {
   adapter: SourceAdapter;
@@ -2100,6 +2101,7 @@ export function SourceWorkbench({
                     ? "关注"
                     : "搜索"}
             </h1>
+            <PageHelp />
             <p className="source-muted">
               {sourceLabel(source)} ·{" "}
               {loadingAccounts

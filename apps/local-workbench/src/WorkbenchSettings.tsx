@@ -18,6 +18,7 @@ import type {
 import "./settings.css";
 import { matchingSettingsPages } from "./settings-navigation.ts";
 import type { SettingsPage } from "./settings-navigation.ts";
+import { PageHelp } from "./PageHelp.tsx";
 
 function sameAppearance(a: AppearancePreferences, b: AppearancePreferences) {
   const first = appearanceRefinement(a);
@@ -257,6 +258,7 @@ export function WorkbenchSettings({
         <div>
           <div className="eyebrow">YOUR WORKBENCH</div>
           <h1>设置</h1>
+          <PageHelp />
           <p>按自己的习惯整理漫画、背景和下载偏好。</p>
         </div>
       </div>

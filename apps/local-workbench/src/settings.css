@@ -29,13 +29,13 @@
 }
 
 .settings-navigation button:hover {
-  color: #f3f1f7;
+  color: #f2f4f6;
   background: #ffffff08;
 }
 
 .settings-navigation button[aria-current="page"] {
-  color: #f3f1f7;
-  background: #b7a3ff14;
+  color: #f2f4f6;
+  background: #e8d09d14;
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
@@ -185,7 +185,7 @@
 
 .settings-mode-option.selected {
   border-color: var(--accent);
-  background: #b7a3ff09;
+  background: #e8d09d09;
 }
 
 .settings-mode-example {
@@ -194,10 +194,10 @@
   overflow: hidden;
   height: 135px;
   border-radius: 6px;
-  background-color: #292138;
+  background-color: #212938;
   background-image:
     radial-gradient(ellipse at 75% 24%, #84607b, transparent 65%),
-    linear-gradient(145deg, #625576, #252b47 50%, #151821);
+    linear-gradient(145deg, #556176, #252b47 50%, #151821);
   background-size: cover;
   background-position: center 35%;
 }
@@ -209,18 +209,18 @@
 }
 
 .settings-mode-example.mode-A::after {
-  background: #0c0c13a6;
+  background: #0c0e13a6;
 }
 
 .settings-mode-example.mode-B::after {
-  background: linear-gradient(180deg, #10101414, #101014 77%);
+  background: linear-gradient(180deg, #0b101b14, #0b101b 77%);
 }
 
 .settings-mode-rail {
   position: absolute;
   inset: 0 auto 0 0;
   width: 15px;
-  background: #0a0a11b8;
+  background: #0a0c11b8;
   z-index: 1;
 }
 
@@ -235,8 +235,8 @@
 
 .settings-mode-grid i {
   border-radius: 3px;
-  border: 1px solid #c4b9dc22;
-  background: #9b8ea52b;
+  border: 1px solid #c1c8d422;
+  background: #9398a02b;
 }
 
 .settings-option-name {
@@ -329,12 +329,12 @@
 }
 
 .settings-segmented button:hover {
-  color: #f1edf6;
+  color: #eff1f4;
 }
 
 .settings-segmented button[aria-pressed="true"] {
-  background: #c5aef324;
-  color: #e5d9fc;
+  background: #e8d09c24;
+  color: #f1e2c3;
 }
 
 .settings-profile-options {
@@ -496,7 +496,7 @@
   padding: 16px;
   border-color: #ffffff35;
   border-radius: 7px;
-  background: #14131940;
+  background: #0d142040;
 }
 .settings-option-name {
   order: -2;
@@ -512,12 +512,12 @@
   display: none;
 }
 .settings-mode-option.selected {
-  border-color: #8053ff;
-  box-shadow: inset 0 0 0 1px #8053ff;
-  background: #1b152826;
+  border-color: #e4b757;
+  box-shadow: inset 0 0 0 1px #e4b757;
+  background: #151c2826;
 }
 .settings-mode-rail {
-  background: #09090baa;
+  background: #06090faa;
 }
 .settings-density-row {
   margin-top: 32px;
@@ -528,7 +528,7 @@
 }
 .settings-segmented button[aria-pressed="true"] {
   color: #fff;
-  background: #6643db;
+  background: #c79d43;
 }
 .settings-savebar {
   border-top: 1px solid #ffffff28;
@@ -547,11 +547,11 @@
   border: 1px solid #ffffff30;
   border-radius: 7px;
   padding: 16px 24px;
-  background: #20202688;
+  background: #15203488;
 }
 .settings-profile-options button[aria-pressed="true"] {
-  background: #47329d85;
-  border-color: #8966ff;
+  background: #34589b85;
+  border-color: #e6bd66;
 }
 .resource-description {
   display: block;
@@ -566,7 +566,7 @@
   padding: 8px 24px;
   border: 1px solid #ffffff24;
   border-radius: 8px;
-  background: #1a1b2070;
+  background: #111a2b70;
 }
 .settings-resource-fields label {
   display: grid;
@@ -587,7 +587,7 @@
   grid-row: 1 / 3;
   min-height: 38px;
   font-size: 16px;
-  background: #16171ccc;
+  background: #0f1725cc;
 }
 .settings-resource-fields small {
   grid-column: 1;
@@ -715,7 +715,7 @@
   flex-shrink: 0;
   border-radius: 6px;
   border: 1px solid #ffffff36;
-  background-image: radial-gradient(ellipse at 70% 0%, #58475f, #15111b);
+  background-image: radial-gradient(ellipse at 70% 0%, #474f5f, #11141b);
   background-size: cover;
   background-position: center 20%;
 }
@@ -881,7 +881,7 @@ fieldset.settings-panel {
   font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
-  background: rgba(20, 18, 26, 0.55);
+  background: rgba(18, 21, 26, 0.55);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
