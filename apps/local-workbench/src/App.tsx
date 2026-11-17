@@ -52,17 +52,9 @@ import { WindowControls } from "./WindowControls.tsx";
 import { isDesktopRuntime } from "./runtime.ts";
 import type { UiSection } from "./UiSidebar.tsx";
 import { AsmrWorkspace } from "./asmr/AsmrWorkspace.tsx";
-import type { AsmrDestination, AsmrTheme } from "./asmr/AsmrWorkspace.tsx";
+import type { AsmrDestination } from "./asmr/AsmrWorkspace.tsx";
 
 const SECTION_KEY = "jmpicacomic.section";
-const ASMR_THEME_KEY = "jmpicacomic.asmr.theme";
-function readAsmrTheme(): AsmrTheme {
-  try {
-    return localStorage.getItem(ASMR_THEME_KEY) === "dark" ? "dark" : "light";
-  } catch {
-    return "light";
-  }
-}
 function readSection(): UiSection {
   try {
     return localStorage.getItem(SECTION_KEY) === "asmr" ? "asmr" : "comic";
@@ -140,6 +132,7 @@ import {
 import "./ui-theme.css";
 import "./ui-motion.css";
 import "./ui-cover-first.css";
+import "./ui-navy-gold.css";
 import type {
   AccountSummary,
   Source,
@@ -147,6 +140,7 @@ import type {
   SourceWork,
   AuthorCreditContext,
 } from "./source-types.ts";
+import { PageHelp } from "./PageHelp.tsx";
 const sourceAdapter = createSourceAdapter();
 const libraryAdapter = createLibraryAdapter();
 const downloadAdapter = createDownloadAdapter();
@@ -265,15 +259,6 @@ export default function App() {
   const [asmrDestination, setAsmrDestination] =
     useState<AsmrDestination>("asmr-home");
   const [asmrNavigationKey, setAsmrNavigationKey] = useState(0);
-  const [asmrTheme, setAsmrTheme] = useState<AsmrTheme>(readAsmrTheme);
-  const changeAsmrTheme = (next: AsmrTheme) => {
-    setAsmrTheme(next);
-    try {
-      localStorage.setItem(ASMR_THEME_KEY, next);
-    } catch {
-      // The theme still applies for this session.
-    }
-  };
   // Once opened, the ASMR workspace stays mounted so its place survives a
   // trip to the comic section.
   const [asmrOpened, setAsmrOpened] = useState(section === "asmr");
@@ -2496,7 +2481,6 @@ export default function App() {
       className={`app-shell ui-refined${sidebar.collapsed ? " sidebar-collapsed" : ""}${ownTitleBar ? " has-window-controls" : ""}`}
       inert={readerHost.isOpen}
       data-section={section}
-      data-asmr-theme={asmrTheme}
       data-background-mode={appearance.backgroundMode}
       data-background-tone={refinement.tone}
       data-reduced-motion={refinement.reducedMotion}
@@ -2590,7 +2574,10 @@ export default function App() {
             !embeddedSourceDetail &&
             (page === "author-search" ||
               (page === "discovery" && discoveryPane === "search")) && (
-              <h1 className="unified-search-title">搜索</h1>
+              <div className="unified-search-heading">
+                <h1 className="unified-search-title">搜索</h1>
+                <PageHelp />
+              </div>
             )}
           {persistence.native &&
             !embeddedSourceDetail &&
@@ -2945,8 +2932,7 @@ export default function App() {
       {persistence.native && asmrOpened && (
         <AsmrWorkspace
           hidden={section !== "asmr"}
-          theme={asmrTheme}
-          onTheme={changeAsmrTheme}
+          theme="dark"
           destination={asmrDestination}
           navigationKey={asmrNavigationKey}
         />

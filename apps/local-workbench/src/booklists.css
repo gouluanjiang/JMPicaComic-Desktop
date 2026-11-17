@@ -35,7 +35,7 @@
   padding: 10px 12px;
   border: 1px solid #ffffff2b;
   border-radius: 7px;
-  background: #101014d9;
+  background: #0b101bd9;
   color: inherit;
   font: inherit;
 }
@@ -96,7 +96,7 @@
 }
 .booklist-archived-name strong {
   font-weight: 500;
-  color: #eeeaf5;
+  color: #eceff3;
   overflow-wrap: anywhere;
 }
 .booklist-archived-name > span {

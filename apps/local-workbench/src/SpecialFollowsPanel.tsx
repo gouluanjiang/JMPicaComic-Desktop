@@ -24,6 +24,7 @@ import {
 } from "./content-filter.ts";
 import { createInventoryMatcher, inventoryLabel } from "./inventory-model.ts";
 import { useBrowseSession } from "./useBrowseSession.ts";
+import { PageHelp } from "./PageHelp.tsx";
 
 type Props = Pick<
   CompletionPanelProps,
@@ -99,6 +100,7 @@ export function SpecialFollowsPanel(props: Props) {
       data-testid="special-panel"
     >
       <h1>特别关注</h1>
+      <PageHelp />
       <p>
         首次建立作品基线；以后每次启动在后台检查。进入本页不会自动标为已读。
       </p>

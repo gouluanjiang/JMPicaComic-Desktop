@@ -806,13 +806,11 @@ export function AsmrWorkspace({
   navigationKey,
   hidden = false,
   theme = "light",
-  onTheme,
 }: {
   destination: AsmrDestination;
   navigationKey: number;
   hidden?: boolean;
   theme?: AsmrTheme;
-  onTheme?(theme: AsmrTheme): void;
 }) {
   const [history, setHistory] = useState<View[]>(() => [viewFor(destination)]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -1043,15 +1041,6 @@ export function AsmrWorkspace({
           onLogin={() => setLoginOpen(true)}
           onLogout={() => void logout()}
         />
-        <button
-          className="asmr-icon-button"
-          data-testid="asmr-theme"
-          aria-label={theme === "dark" ? "切换到浅色主题" : "切换到暗色主题"}
-          title={theme === "dark" ? "切换到浅色主题" : "切换到暗色主题"}
-          onClick={() => onTheme?.(theme === "dark" ? "light" : "dark")}
-        >
-          <Icon name={theme === "dark" ? "sun" : "moon"} size={19} />
-        </button>
       </header>
       <div className="asmr-body">
         <div className="asmr-content" ref={content}>

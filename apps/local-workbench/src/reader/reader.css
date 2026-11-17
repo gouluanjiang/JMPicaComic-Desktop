@@ -2,8 +2,8 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  color: #f5f3fa;
-  background: #080809;
+  color: #f5f6f8;
+  background: #05080d;
 }
 .reader-viewport {
   position: absolute;
@@ -24,7 +24,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  background: #121115;
+  background: #0b111c;
   overflow: hidden;
 }
 .reader-vertical .reader-page {
@@ -54,7 +54,7 @@
   justify-content: center;
   align-items: center;
   gap: 12px;
-  color: #bdb6ca;
+  color: #bbbec5;
   text-align: center;
   padding: 24px;
 }
@@ -84,8 +84,8 @@
   left: 0;
   right: 0;
   padding: 14px 24px 18px;
-  background: #19151eed;
-  border-top: 1px solid #493c5b;
+  background: #15181eed;
+  border-top: 1px solid #3c475b;
   box-shadow: 0 -10px 40px #0008;
   opacity: 0;
   transform: translateY(12px);
@@ -133,19 +133,19 @@
 }
 .comic-reader button,
 .comic-reader select {
-  border: 1px solid #49404f;
-  color: #f5f3fa;
-  background: #242029;
+  border: 1px solid #40454f;
+  color: #f5f6f8;
+  background: #162136;
   border-radius: 6px;
   padding: 8px 12px;
   font: inherit;
   white-space: nowrap;
 }
 .comic-reader button:hover {
-  background: #392b52;
+  background: #2b3952;
 }
 .comic-reader :focus-visible {
-  outline: 2px solid #a785ff;
+  outline: 2px solid #eac87f;
   outline-offset: 2px;
 }
 .comic-reader button:disabled {
@@ -158,7 +158,7 @@
 .reader-toolbar-controls input[type="range"] {
   flex: 1;
   min-width: 70px;
-  accent-color: #9164f2;
+  accent-color: #e0b75e;
   padding: 0;
 }
 .reader-toolbar-controls output {
@@ -175,7 +175,7 @@
   gap: 16px;
   padding: 12px 20px;
   border-radius: 8px;
-  background: #1a1621ed;
+  background: #161a21ed;
   font-size: 14px;
 }
 @media (max-width: 900px) {

@@ -54,22 +54,25 @@ test("the main window draws its own title bar buttons in both sections", async (
       ["plugin:window|close", { label: "main" }],
     ]);
 
-  // On the ASMR bar the buttons stay in the corner, clear of its controls.
+  // On the ASMR bar the buttons stay in the corner, clear of its controls,
+  // and look as they do over the comic pages (one theme).
+  const comicColor = await controls.evaluate(
+    (node) => getComputedStyle(node).color,
+  );
   await page.getByTestId("section-asmr").click();
   await expect(page.getByTestId("asmr-workspace")).toBeVisible();
   await expect(controls).toBeVisible();
   await expect(page.locator("header.asmr-topbar")).toHaveAttribute(
     "data-tauri-drag-region",
   );
-  await apart(controls, page.getByTestId("asmr-theme"));
   await apart(controls, page.getByTestId("asmr-account"));
   expect(await controls.evaluate((node) => getComputedStyle(node).color)).toBe(
-    "rgba(255, 255, 255, 0.85)",
+    comicColor,
   );
 
   // A narrow window still keeps the bar's buttons clear.
   await page.setViewportSize({ width: 720, height: 700 });
-  await apart(controls, page.getByTestId("asmr-theme"));
+  await apart(controls, page.getByTestId("asmr-account"));
   await page.getByTestId("section-comic").click();
   await apart(controls, page.getByTestId("appearance-shortcut"));
 

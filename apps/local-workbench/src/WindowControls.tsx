@@ -153,8 +153,11 @@ export function ReaderTitleBar({ onClose }: { onClose(): void }) {
     <div
       className={`reader-titlebar-zone${visible ? " is-visible" : ""}`}
       data-testid="reader-titlebar"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
+      // Movement inside the edge also opens it: a pointer that is already
+      // in the top edge (a new window under the cursor) never "enters" it.
+      onPointerEnter={() => setVisible(true)}
+      onPointerMove={() => setVisible(true)}
+      onPointerLeave={() => setVisible(false)}
     >
       <div className="reader-titlebar" data-tauri-drag-region>
         <span className="reader-titlebar-title" data-tauri-drag-region>

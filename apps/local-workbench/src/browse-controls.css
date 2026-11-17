@@ -9,7 +9,7 @@
   line-height: 1.5;
   min-height: 3em;
   margin: 4px 0;
-  color: var(--muted, #b5abbf);
+  color: var(--muted, #b0b3ba);
   font-size: 12px;
 }
 .browse-author-link {
@@ -24,31 +24,31 @@
   cursor: pointer;
 }
 .browse-author-link:focus-visible {
-  outline: 2px solid var(--accent, #956bfa);
+  outline: 2px solid var(--accent, #e6bd66);
   outline-offset: 2px;
 }
 .source-tags > .tag-search {
-  border: 1px solid var(--line, #484052);
+  border: 1px solid var(--line, #404652);
   border-radius: 4px;
   padding: 3px 8px;
   font: inherit;
   font-size: 11px;
   background: transparent;
-  color: #bfb3ce;
+  color: #b9bec8;
   cursor: pointer;
 }
 .tag-search:focus-visible {
-  outline: 2px solid var(--accent, #956bfa);
+  outline: 2px solid var(--accent, #e6bd66);
   outline-offset: 2px;
 }
 @media (hover: hover) and (pointer: fine) {
   .browse-author-link:hover {
-    color: var(--accent, #ae8bff);
+    color: var(--accent, #ebca84);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
   .tag-search:hover {
-    border-color: var(--accent, #956bfa);
+    border-color: var(--accent, #e6bd66);
   }
 }
 .floating-selection-host {
@@ -59,9 +59,9 @@
   max-height: 35dvh;
   overflow: auto;
   padding: 8px 34px;
-  border-top: 1px solid var(--line, #484052);
-  background: var(--surface, #201d27);
-  color: var(--text, #f5f3fa);
+  border-top: 1px solid var(--line, #404652);
+  background: var(--surface, #151f32);
+  color: var(--text, #f5f6f8);
 }
 /* With a dock, keep transient feedback away from wrapped selection actions. */
 .app-shell:has(.floating-selection-host) .toast {
@@ -71,12 +71,12 @@
   max-width: calc(100vw - var(--sidebar-width, 68px) - 32px);
 }
 .app-shell.ui-refined .floating-selection-host .button.secondary {
-  background: #29282f;
+  background: #282a2f;
 }
 .app-shell.ui-refined
   .floating-selection-host
   .button.secondary:hover:not(:disabled) {
-  background: #34323d;
+  background: #32363d;
 }
 .floating-selection-bar {
   width: 100%;
@@ -105,10 +105,10 @@
 }
 .floating-selection-options > button {
   padding: 8px 12px;
-  border: 1px solid var(--line, #484052);
+  border: 1px solid var(--line, #404652);
   border-radius: 7px;
   color: inherit;
-  background: #29282f;
+  background: #282a2f;
   font: inherit;
   font-size: 12px;
   cursor: pointer;

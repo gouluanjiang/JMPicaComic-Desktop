@@ -1,5 +1,29 @@
 # Current development handoff
 
+## Navy and gold theme, explanations behind (i) (2026-11-17)
+
+The user compared a live mockup of the installed 1.3.0 program in two palettes
+and chose dark navy with gold, the look of their azurlane-l2d-gallery. This
+replaces the September purple accent of `MANGAMONITOR_UI_BASELINE_2026-09-09.md`;
+layout, cover geometry and navigation order from that baseline are unchanged.
+
+- One palette for the whole program. Purple accents became gold and purple or
+  near-black surfaces became navy across every stylesheet (a mechanical recolour
+  that keeps each colour's lightness and alpha); the tokens live at the top of
+  `ui-theme.css` (`--accent`, `--on-accent`, `--surface`, `--raised`, `--text`,
+  `--muted`). The ASMR section no longer has its own light theme or theme
+  switch: it uses the same navy tokens, and the sidebar looks the same in both
+  sections.
+- One control shape and one badge style, in `ui-navy-gold.css` (loaded last):
+  buttons, selects and search fields are pills; the primary action is solid
+  gold; language, 新增 and ASMR badges share one rounded label.
+- The user asked for no explanatory small text on the main screen of any page.
+  Page subtitles, running statistics and help paragraphs are hidden until the
+  page's (i) beside the title is opened (`PageHelp.tsx`). Alerts, status lines,
+  empty states, copy feedback and paragraphs that hold a control stay visible.
+- Tests: the ASMR theme test now checks the single theme; one colour expectation
+  in the selection-dock test follows the new surface colour.
+
 ## Main window without the Windows title bar (2026-11-16)
 
 User request after 1.3.0: hide the Windows title bar and put the window buttons in

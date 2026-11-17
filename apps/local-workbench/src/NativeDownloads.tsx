@@ -46,6 +46,7 @@ import { sourceLabel } from "./source-types.ts";
 import type { AccountSummary } from "./source-types.ts";
 import { Icon } from "./icons.tsx";
 import "./native-downloads.css";
+import { PageHelp } from "./PageHelp.tsx";
 
 function TaskMaintenanceConfirmation({
   downloads,
@@ -479,6 +480,7 @@ export function NativeDownloads({
                 {unfinishedDownloadCount(downloads.snapshot.tasks)}
               </span>
             </h1>
+            <PageHelp />
             <p>多选漫画或粘贴作品编号，直接加入队列，依次完整保存到电脑。</p>
           </div>
         </div>

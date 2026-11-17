@@ -593,9 +593,9 @@ test("a small reader window's own title bar appears at the top edge and closes l
       ["plugin:window|toggle_maximize", { label: "reader-window-1" }],
     ]);
   // Closing saves the reading position first, as the system close does.
-  await child.getByTestId("reader-viewport").focus();
-  await child.keyboard.press("ArrowRight");
-  await expect(child.getByLabel("当前页码")).toHaveText(/^2 \//);
+  // A small window opens in continuous mode, where arrow keys scroll rather
+  // than turn pages; move with the progress slider instead.
+  await jump(child, 2, 6);
   await child.mouse.move(200, 3);
   const start = harness.calls.length;
   await buttons.getByRole("button", { name: "关闭" }).click();

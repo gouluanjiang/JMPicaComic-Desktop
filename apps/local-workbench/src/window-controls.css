@@ -9,7 +9,7 @@
   z-index: 130;
   display: flex;
   height: 36px;
-  color: var(--muted, #b8b2c4);
+  color: var(--muted, #b6bac0);
 }
 .window-controls button {
   display: grid;
@@ -33,7 +33,7 @@
 }
 .window-controls button:hover {
   background: #ffffff1f;
-  color: var(--text, #f5f3fa);
+  color: var(--text, #f5f6f8);
 }
 .window-controls button:active {
   background: #ffffff33;
@@ -48,17 +48,10 @@
   outline-offset: -3px;
 }
 
-/* On the blue ASMR bar the buttons are white, in both ASMR themes. */
-.app-shell[data-section="asmr"] ~ .window-controls {
-  color: #ffffffd9;
-}
-.app-shell[data-section="asmr"] ~ .window-controls button:hover {
-  color: #fff;
-}
 /* Over the in-app reader the page may be bright, so the buttons get a ground. */
 .window-controls.over-reader {
-  color: #f5f3fa;
-  background: #080809b3;
+  color: #f5f6f8;
+  background: #05080db3;
 }
 
 /* Each top bar keeps clear of the buttons. */
@@ -94,10 +87,10 @@
   align-items: center;
   height: 34px;
   padding-left: 14px;
-  background: #19151eed;
-  border-bottom: 1px solid #493c5b;
+  background: #15181eed;
+  border-bottom: 1px solid #3c475b;
   box-shadow: 0 10px 40px #0008;
-  color: #d9d4e2;
+  color: #d7dadf;
   font-size: 12px;
   opacity: 0;
   transform: translateY(-12px);

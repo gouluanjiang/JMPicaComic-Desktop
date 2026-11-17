@@ -6,29 +6,31 @@
  * owned by the original layout styles and VirtualSourceGrid measurements.
  */
 .app-shell.ui-refined {
-  --accent: #b8a2ee;
-  --line: #ffffff12;
-  --muted: #a09da9;
-  --subtle: #797c88;
+  --accent: #d9b45f;
+  --on-accent: #14110a;
+  --line: #ffffff14;
+  --muted: #98a3b6;
+  --subtle: #6f7b90;
   --green: #a4beac;
   --warning: #d3b88b;
-  --surface: #1b1c20;
-  --text: #ededf0;
+  --surface: #121b2e;
+  --raised: #18233a;
+  --text: #eef1f6;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --sidebar-width: 212px;
   --background-shade: 0.84;
   --background-blur: 0px;
   --background-fallback: radial-gradient(
     ellipse at 90% 0%,
-    #35313f 0%,
-    #17181d 45%,
-    #101113 100%
+    #24365a 0%,
+    #111b31 45%,
+    #0b1222 100%
   );
   display: flex;
   padding-left: var(--sidebar-width);
   min-height: 0;
   color: var(--text);
-  background: #111214;
+  background: #0b1222;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -47,13 +49,13 @@
   --background-fallback: radial-gradient(
     ellipse at 85% 8%,
     #875e70 0%,
-    #38283f 45%,
-    #14131c 100%
+    #28303f 45%,
+    #13161c 100%
   );
 }
 .app-shell.ui-refined .workbench-background {
   height: auto;
-  background-color: #111214;
+  background-color: #0b1222;
   background-image: var(--user-background, none), var(--background-fallback);
   background-position: center;
   background-size: cover;
@@ -64,7 +66,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: rgb(14 15 17 / var(--background-shade));
+  background: rgb(10 17 32 / var(--background-shade));
 }
 .app-shell.ui-refined[data-background-mode="B"] .workbench-background {
   height: min(620px, 85dvh);
@@ -82,7 +84,7 @@
   padding: 28px 9px 14px;
   flex-direction: column;
   align-items: stretch;
-  background: #0c0d10e6;
+  background: #080d15e6;
   border: 0;
   border-right: 1px solid var(--line);
   overflow: hidden;
@@ -111,7 +113,7 @@
   width: 34px;
   height: 36px;
   flex: 0 0 34px;
-  color: #e8dafb;
+  color: #f1e2c3;
   background: transparent;
   border-radius: 0;
   font:
@@ -187,8 +189,8 @@
   white-space: nowrap;
 }
 .app-shell.ui-refined .ui-nav-item:is(.active, [aria-current="page"]) {
-  color: #e7dbff;
-  background: #a78add18;
+  color: #f1e3c5;
+  background: #d3b77b18;
 }
 .app-shell.ui-refined .ui-nav-item.active::before {
   display: block;
@@ -207,7 +209,7 @@
   margin-left: auto;
   min-width: 21px;
   padding: 1px 4px;
-  color: #c2b0e7;
+  color: #dec99c;
   background: #ffffff09;
   border-radius: 5px;
   font-size: 10px;
@@ -285,7 +287,7 @@
   font-size: 11px;
 }
 .app-shell.ui-refined .breadcrumb strong {
-  color: #bbb5c5;
+  color: #b9bcc1;
 }
 .app-shell.ui-refined .ui-appearance-shortcut {
   width: 34px;
@@ -311,7 +313,7 @@
   flex-shrink: 0;
   padding-inline: 36px;
   border-top: 1px solid var(--line);
-  background: #111214b3;
+  background: #0b111bb3;
   color: var(--subtle);
   font-size: 10px;
 }
@@ -338,7 +340,7 @@
 .app-shell.ui-refined .eyebrow {
   display: block;
   margin-bottom: 8px;
-  color: #aa96c8;
+  color: #a1abbd;
   font-size: 10px;
   letter-spacing: 1.6px;
 }
@@ -365,13 +367,13 @@
   line-height: 1.5;
 }
 .app-shell.ui-refined .button.primary {
-  color: #19141f;
-  background: #b69ce6;
-  border-color: #b69ce6;
+  color: #14181f;
+  background: #d9c18e;
+  border-color: #d9c18e;
   font-weight: 600;
 }
 .app-shell.ui-refined .button.secondary {
-  color: #ddd7e6;
+  color: #dadde3;
   background: #ffffff04;
   border-color: #ffffff1c;
 }
@@ -397,7 +399,7 @@
     textarea
   ):not(.search-box input):not(.source-search input) {
   color: var(--text);
-  background-color: #1b1c20;
+  background-color: #121b2c;
   border-color: #ffffff1c;
   border-radius: 7px;
   font-size: 12px;
@@ -454,7 +456,7 @@
   font-size: 13px;
 }
 .app-shell.ui-refined .tabs > button.active {
-  color: #e1d3f3;
+  color: #eeddb8;
 }
 .app-shell.ui-refined .tabs > button.active::after {
   height: 2px;
@@ -474,9 +476,9 @@
 .app-shell.ui-refined
   :is(.source-tabs, .result-filters)
   > button:is(.active, [aria-pressed="true"]) {
-  color: #dbcaf7;
-  background: #b8a2ee13;
-  border-color: #b8a2ee35;
+  color: #eddbb4;
+  background: #e0c89413;
+  border-color: #e0c89435;
 }
 .app-shell.ui-refined .source-following-tabs > button {
   border: 0;
@@ -502,7 +504,7 @@
 .app-shell.ui-refined
   :is(.source-density, .density-control, .settings-segmented)
   button[aria-pressed="true"] {
-  color: #e3d9ef;
+  color: #dee2ea;
   background: #ffffff12;
   box-shadow: none;
 }
@@ -512,7 +514,7 @@
   padding-block: 6px 10px;
 }
 .app-shell.ui-refined .library-toolbar.is-stuck {
-  background: #141419f2;
+  background: #0e1421f2;
 }
 .app-shell.ui-refined
   :is(
@@ -561,7 +563,7 @@
 .app-shell.ui-refined .page-scope-details > summary {
   width: fit-content;
   padding: 6px 0;
-  color: #b2a9c0;
+  color: #aeb3bb;
   cursor: pointer;
 }
 .app-shell.ui-refined .page-scope-details > :not(summary) {
@@ -574,9 +576,9 @@
   gap: 8px 16px;
   padding: 13px 16px;
   margin: 0 0 18px;
-  color: #cdc4d9;
-  background: #b39ace08;
-  border: 1px solid #b39ace1c;
+  color: #c9cdd4;
+  background: #a6b0c208;
+  border: 1px solid #a6b0c21c;
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.75;
@@ -594,7 +596,7 @@
   color: var(--green);
 }
 .app-shell.ui-refined .source-notice {
-  color: #b5adbf;
+  color: #b1b5bb;
   font-size: 12px;
 }
 .app-shell.ui-refined
@@ -617,19 +619,19 @@
   box-shadow: 0 8px 14px #0002;
 }
 .app-shell.ui-refined .source-cover {
-  background: #24232b;
+  background: #18233a;
 }
 .app-shell.ui-refined .source-card h3 {
   font-weight: 500;
 }
 .app-shell.ui-refined .source-card > p {
-  color: #a39baa;
+  color: #9ea1a7;
 }
 .app-shell.ui-refined .source-card .source-card-date {
   color: #99949f;
 }
 .app-shell.ui-refined .source-card > .source-card-state {
-  color: #c4b6d8;
+  color: #bec4d0;
 }
 .app-shell.ui-refined
   :is(.source-card.is-selected .source-card-cover, .selected .cover-wrap) {
@@ -639,29 +641,29 @@
   outline-color: var(--accent);
 }
 .app-shell.ui-refined .source-badge {
-  color: #e5ddec;
-  background: #15171bd9;
+  color: #e0e3e9;
+  background: #0e1623d9;
 }
 .app-shell.ui-refined .card-author {
-  color: #a39baa;
+  color: #9ea1a7;
 }
 .app-shell.ui-refined .source-selection-bar {
   left: var(--sidebar-width);
   bottom: 32px;
   padding: 12px 36px;
-  color: #e0d5ec;
-  background: #201c28f5;
-  border-color: #b8a2ee30;
+  color: #dadfe7;
+  background: #1c2028f5;
+  border-color: #e0c89430;
   backdrop-filter: none;
 }
 .app-shell.ui-refined .selection-bar {
   padding: 12px 16px;
-  border-color: #b8a2ee30;
-  background: #201c28f5;
+  border-color: #e0c89430;
+  background: #1c2028f5;
 }
 .app-shell.ui-refined .selected-count {
-  color: #e5d6ff;
-  background: #443753;
+  color: #f1e2c3;
+  background: #374153;
 }
 .app-shell.ui-refined .source-detail-main {
   grid-template-columns: min(28%, 280px) minmax(0, 1fr);
@@ -673,7 +675,7 @@
 }
 .app-shell.ui-refined :is(.source-tags > span, .tags > span) {
   border-color: var(--line);
-  color: #bfb3ce;
+  color: #b9bec8;
   font-size: 11px;
 }
 .app-shell.ui-refined :is(.source-facts, .source-description) {
@@ -698,12 +700,12 @@
   padding: 14px 16px;
   gap: 14px;
   margin-bottom: 20px;
-  background: #b39ace08;
-  border-color: #b39ace1c;
+  background: #a6b0c208;
+  border-color: #a6b0c21c;
   border-radius: 8px;
 }
 .app-shell.ui-refined .queue-overview strong {
-  color: #d8d1e2;
+  color: #d5d8de;
   font-size: 12px;
 }
 .app-shell.ui-refined .queue-overview > div > span:last-child {
@@ -746,8 +748,8 @@
 .app-shell.ui-refined .download-task-icon {
   flex-basis: 63px;
   min-height: 88px;
-  color: #c4acde;
-  background: #a58ec30d;
+  color: #dbc493;
+  background: #9aa4b70d;
   border-radius: 6px;
 }
 .app-shell.ui-refined .native-downloads .task-complete {
@@ -757,7 +759,7 @@
   background: #ffffff0d;
 }
 .app-shell.ui-refined .progress-track > span {
-  background: #aa91cd;
+  background: #9eaac0;
 }
 .app-shell.ui-refined .progress-track.error > span {
   background: var(--warning);
@@ -792,7 +794,7 @@
 }
 .app-shell.ui-refined .settings-navigation button[aria-current="page"] {
   color: var(--accent);
-  background: #b8a2ee0a;
+  background: #e0c8940a;
 }
 .app-shell.ui-refined .settings-navigation button > span {
   font-size: 16px;
@@ -844,7 +846,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #6b617f;
+  background: #686e78;
   box-shadow: inset 0 0 0 1px #ffffff1c;
 }
 .app-shell.ui-refined
@@ -856,9 +858,9 @@
   background: #a16f84;
 }
 .app-shell.ui-refined .settings-tone-options button[aria-pressed="true"] {
-  color: #e3d9ef;
-  background: #b8a2ee13;
-  border-color: #b8a2ee66;
+  color: #dee2ea;
+  background: #e0c89413;
+  border-color: #e0c89466;
 }
 .app-shell.ui-refined .settings-range-row {
   display: grid;
@@ -933,7 +935,7 @@
 .app-shell.ui-refined .settings-mode-option.selected {
   border-color: var(--accent);
   box-shadow: none;
-  background: #b8a2ee09;
+  background: #e0c89409;
 }
 .app-shell.ui-refined .settings-option-name {
   margin-bottom: 10px;
@@ -985,8 +987,8 @@
   font-size: 12px;
 }
 .app-shell.ui-refined .settings-profile-options button[aria-pressed="true"] {
-  background: #b8a2ee13;
-  border-color: #b8a2ee55;
+  background: #e0c89413;
+  border-color: #e0c89455;
 }
 .app-shell.ui-refined .settings-account-row {
   gap: 18px;
@@ -1017,7 +1019,7 @@
 }
 .app-shell.ui-refined .dialog {
   color: var(--text);
-  background: #202026;
+  background: #152034;
   border-color: #ffffff22;
   border-radius: 12px;
   box-shadow: 0 28px 90px #0008;
@@ -1032,15 +1034,15 @@
   letter-spacing: 0;
 }
 .app-shell.ui-refined .toast {
-  color: #e6dcef;
-  background: #282331;
+  color: #e0e4eb;
+  background: #232831;
   border-color: #ffffff20;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .app-shell.ui-refined .button.primary:hover:not(:disabled) {
-    background: #c2acec;
-    border-color: #c2acec;
+    background: #deca9d;
+    border-color: #deca9d;
   }
   .app-shell.ui-refined .button.secondary:hover:not(:disabled),
   .app-shell.ui-refined .ui-nav-item:hover:not(:disabled) {
@@ -1048,7 +1050,7 @@
     background: #ffffff08;
   }
   .app-shell.ui-refined .ui-nav-item.active:hover {
-    background: #a78add20;
+    background: #d3b77b20;
   }
 }
 
@@ -1224,8 +1226,8 @@
 @media (prefers-contrast: more) {
   .app-shell.ui-refined {
     --line: #ffffff60;
-    --muted: #cbc7d2;
-    --subtle: #b4b0bd;
+    --muted: #c9ccd0;
+    --subtle: #b3b5ba;
   }
   .app-shell.ui-refined :is(.button, input, select, textarea) {
     border-color: #ffffff60;
@@ -1233,9 +1235,9 @@
 }
 @media (prefers-reduced-transparency: reduce) {
   .app-shell.ui-refined .ui-sidebar {
-    background: #111216;
+    background: #0c121d;
   }
   .app-shell.ui-refined :is(.source-selection-bar, .selection-bar) {
-    background: #201c28;
+    background: #1c2028;
   }
 }
