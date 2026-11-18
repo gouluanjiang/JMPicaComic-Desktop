@@ -3078,10 +3078,18 @@ export default function App() {
     [],
   );
   const libraryRootId = library.snapshot.rootId ?? undefined;
+  // `downloads` is a new object on every render; depend on its parts.
+  const downloadTasks = downloads.snapshot;
+  const submittingKeys = downloads.submittingKeys;
   const cardDownloadFeedback = useCallback(
     (work: { source: Source; workId: string }) =>
-      downloadActionState(downloads, work.source, work.workId, libraryRootId),
-    [downloads, libraryRootId],
+      downloadActionState(
+        { snapshot: downloadTasks, submittingKeys },
+        work.source,
+        work.workId,
+        libraryRootId,
+      ),
+    [downloadTasks, submittingKeys, libraryRootId],
   );
   return (
     <SourceLanguageProvider cache={sourceCache}>
