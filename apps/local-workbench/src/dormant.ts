@@ -1,5 +1,39 @@
-import { memo } from "react";
+import { memo, useRef } from "react";
 import type { ComponentType } from "react";
+
+type Callbacks = Record<string, unknown>;
+
+/**
+ * Stable stand-ins for callback props. Each function keeps its identity for
+ * the life of the calling component and always runs the latest one passed
+ * in, so a memoized child can skip renders without holding stale code.
+ * Values that are not functions (e.g. an absent optional callback) pass
+ * through unchanged, so a child can still tell whether one is given.
+ */
+export function useLatestCallbacks<T extends Callbacks>(callbacks: T): T {
+  const latest = useRef(callbacks);
+  latest.current = callbacks;
+  const proxies = useRef(new Map<string, (...args: unknown[]) => unknown>());
+  const result: Callbacks = {};
+  for (const [name, value] of Object.entries(callbacks)) {
+    if (typeof value !== "function") {
+      result[name] = value;
+      continue;
+    }
+    let proxy = proxies.current.get(name);
+    if (!proxy) {
+      proxy = (...args: unknown[]) => {
+        const current = latest.current[name];
+        return typeof current === "function"
+          ? (current as (...values: unknown[]) => unknown)(...args)
+          : undefined;
+      };
+      proxies.current.set(name, proxy);
+    }
+    result[name] = proxy;
+  }
+  return result as T;
+}
 
 /**
  * While a page stays hidden, it skips main-window re-renders in which only
