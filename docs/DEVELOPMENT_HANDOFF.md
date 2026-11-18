@@ -43,8 +43,11 @@ reader windows (PR #60). Functions and data formats are unchanged.
 - Version 1.4.0 in `package.json`, `src-tauri/Cargo.toml`/`Cargo.lock`,
   `tauri.conf.json` (bundling `RELEASE_NOTES_1.4.0.md`) and the bug report
   template; docs index, project status and user guide name 1.4.0.
-- Known gap: the README screenshots (attached to the v1.3.0 release) still show
-  the 1.3.0 colours.
+- README screenshots retaken in the installed 1.4.0 on 2026-11-18 and attached
+  to the v1.4.0 release. At the user's request every cover is one image they
+  supplied, titles read 张飞1, 张飞2… and authors 刘备1, 刘备2…; work numbers
+  are random. The replacement runs in the page before each shot and every shot
+  was checked for leftover real titles, authors, covers and account names.
 
 ## Navy and gold theme, explanations behind (i) (2026-11-17)
 

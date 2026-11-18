@@ -18,7 +18,7 @@
 一个支持 JM 和哔咔的 Windows 桌面程序（原名 MangaMonitor）。除了跟进关注作者的新作，它还能批量下载、管理电脑上的漫画，并直接在程序里阅读。另有一个开发中的 [ASMR 分区](#asmr-分区)，可以在线收听 asmr.one 的作品，登录账号后还能管理收藏、标记和播放列表。
 
 > [!NOTE]
-> 页面上的截图都是在真实程序里拍的，但**封面、作品名、作者名和编号都替换成了合成示例**，不含任何真实作品。截图挂在[发行页](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.3.0)，仓库里不放图片。
+> 页面上的截图都是在 1.4.0 的真实程序里拍的，但**封面统一换成了同一张图，作品名和作者名换成了“张飞1”“刘备1”这样的代称，编号是随机生成的**，不含任何真实作品。截图挂在[发行页](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.4.0)，仓库里不放图片。
 
 > [!WARNING]
 > **还在用 1.0.2 请尽快升级：** 1.0.2 内置的 JM 主域名已失效并变成停放页，在这个版本上登录 JM，账号密码可能已经发送到这个域名。1.1.0 已修复。
@@ -66,11 +66,13 @@
 
 左侧栏分三组：“我的漫画”（漫画库、下载队列、浏览历史）、“发现作品”（在线收藏、最近更新、周排行榜、搜索）、“关注与更新”（作者更新、关注作者、特别关注）。侧栏顶部的“漫画 / ASMR”切换两个分区，底部是设置和收起侧栏。
 
+窗口没有 Windows 自带的标题栏：最小化、最大化和关闭按钮在右上角，按住顶部空白处可以拖动窗口，双击可以最大化或还原。
+
 ### 作者更新
 
 程序的核心功能：一键检查所有关注作者，告诉你这次新发现了多少部。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-author-updates.jpg" alt="作者更新：检查结果和未入库的新作" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-author-updates.jpg" alt="作者更新：检查结果和未入库的新作" width="820"></p>
 
 如果你一个月甚至更久才看一次漫画，自己翻完这段时间的全部更新太花时间，里面还混着大量不想看的内容。假设你在 10 月 1 日第一次检查，11 月 1 日再回来：
 
@@ -113,7 +115,7 @@
 
 集中管理想长期跟进的作者，或先记下某一部还想继续看的作品。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-followed-authors.jpg" alt="关注作者名单" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-followed-authors.jpg" alt="关注作者名单" width="820"></p>
 
 | 想做什么 | 怎么做 |
 | --- | --- |
@@ -139,7 +141,7 @@
 
 在网站上收藏了很多作品，想看看哪些还没下载。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-favorites.jpg" alt="在线收藏：网站收藏夹和入库状态" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-favorites.jpg" alt="在线收藏：网站收藏夹和入库状态" width="820"></p>
 
 | 想做什么 | 怎么做 |
 | --- | --- |
@@ -152,7 +154,7 @@
 
 不限于关注的作者，想随便逛逛网站最近出了什么。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-recent.jpg" alt="最近更新：两站的新近作品" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-recent.jpg" alt="最近更新：两站的新近作品" width="820"></p>
 
 打开左侧的“最近更新”，在“来源”中选择 JM、哔咔或两站合并，向下滚动继续加载，点击“刷新最近更新”读取最新内容。“新增”角标表示和上次浏览相比新出现的作品。
 
@@ -160,7 +162,7 @@
 
 想知道最近大家都在看什么，发现还不认识的作者。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-ranking.jpg" alt="JM 每周必看榜单" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-ranking.jpg" alt="JM 每周必看榜单" width="820"></p>
 
 打开左侧的“周排行榜”，查看 JM 每周必看或哔咔排行榜。JM 可以选择期数和类型，点击“刷新榜单”重新读取。切到“未入库”筛掉已经有的作品，再下载想看的。
 
@@ -168,7 +170,7 @@
 
 下载前先确认页数、章节、更新时间、作者和标签。点击作品标题，或右键封面选择“作品详细”打开。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-detail.jpg" alt="作品详情：作者、标签、章节、页数和操作按钮" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-detail.jpg" alt="作品详情：作者、标签、章节、页数和操作按钮" width="820"></p>
 
 在详情里可以阅读、下载到漫画库、收藏到网站、关注作者或作品，也可以点击标签继续搜索。
 
@@ -183,7 +185,7 @@
 
 一次下载很多本，中途可能要暂停，或者下载失败后要重试。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-download-queue.jpg" alt="下载队列：粘贴编号和三个分类" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-download-queue.jpg" alt="下载队列：粘贴编号和三个分类" width="820"></p>
 
 | 想做什么 | 怎么做 |
 | --- | --- |
@@ -198,7 +200,7 @@
 
 电脑里已经有不少 ZIP 漫画，想用封面墙浏览和查找。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-library.jpg" alt="漫画库：最近入库和全部作品的封面墙" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-library.jpg" alt="漫画库：最近入库和全部作品的封面墙" width="820"></p>
 
 | 想做什么 | 怎么做 |
 | --- | --- |
@@ -212,7 +214,7 @@
 
 下载完直接在程序里看，或者开一个小窗一边看一边做别的事。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-reader.jpg" alt="程序内阅读：单页模式和底部工具栏" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-reader.jpg" alt="程序内阅读：单页模式和底部工具栏" width="820"></p>
 
 | 操作 | 怎么做 |
 | --- | --- |
@@ -223,6 +225,7 @@
 | 跳页、换章节 | 鼠标移到底部显示工具栏，拖动进度条或选择章节 |
 | 全屏 | 工具栏的“全屏”，或按 `F11` |
 | 返回 | 工具栏的“返回”，或按 `Esc` |
+| 移动、最小化、关闭小窗 | 鼠标移到小窗最顶端，滑出标题栏后拖动或点按钮；关闭前会保存阅读位置 |
 
 可以同时打开多个小窗并按需置顶，阅读位置会自动保存。
 
@@ -230,7 +233,7 @@
 
 想找回前几天看过、但当时没收藏的作品。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-history.jpg" alt="浏览历史：带封面的最近打开记录" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-history.jpg" alt="浏览历史：带封面的最近打开记录" width="820"></p>
 
 打开左侧的“浏览历史”，这里带封面显示最近打开的 100 本。只有打开详情或阅读器才会记录。可以取消勾选“记录浏览历史”，也可以点击“清空历史”；两者都不影响漫画文件和阅读进度。
 
@@ -238,7 +241,7 @@
 
 点左下角的“设置”。左边是分类，顶部可以搜索设置项。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-settings-account.jpg" alt="设置：账号与收藏" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-settings-account.jpg" alt="设置：账号与收藏" width="820"></p>
 
 | 位置 | 用来做什么 |
 | --- | --- |
@@ -250,11 +253,11 @@
 
 #### 外观
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-settings-appearance.jpg" alt="设置：外观" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-settings-appearance.jpg" alt="设置：外观" width="820"></p>
 
 #### 软件更新
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-settings-diagnostics.jpg" alt="设置：软件更新与网络诊断" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-settings-diagnostics.jpg" alt="设置：软件更新与网络诊断" width="820"></p>
 
 - 程序启动时会检查有没有新版本，有就在右上角提示。点击“查看更新”可以看到版本说明，确认后才会下载和安装。
 - 安装包会先校验签名，然后程序和所有阅读小窗会关闭，安装完成后自动重新打开。下载队列运行时不能安装。
@@ -270,14 +273,14 @@
 
 开发中。想在同一个程序里听 ASMR，不用另开浏览器。内容来自 asmr.one，浏览和播放都不需要账号；音频和视频直接在线播放，不会保存到电脑上。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-asmr.jpg" alt="ASMR 分区：热门作品和全部作品" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-asmr.jpg" alt="ASMR 分区：热门作品和全部作品" width="820"></p>
 
 1. 点击侧栏顶部的“漫画 / ASMR”切换到 ASMR 分区。切回漫画时，原来的页面和浏览位置都会保留。
 2. 浏览热门作品或全部作品，可以排序、只看带字幕的作品，也可以搜索标题、社团、声优或 RJ 号。
 3. 点开作品，右侧会显示详情和文件列表。点击“播放”，或直接点列表里的音频、视频文件。
 4. 底部出现播放条，点它可以展开完整播放器，里面有字幕列表和播放列表。
 
-<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.3.0/screenshot-asmr-detail.jpg" alt="ASMR 作品详情：标记、评分、播放和文件列表" width="820"></p>
+<p align="center"><img src="https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/download/v1.4.0/screenshot-asmr-detail.jpg" alt="ASMR 作品详情：标记、评分、播放和文件列表" width="820"></p>
 
 **播放时：**
 
