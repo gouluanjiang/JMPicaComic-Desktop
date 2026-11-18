@@ -514,7 +514,6 @@ export default function App() {
     persistence.native,
     library.snapshot,
     downloads.snapshot,
-    page,
   );
   const downloadInventory = useMemo(
     () =>
