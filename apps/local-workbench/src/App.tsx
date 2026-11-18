@@ -3065,20 +3065,30 @@ export default function App() {
       )}
     </div>
   );
+  // Every card reads these through context, on hidden pages too. Stable
+  // values keep a main-window render from redrawing every card.
+  const searchActions = useRef({ openTagSearch, openAuthorSearch });
+  searchActions.current = { openTagSearch, openAuthorSearch };
+  const stableTagSearch = useCallback(
+    (...args: Parameters<typeof openTagSearch>) =>
+      searchActions.current.openTagSearch(...args),
+    [],
+  );
+  const stableAuthorSearch = useCallback(
+    (name: string) => searchActions.current.openAuthorSearch(name),
+    [],
+  );
+  const libraryRootId = library.snapshot.rootId ?? undefined;
+  const cardDownloadFeedback = useCallback(
+    (work: { source: Source; workId: string }) =>
+      downloadActionState(downloads, work.source, work.workId, libraryRootId),
+    [downloads, libraryRootId],
+  );
   return (
     <SourceLanguageProvider cache={sourceCache}>
-      <TagSearchProvider value={openTagSearch}>
-        <AuthorSearchProvider value={openAuthorSearch}>
-          <DownloadFeedbackContext.Provider
-            value={(work) =>
-              downloadActionState(
-                downloads,
-                work.source,
-                work.workId,
-                library.snapshot.rootId ?? undefined,
-              )
-            }
-          >
+      <TagSearchProvider value={stableTagSearch}>
+        <AuthorSearchProvider value={stableAuthorSearch}>
+          <DownloadFeedbackContext.Provider value={cardDownloadFeedback}>
             <ReaderAccessProvider value={readerHost.actions}>
               <SpecialFollowsContext.Provider value={special}>
                 {content}

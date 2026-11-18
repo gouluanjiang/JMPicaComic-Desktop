@@ -51,6 +51,16 @@ export function createAuthorCatalogIndex() {
         const key = JSON.stringify(scope),
           previous = entries.get(key),
           floor = minimum.get(key);
+        // The recent-updates page re-reads the whole catalog each time it
+        // shows. A read at the very revisions already held says nothing new,
+        // so the membership is not rebuilt and nothing redraws.
+        if (
+          previous &&
+          snapshot.revision === previous.revision &&
+          (snapshot.followingRevision ?? 0) === previous.followingRevision &&
+          (snapshot.policyRevision ?? 0) === previous.policyRevision
+        )
+          return false;
         return (
           (!current || current.has(key)) &&
           snapshot.revision >=

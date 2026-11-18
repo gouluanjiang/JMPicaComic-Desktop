@@ -104,3 +104,14 @@ test("retiring sessions releases their membership and rejects late snapshots wit
   catalog.retainScopes([]);
   assert.equal(catalog.read([nextJm, pica]).size, 0);
 });
+
+test("a re-read at the revisions already held leaves membership as it is", () => {
+  const catalog = createAuthorCatalogIndex();
+  assert.equal(catalog.remember(snapshot(7, [record("kept")])), true);
+  const before = catalog.read([jm, pica]);
+  assert.equal(catalog.remember(snapshot(7, [record("kept")])), false);
+  assert.deepEqual([...catalog.read([jm, pica])], [...before]);
+  // A newer revision is still taken in full.
+  assert.equal(catalog.remember(snapshot(8, [record("next")])), true);
+  assert.deepEqual([...catalog.read([jm, pica])], [key("next")]);
+});

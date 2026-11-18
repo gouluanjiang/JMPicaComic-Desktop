@@ -35,6 +35,7 @@ import { AuthorCreditNote } from "./AuthorCreditNote.tsx";
 import { downloadSelectionLimit } from "./download-types.ts";
 import { createPortal } from "react-dom";
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -1625,6 +1626,27 @@ export function SourceWorkbench({
       </div>
     );
   }
+  // Read by the author rows at click time, so the rows need not redraw when
+  // only these closures change.
+  const authorActions = useRef<FollowedAuthorActions>(null!);
+  authorActions.current = {
+    search(author) {
+      if (onAuthorSearch) {
+        onAuthorSearch(author);
+        return;
+      }
+      setAuthorSearch(true);
+      setSort(searchSort());
+      setQuery(author);
+      setQueryMode("author");
+      setShowOtherAuthorResults(false);
+      clearSelection();
+      void readList("search", author, null, 1, false, true);
+    },
+    unfollow(author) {
+      void changeFollow({ kind: "author", value: author, desired: false });
+    },
+  };
   function followingFeedback() {
     return followingError || pendingFollow ? (
       <div className="source-notice">
@@ -2370,58 +2392,13 @@ export function SourceWorkbench({
                     <span>检查方式</span>
                     <span>操作</span>
                   </div>
-                  {(following?.authors ?? [])
-                    .filter((name) => name.includes(query.trim()))
-                    .map((author) => (
-                      <div className="source-author-row" key={author}>
-                        <strong>{author}</strong>
-                        <span>{sourceLabel(source)}</span>
-                        <span className="source-muted">手动查看与检查</span>
-                        <div className="source-actions">
-                          <button
-                            type="button"
-                            className="button secondary"
-                            onClick={() => {
-                              if (onAuthorSearch) {
-                                onAuthorSearch(author);
-                                return;
-                              }
-                              setAuthorSearch(true);
-                              setSort(searchSort());
-                              setQuery(author);
-                              setQueryMode("author");
-                              setShowOtherAuthorResults(false);
-                              clearSelection();
-                              void readList(
-                                "search",
-                                author,
-                                null,
-                                1,
-                                false,
-                                true,
-                              );
-                            }}
-                          >
-                            搜索该作者
-                          </button>
-                          <SpecialFollowButton author={author} />
-                          <button
-                            type="button"
-                            className="text-button"
-                            disabled={followingBusy}
-                            onClick={() =>
-                              void changeFollow({
-                                kind: "author",
-                                value: author,
-                                desired: false,
-                              })
-                            }
-                          >
-                            取消关注
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  <FollowedAuthorRows
+                    authors={following?.authors ?? noAuthors}
+                    query={query}
+                    sourceName={sourceLabel(source)}
+                    busy={followingBusy}
+                    actions={authorActions}
+                  />
                 </div>
                 {followingBusy && <p role="status">正在读取本机关注…</p>}
                 {following && !following.authors.length && (
@@ -2949,6 +2926,60 @@ export interface SourceWorkGridProps {
   onOpenWork(reference: WorkReference): void;
 }
 /** A read-only real-metadata projection for local booklists; it never uses demo inventory. */
+type FollowedAuthorActions = {
+  search(author: string): void;
+  unfollow(author: string): void;
+};
+const noAuthors: string[] = [];
+
+/**
+ * The followed-author list can hold hundreds of rows. It stays mounted while
+ * other pages show, so it redraws only when its own inputs change, not on
+ * every main-window render.
+ */
+const FollowedAuthorRows = memo(function FollowedAuthorRows({
+  authors,
+  query,
+  sourceName,
+  busy,
+  actions,
+}: {
+  authors: readonly string[];
+  query: string;
+  sourceName: string;
+  busy: boolean;
+  actions: { readonly current: FollowedAuthorActions };
+}) {
+  const terms = query.trim();
+  return authors
+    .filter((name) => name.includes(terms))
+    .map((author) => (
+      <div className="source-author-row" key={author}>
+        <strong>{author}</strong>
+        <span>{sourceName}</span>
+        <span className="source-muted">手动查看与检查</span>
+        <div className="source-actions">
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => actions.current.search(author)}
+          >
+            搜索该作者
+          </button>
+          <SpecialFollowButton author={author} />
+          <button
+            type="button"
+            className="text-button"
+            disabled={busy}
+            onClick={() => actions.current.unfollow(author)}
+          >
+            取消关注
+          </button>
+        </div>
+      </div>
+    ));
+});
+
 export function SourceWorkGrid({
   works,
   scopes,

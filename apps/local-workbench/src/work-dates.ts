@@ -1,9 +1,24 @@
 export type UpdatedSort = "updated-desc" | "updated-asc" | "source";
 export const updatedSorts = ["updated-desc", "updated-asc", "source"] as const;
 
+// Catalog reads check tens of thousands of dates, most of them repeated, and
+// the answer depends on the string alone.
+const DATE_CACHE_LIMIT = 50_000;
+const checkedDates = new Map<string, string | null>();
+
 /** Date-only values keep their precision; IPC dates never accept local-time strings. */
 export function normalizedWorkDate(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+  // The longest accepted form has 35 characters; longer text is never cached.
+  if (typeof value !== "string" || value.length > 40) return null;
+  const known = checkedDates.get(value);
+  if (known !== undefined) return known;
+  const checked = checkWorkDate(value);
+  if (checkedDates.size >= DATE_CACHE_LIMIT) checkedDates.clear();
+  checkedDates.set(value, checked);
+  return checked;
+}
+
+function checkWorkDate(value: string): string | null {
   const day = /^\d{4}-\d{2}-\d{2}$/.test(value);
   if (
     !day &&

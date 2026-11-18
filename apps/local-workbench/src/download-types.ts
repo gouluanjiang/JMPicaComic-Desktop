@@ -112,6 +112,32 @@ export const emptyDownloadInventory = (): DownloadInventorySnapshot => ({
   rootId: null,
   items: [],
 });
+/**
+ * Whether a re-read inventory says exactly what the held one says. The
+ * inventory is re-read on every page switch and window focus; keeping the held
+ * object then spares every page that compares it by identity a full redraw.
+ */
+export function sameDownloadInventory(
+  held: DownloadInventorySnapshot,
+  read: DownloadInventorySnapshot,
+): boolean {
+  if (
+    held.revision !== read.revision ||
+    held.libraryRevision !== read.libraryRevision ||
+    held.rootId !== read.rootId ||
+    held.items.length !== read.items.length
+  )
+    return false;
+  return held.items.every((item, index) => {
+    const other = read.items[index];
+    return (
+      item.source === other.source &&
+      item.workId === other.workId &&
+      item.libraryEntryId === other.libraryEntryId &&
+      item.localFiles === other.localFiles
+    );
+  });
+}
 export interface DownloadAdapter {
   inventory(): Promise<DownloadInventorySnapshot>;
   read(recheckFiles?: boolean): Promise<DownloadSnapshot>;

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { emptyDownloadInventory } from "./download-types.ts";
+import {
+  emptyDownloadInventory,
+  sameDownloadInventory,
+} from "./download-types.ts";
 import type {
   DownloadAdapter,
   DownloadInventorySnapshot,
@@ -47,7 +50,14 @@ export function useDownloadInventory(
       if (request !== epoch.current) return;
       if (snapshot.rootId !== library.rootId)
         throw new DownloadError("DOWNLOAD_ROOT_CHANGED");
-      setState({ snapshot, ready: true, busy: false, error: null });
+      setState((previous) => ({
+        snapshot: sameDownloadInventory(previous.snapshot, snapshot)
+          ? previous.snapshot
+          : snapshot,
+        ready: true,
+        busy: false,
+        error: null,
+      }));
     } catch (problem) {
       if (request === epoch.current)
         setState((previous) => ({
