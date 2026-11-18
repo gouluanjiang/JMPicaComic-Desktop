@@ -491,34 +491,42 @@ export function useReaderHost(
         if (!currentChoice.current || isCurrent()) setOpeningWindow(false);
       });
   };
-  const actions: ReaderAccess = {
-    available: enabled,
-    choose: (next, title, details, point, localActions) => {
-      if (!enabled) return details();
-      remember();
-      setChoiceError("");
-      setOpeningWindow(pendingWindows.current.has(JSON.stringify(next)));
-      const rect = document.activeElement?.getBoundingClientRect();
-      setChoice({
-        request: next,
-        title,
-        details,
-        localActions: next.kind === "library" ? localActions : undefined,
-        point: point ?? {
-          x: rect?.left ?? 24,
-          y: rect?.top ?? 24,
-          keyboard: true,
-        },
-      });
-    },
-    readWindow: (next) => openWindow(next),
-    read: (next) => {
-      if (!enabled) return;
-      remember();
-      setChoice(null);
-      setRequest(next);
-    },
-  };
+  const latest = useRef({ remember, openWindow });
+  latest.current = { remember, openWindow };
+  // Every cover on every list reads these through context, hidden pages
+  // included; one object per `enabled` keeps a main-window render from
+  // redrawing them all.
+  const actions = useMemo<ReaderAccess>(
+    () => ({
+      available: enabled,
+      choose: (next, title, details, point, localActions) => {
+        if (!enabled) return details();
+        latest.current.remember();
+        setChoiceError("");
+        setOpeningWindow(pendingWindows.current.has(JSON.stringify(next)));
+        const rect = document.activeElement?.getBoundingClientRect();
+        setChoice({
+          request: next,
+          title,
+          details,
+          localActions: next.kind === "library" ? localActions : undefined,
+          point: point ?? {
+            x: rect?.left ?? 24,
+            y: rect?.top ?? 24,
+            keyboard: true,
+          },
+        });
+      },
+      readWindow: (next) => latest.current.openWindow(next),
+      read: (next) => {
+        if (!enabled) return;
+        latest.current.remember();
+        setChoice(null);
+        setRequest(next);
+      },
+    }),
+    [enabled],
+  );
   const performLocalAction = (action: () => void | Promise<void>) => {
     setChoice(null);
     const previous = returnTo.current;
