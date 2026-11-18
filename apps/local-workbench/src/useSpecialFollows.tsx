@@ -230,9 +230,8 @@ export function useSpecialFollows(
   // context, so a new object on each main-window render redrew them all.
   return useMemo(() => {
     const enabledAuthors = new Set(
-      snapshot?.authors
-        .filter((row) => row.enabled)
-        .map((row) => row.author) ?? [],
+      snapshot?.authors.filter((row) => row.enabled).map((row) => row.author) ??
+        [],
     );
     async function set(author: string, enabled: boolean) {
       if (busy) return;
