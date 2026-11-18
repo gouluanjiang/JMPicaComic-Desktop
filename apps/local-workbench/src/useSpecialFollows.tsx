@@ -3,14 +3,20 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import type { AccountSummary, SourceScope } from "./source-types.ts";
 import type { WorkReference } from "./booklists.ts";
 import { accountScope } from "./source-types.ts";
 import { invokeDesktop } from "./runtime.ts";
-import { isContentHidden } from "./content-filter.ts";
+import {
+  getContentFilterRevision,
+  isContentHidden,
+  subscribeContentFilter,
+} from "./content-filter.ts";
 import { subscribeSourceVisits, recordSourceVisit } from "./work-visits.ts";
 import { listenReaderEvent } from "./reader/window-runtime.ts";
 import { subscribeAuthorCatalogChanges } from "./author-catalog-events.ts";
@@ -214,35 +220,48 @@ export function useSpecialFollows(
       }),
     [native, request],
   );
-  async function set(author: string, enabled: boolean) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await request("special_set", { author, enabled });
-    } finally {
-      setBusy(false);
+  const filterRevision = useSyncExternalStore(
+    subscribeContentFilter,
+    getContentFilterRevision,
+    getContentFilterRevision,
+  );
+  const connected = native && scopes.length === 2;
+  // One object per real change: every author row's button reads this through
+  // context, so a new object on each main-window render redrew them all.
+  return useMemo(() => {
+    const enabledAuthors = new Set(
+      snapshot?.authors
+        .filter((row) => row.enabled)
+        .map((row) => row.author) ?? [],
+    );
+    async function set(author: string, enabled: boolean) {
+      if (busy) return;
+      setBusy(true);
+      try {
+        await request("special_set", { author, enabled });
+      } finally {
+        setBusy(false);
+      }
     }
-  }
-  return {
-    snapshot,
-    run,
-    error,
-    busy,
-    connected: native && scopes.length === 2,
-    unread:
-      snapshot?.updates.filter(
-        (update) => update.readAt === null && !isContentHidden(update.work),
-      ).length ?? 0,
-    set,
-    enabled: (author: string) =>
-      snapshot?.authors.some((row) => row.author === author && row.enabled) ??
-      false,
-    refresh: () => request("special_read"),
-    start: () => request("special_start"),
-    cancel: () => request("special_cancel"),
-    markRead: (identity: WorkReference | null = null) =>
-      request("special_mark_read", { identity }),
-  };
+    return {
+      snapshot,
+      run,
+      error,
+      busy,
+      connected,
+      unread:
+        snapshot?.updates.filter(
+          (update) => update.readAt === null && !isContentHidden(update.work),
+        ).length ?? 0,
+      set,
+      enabled: (author: string) => enabledAuthors.has(author),
+      refresh: () => request("special_read"),
+      start: () => request("special_start"),
+      cancel: () => request("special_cancel"),
+      markRead: (identity: WorkReference | null = null) =>
+        request("special_mark_read", { identity }),
+    };
+  }, [snapshot, run, error, busy, connected, request, filterRevision]);
 }
 type SpecialState = ReturnType<typeof useSpecialFollows>;
 export const SpecialFollowsContext = createContext<SpecialState | null>(null);

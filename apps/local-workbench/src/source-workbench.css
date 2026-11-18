@@ -457,6 +457,11 @@
 .source-author-row > strong {
   overflow-wrap: anywhere;
 }
+/* Hundreds of followed authors: rows out of view skip layout and painting. */
+.source-author-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 73px;
+}
 .source-accounts h2 {
   margin-top: 0;
 }
