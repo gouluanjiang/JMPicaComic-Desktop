@@ -11,23 +11,24 @@ import type {
 import type { LibrarySnapshot } from "./library-types.ts";
 import { DownloadError, downloadErrorMessage } from "./download-runtime.ts";
 
-/** Receipt file checks run on relevant changes, never for each image-progress tick. */
+/**
+ * Receipt file checks run on relevant changes: a library change, a finished
+ * download, the window regaining focus or an explicit refresh. Never for each
+ * image-progress tick, and not on every page switch either.
+ */
 export function useDownloadInventory(
   adapter: DownloadAdapter,
   enabled: boolean,
   library: LibrarySnapshot,
   downloads: DownloadSnapshot,
-  view: string,
 ) {
   const [state, setState] = useState<{
     snapshot: DownloadInventorySnapshot;
     ready: boolean;
-    busy: boolean;
     error: string | null;
   }>(() => ({
     snapshot: emptyDownloadInventory(),
     ready: false,
-    busy: false,
     error: null,
   }));
   const epoch = useRef(0);
@@ -44,26 +45,27 @@ export function useDownloadInventory(
   const refresh = useCallback(async () => {
     if (!enabled) return;
     const request = ++epoch.current;
-    setState((previous) => ({ ...previous, busy: true, error: null }));
+    setState((previous) =>
+      previous.error ? { ...previous, error: null } : previous,
+    );
     try {
       const snapshot = await adapter.inventory();
       if (request !== epoch.current) return;
       if (snapshot.rootId !== library.rootId)
         throw new DownloadError("DOWNLOAD_ROOT_CHANGED");
-      setState((previous) => ({
-        snapshot: sameDownloadInventory(previous.snapshot, snapshot)
-          ? previous.snapshot
-          : snapshot,
-        ready: true,
-        busy: false,
-        error: null,
-      }));
+      // An unchanged answer keeps the held state, so nothing redraws.
+      setState((previous) =>
+        previous.ready &&
+        !previous.error &&
+        sameDownloadInventory(previous.snapshot, snapshot)
+          ? previous
+          : { snapshot, ready: true, error: null },
+      );
     } catch (problem) {
       if (request === epoch.current)
         setState((previous) => ({
           ...previous,
           ready: false,
-          busy: false,
           error: downloadErrorMessage(problem),
         }));
     }
@@ -73,7 +75,7 @@ export function useDownloadInventory(
     return () => {
       epoch.current++;
     };
-  }, [refresh, library.revision, completed, view]);
+  }, [refresh, library.revision, completed]);
   useEffect(() => {
     if (!enabled) return;
     const focus = () => {

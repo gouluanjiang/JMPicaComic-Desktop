@@ -122,6 +122,12 @@ export function useAuthorCatalogMembership(
           .catch(() => {})
           .then(async () => {
             if (!alive) return;
+            // Ask the small progress answer first: when its revisions match
+            // what is held, the full catalog (tens of thousands of records)
+            // has nothing new. A failed progress read falls back to the
+            // full read.
+            const progress = await adapter.progress(scopes).catch(() => null);
+            if (!alive || (progress && catalog.holds(progress))) return;
             const next = await adapter.read(scopes, false);
             if (alive) rememberAuthorCatalog(next);
           });

@@ -115,3 +115,23 @@ test("a re-read at the revisions already held leaves membership as it is", () =>
   assert.equal(catalog.remember(snapshot(8, [record("next")])), true);
   assert.deepEqual([...catalog.read([jm, pica])], [key("next")]);
 });
+
+test("a progress answer at the held revisions needs no full catalog read", () => {
+  const catalog = createAuthorCatalogIndex();
+  const progress = (revision, scopes = [jm, pica], extra = {}) => ({
+    revision,
+    scopes,
+    ...extra,
+  });
+  assert.equal(catalog.holds(progress(7)), false);
+  catalog.remember(snapshot(7, [record("kept")]));
+  assert.equal(catalog.holds(progress(7)), true);
+  assert.equal(catalog.holds(progress(8)), false);
+  assert.equal(
+    catalog.holds(progress(7, [jm, pica], { followingRevision: 1 })),
+    false,
+  );
+  assert.equal(catalog.holds(progress(7, [])), false);
+  catalog.invalidate({ ...jm, revision: 7 });
+  assert.equal(catalog.holds(progress(7)), false);
+});

@@ -77,6 +77,7 @@ import type { DocumentSnapshot } from "./persistence.ts";
 import "./booklists.css";
 import { AccountSettings } from "./AccountSettings.tsx";
 import { SourceWorkbench } from "./SourceWorkbench.tsx";
+import { useLatestCallbacks } from "./dormant.ts";
 import {
   SourceLanguageBadge,
   SourceLanguageProvider,
@@ -154,6 +155,8 @@ import type {
 } from "./source-types.ts";
 import { PageHelp } from "./PageHelp.tsx";
 const sourceAdapter = createSourceAdapter();
+// Redraws when a prop changes; App passes stable callbacks (sourceCallbacks).
+const SourceWorkbenchView = memo(SourceWorkbench);
 const libraryAdapter = createLibraryAdapter();
 const downloadAdapter = createDownloadAdapter();
 const persistence = createWorkbenchPersistence({ fixture: activeFixture });
@@ -514,7 +517,6 @@ export default function App() {
     persistence.native,
     library.snapshot,
     downloads.snapshot,
-    page,
   );
   const downloadInventory = useMemo(
     () =>
@@ -689,31 +691,39 @@ export default function App() {
           ? "following"
           : lastSourceView.current;
   lastSourceView.current = sourceView;
-  const discoveryNavigation = (
-    <div className="source-tabs" role="group" aria-label="发现分类">
-      {(
-        [
-          ["search", "搜索"],
-          ["JM", "JM 每周必看"],
-          ["Pica", "哔咔排行榜"],
-          ["recent", "最近更新"],
-        ] as const
-      ).map(([value, label]) => (
-        <button
-          key={value}
-          aria-pressed={discoveryPane === value}
-          className={discoveryPane === value ? "active" : ""}
-          data-testid={"discovery-" + value}
-          onClick={() =>
-            value === "search"
-              ? chooseSearchMode(unifiedSearchMode)
-              : setDiscoveryPane(value)
-          }
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+  const chooseLatestSearchMode = useLatestCallbacks({
+    choose: chooseSearchMode,
+  }).choose;
+  // One element per pane and mode: the visible discovery pages receive it as
+  // a prop, and a new element on every render would redraw them each time.
+  const discoveryNavigation = useMemo(
+    () => (
+      <div className="source-tabs" role="group" aria-label="发现分类">
+        {(
+          [
+            ["search", "搜索"],
+            ["JM", "JM 每周必看"],
+            ["Pica", "哔咔排行榜"],
+            ["recent", "最近更新"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            aria-pressed={discoveryPane === value}
+            className={discoveryPane === value ? "active" : ""}
+            data-testid={"discovery-" + value}
+            onClick={() =>
+              value === "search"
+                ? chooseLatestSearchMode(unifiedSearchMode)
+                : setDiscoveryPane(value)
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    ),
+    [discoveryPane, unifiedSearchMode, chooseLatestSearchMode],
   );
   function openEmbeddedWork(
     ref: WorkReference,
@@ -2487,6 +2497,29 @@ export default function App() {
   );
   // The desktop main window draws its own title bar buttons.
   const ownTitleBar = isDesktopRuntime();
+  // Stable stand-ins that always run the latest code: the source page then
+  // redraws only when its own data changes, not on every main-window render.
+  const sourceCallbacks = useLatestCallbacks({
+    onAuthorSearch: openAuthorSearch,
+    onDetailBack: embeddedSourceDetail ? returnFromEmbeddedDetail : undefined,
+    onDownload: (work: SourceWork) => void beginDownload(work.workId, work),
+    onDownloadMany: beginDownloadMany,
+    onOpenLibrary: (work: SourceWork, entryId?: string) => {
+      setRequestedLibraryEntryId(entryId ?? null);
+      navigate("library");
+      setLibraryTab("all");
+      setRequestedLibraryWork(work);
+      setLibraryRequestKey((key) => key + 1);
+      setQuery("");
+    },
+    onAccountsChange: mergeAccounts,
+    onOpenAccounts: (source: Source) => {
+      setRequestedSource(source);
+      openSettings("accounts");
+    },
+    onWorksChanged: cacheSourceWorks,
+    onDensityChange: changeDensity,
+  });
   const content = (
     <div
       className={`app-shell ui-refined${sidebar.collapsed ? " sidebar-collapsed" : ""}${ownTitleBar ? " has-window-controls" : ""}`}
@@ -2845,48 +2878,28 @@ export default function App() {
               </div>
             ))}
           {persistence.native && (
-            <SourceWorkbench
+            <SourceWorkbenchView
+              {...sourceCallbacks}
               adapter={sourceAdapter}
               searchMode={
                 unifiedSearchMode === "author" ? undefined : unifiedSearchMode
               }
               searchRequest={tagRequest}
-              onAuthorSearch={openAuthorSearch}
               discoveryNavigation={
                 sourceActive && page === "discovery"
                   ? discoveryNavigation
                   : null
               }
-              onDetailBack={
-                embeddedSourceDetail ? returnFromEmbeddedDetail : undefined
-              }
-              onDownload={(work) => void beginDownload(work.workId, work)}
-              onDownloadMany={beginDownloadMany}
               downloadInventory={downloadLibrary.snapshot}
               inventoryReady={downloadLibrary.ready && !downloadLibrary.error}
               downloadReady={downloads.ready}
               downloadBusy={false}
               librarySnapshot={library.snapshot}
               libraryReady={!library.error}
-              onOpenLibrary={(work, entryId) => {
-                setRequestedLibraryEntryId(entryId ?? null);
-                navigate("library");
-                setLibraryTab("all");
-                setRequestedLibraryWork(work);
-                setLibraryRequestKey((key) => key + 1);
-                setQuery("");
-              }}
               accounts={accounts}
-              onAccountsChange={mergeAccounts}
-              onOpenAccounts={(source) => {
-                setRequestedSource(source);
-                openSettings("accounts");
-              }}
-              onWorksChanged={cacheSourceWorks}
               view={sourceView}
               active={sourceActive}
               density={appearance.density}
-              onDensityChange={changeDensity}
               requestedSource={requestedSource}
               requestedWork={requestedWork}
               requestedAuthorContext={requestedAuthorContext}
@@ -3079,10 +3092,18 @@ export default function App() {
     [],
   );
   const libraryRootId = library.snapshot.rootId ?? undefined;
+  // `downloads` is a new object on every render; depend on its parts.
+  const downloadTasks = downloads.snapshot;
+  const submittingKeys = downloads.submittingKeys;
   const cardDownloadFeedback = useCallback(
     (work: { source: Source; workId: string }) =>
-      downloadActionState(downloads, work.source, work.workId, libraryRootId),
-    [downloads, libraryRootId],
+      downloadActionState(
+        { snapshot: downloadTasks, submittingKeys },
+        work.source,
+        work.workId,
+        libraryRootId,
+      ),
+    [downloadTasks, submittingKeys, libraryRootId],
   );
   return (
     <SourceLanguageProvider cache={sourceCache}>

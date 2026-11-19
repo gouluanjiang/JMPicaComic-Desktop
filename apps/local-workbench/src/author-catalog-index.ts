@@ -99,6 +99,31 @@ export function createAuthorCatalogIndex() {
       }
       return true;
     },
+    /**
+     * Whether membership is already held for every scope of a small progress
+     * answer at exactly its revisions, so the full catalog need not be read.
+     */
+    holds(
+      view: Pick<
+        DiscoverySnapshot,
+        "scopes" | "revision" | "followingRevision" | "policyRevision"
+      >,
+    ): boolean {
+      return (
+        view.scopes.length > 0 &&
+        view.scopes.every((scope) => {
+          const key = JSON.stringify(scope),
+            held = entries.get(key);
+          return (
+            !!held &&
+            (!current || current.has(key)) &&
+            held.revision === view.revision &&
+            held.followingRevision === (view.followingRevision ?? 0) &&
+            held.policyRevision === (view.policyRevision ?? 0)
+          );
+        })
+      );
+    },
     read(scopes: SourceScope[]): ReadonlySet<string> {
       return new Set(
         scopes.flatMap((scope) => [
