@@ -141,11 +141,11 @@ V1 后讨论：阅读器、应用内更新
 - 原始 `MANGAMONITOR_NEW_CHAT_PROMPT_2026-09-09.md`：71 行首页、89 行 ZIP、92 行推荐排行、94 行历史后置。导出和书单要求由后来的用户取消覆盖。
 - 原始 `MANGAMONITOR_UI_BASELINE_2026-09-09.md`：42 行排行入口、74 行最近入库、78 行详情、82 行三类关系。
 - [F01–F13 功能清单](LOCAL_WORKBENCH_FEATURE_SCOPE.md)、[发现设计](LOCAL_WORKBENCH_DISCOVERY_DESIGN.md)。
-- [来源接口](../apps/local-workbench/src/source-types.ts)：61 行查询类型；[App](../apps/local-workbench/src/App.tsx)：407–418 行 native 入口，1959 行实际下载设置，2272 行作者补全。1091 行最近入库与 1594 行章节示例属于旧展示分支。
-- [账户设置](../apps/local-workbench/src/AccountSettings.tsx)：230 行自动发现；[来源列表](../apps/local-workbench/src/SourceWorkbench.tsx)：1803 行全选范围、1999 行 50 本限制、2009 行作品监控。
-- [设置](../apps/local-workbench/src/WorkbenchSettings.tsx)：513 行 native 面板与旧偏好的分支，632 行代理／诊断未接入。
-- 当时引用的关联结构 `apps/local-workbench/src/source-matches-types.ts` 与关联面板 `apps/local-workbench/src/SourceMatchesPanel.tsx` 当前已不存在，对应关联功能已退出当前范围；保留路径文字作为历史记录。[实际库页面](../apps/local-workbench/src/LibraryWorkbench.tsx)。
-- [队列交付](BATCH_QUEUE_AND_MATCHING_2026-09-12.md)、[作者补全交付](AUTHOR_COMPLETENESS_BATCH_2026-09-12.md)、[当前交接](DEVELOPMENT_HANDOFF.md)。早期待验收描述应结合交接中的后续用户验收。
+- [来源接口](../../../apps/local-workbench/src/source-types.ts)：61 行查询类型；[App](../../../apps/local-workbench/src/App.tsx)：407–418 行 native 入口，1959 行实际下载设置，2272 行作者补全。1091 行最近入库与 1594 行章节示例属于旧展示分支。
+- [账户设置](../../../apps/local-workbench/src/AccountSettings.tsx)：230 行自动发现；[来源列表](../../../apps/local-workbench/src/SourceWorkbench.tsx)：1803 行全选范围、1999 行 50 本限制、2009 行作品监控。
+- [设置](../../../apps/local-workbench/src/WorkbenchSettings.tsx)：513 行 native 面板与旧偏好的分支，632 行代理／诊断未接入。
+- 当时引用的关联结构 `apps/local-workbench/src/source-matches-types.ts` 与关联面板 `apps/local-workbench/src/SourceMatchesPanel.tsx` 当前已不存在，对应关联功能已退出当前范围；保留路径文字作为历史记录。[实际库页面](../../../apps/local-workbench/src/LibraryWorkbench.tsx)。
+- [队列交付](BATCH_QUEUE_AND_MATCHING_2026-09-12.md)、[作者补全交付](AUTHOR_COMPLETENESS_BATCH_2026-09-12.md)、[当前交接](../../DEVELOPMENT_HANDOFF.md)。早期待验收描述应结合交接中的后续用户验收。
 - [Issue #7 状态同步](https://github.com/gouluanjiang/MangaMonitor-AI/issues/7)、[Issue #6 最终验收](https://github.com/gouluanjiang/MangaMonitor-AI/issues/6)、[Issue #9 原路线](https://github.com/gouluanjiang/MangaMonitor-AI/issues/9)：2026-09-13 用 GitHub 连接器读取，三项 open；不能据此推断其全部子任务都未实现。
 
 ## 本轮实际动作

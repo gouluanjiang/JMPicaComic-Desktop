@@ -2,7 +2,7 @@
 
 ## Scope
 
-The user authorized merging the final JM pagination correction and publishing 1.0.1 to close V1 delivery. This patch includes the [reviewed JM search boundary compatibility](JM_SEARCH_BOUNDARY_2026-09-29.md) and the versioned release resources. It preserves application identifiers, data and credential namespaces, the existing installation name and the previously accepted product scope. No source matching, author inference, download authority, data migration or automatic monitoring behavior is introduced.
+The user authorized merging the final JM pagination correction and publishing 1.0.1 to close V1 delivery. This patch includes the [reviewed JM search boundary compatibility](archive/desktop-development/JM_SEARCH_BOUNDARY_2026-09-29.md) and the versioned release resources. It preserves application identifiers, data and credential namespaces, the existing installation name and the previously accepted product scope. No source matching, author inference, download authority, data migration or automatic monitoring behavior is introduced.
 
 The existing v1.0.0 tag and assets remain intact. PR #20 is the delivery PR. A new v1.0.1 release must point to the actual merge commit and carry the reviewed final-version artifact; do not relabel the previous 1.0.0 executable.
 

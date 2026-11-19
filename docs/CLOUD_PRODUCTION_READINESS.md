@@ -110,8 +110,8 @@ With PR `#34` integrated and the hardened live validation passing, roadmap steps
 
 On 2026-09-08 the user explicitly authorized the repository's smallest V1 add-only real-download thaw. The mandatory thaw review was therefore executed in the same development session and recorded in:
 
-- `docs/V1_ADD_ONLY_DOWNLOAD_THAW_2026-09-08.md`
-- `docs/V1_ADD_ONLY_STAGING_ACCEPTANCE.md`
+- `docs/archive/desktop-development/V1_ADD_ONLY_DOWNLOAD_THAW_2026-09-08.md`
+- `docs/archive/desktop-development/V1_ADD_ONLY_STAGING_ACCEPTANCE.md`
 
 All three recorded upstream pins were reopened and their default branch heads still matched the pinned revisions. Existing A6.10–A6.15 source/media/staging code was retained rather than replaced with broader upstream filesystem semantics.
 

@@ -244,7 +244,7 @@ whole-program no-leak conclusion.
 
 ### Full loading matrix
 
-[The full paired matrix](../evidence/long-regression-2026-10-02/final-followup/performance-matrix-comparison.csv)
+[The full paired matrix](../../../evidence/long-regression-2026-10-02/final-followup/performance-matrix-comparison.csv)
 contains 80 exact size/background/scenario/phase rows with five samples per
 version, first/complete median and p95, and request deltas. P95 is the maximum
 at this sample count. Cold means a fresh Chromium/app cache; host OS caches
@@ -474,10 +474,10 @@ to install or touch the real profile remains separate from this task.
 
 ## Evidence, reproducibility and continuation
 
-- [Completed original baseline](../evidence/long-regression-2026-10-02/baseline-complete/manifest.json): all raw operation/latency/resource logs and exit/continuity proof.
-- [Confirmed failure and short retest evidence](../evidence/long-regression-2026-10-02/tab-lifetime-before/) and [native diagnostics](../evidence/long-regression-2026-10-02/native-diagnostics/): original repro failures are retained.
-- [Exact-candidate CI, artifacts and targeted ABBA evidence](../evidence/long-regression-2026-10-02/post-fix-checkpoint-01/manifest.json): completed CI/performance evidence; its live long-test snapshots were explicitly incomplete at capture.
-- [Final sustained follow-up archive](../evidence/long-regression-2026-10-02/final-followup/manifest.json): completed summaries, raw data, heap snapshots, comparison CSV, timing-diagnostic qualification/ABBA, analysis scripts and file hashes.
+- [Completed original baseline](../../../evidence/long-regression-2026-10-02/baseline-complete/manifest.json): all raw operation/latency/resource logs and exit/continuity proof.
+- [Confirmed failure and short retest evidence](../../../evidence/long-regression-2026-10-02/tab-lifetime-before) and [native diagnostics](../../../evidence/long-regression-2026-10-02/native-diagnostics): original repro failures are retained.
+- [Exact-candidate CI, artifacts and targeted ABBA evidence](../../../evidence/long-regression-2026-10-02/post-fix-checkpoint-01/manifest.json): completed CI/performance evidence; its live long-test snapshots were explicitly incomplete at capture.
+- [Final sustained follow-up archive](../../../evidence/long-regression-2026-10-02/final-followup/manifest.json): completed summaries, raw data, heap snapshots, comparison CSV, timing-diagnostic qualification/ABBA, analysis scripts and file hashes.
 
 Baseline application is `9afbb4b0470b3939b9f8f8e0848dcc1c3a8b3827`; baseline
 long-test harness is `159f4f725200d639d080fd719d9d7fae2eb92936` (application

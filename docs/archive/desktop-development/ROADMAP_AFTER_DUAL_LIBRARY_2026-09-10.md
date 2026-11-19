@@ -48,7 +48,7 @@ flowchart TD
 
 ## 依据
 
-- [当前开发交接](DEVELOPMENT_HANDOFF.md)
+- [当前开发交接](../../DEVELOPMENT_HANDOFF.md)
 - [本批双库报告](LOCAL_WORKBENCH_DUAL_LIBRARY_2026-09-10.md)
 - [上游目录兼容记录](UPSTREAM_DIRECTORY_COMPATIBILITY_2026-09-10.md)
 - [既有功能范围](LOCAL_WORKBENCH_FEATURE_SCOPE.md)：历史输出格式表述以当前交接和用户最新要求为准。

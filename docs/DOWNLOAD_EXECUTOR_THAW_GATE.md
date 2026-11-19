@@ -15,7 +15,7 @@ This gate applies before any change that can make the system do one or more of t
 
 ## Review scope and reusable evidence
 
-Read the affected contract, implementation/tests and `upstream-source-reference.md` sections. Use `V1_ADD_ONLY_DOWNLOAD_THAW_2026-09-08.md` for the initial staging review or the handoff's applicable desktop review.
+Read the affected contract, implementation/tests and `upstream-source-reference.md` sections. Use `archive/desktop-development/V1_ADD_ONLY_DOWNLOAD_THAW_2026-09-08.md` for the initial staging review or the handoff's applicable desktop review.
 
 Reuse evidence while its pins, contracts, behavior and authorized scope apply. Reopen affected upstream source for changed pins/protocols, newly adopted behavior or defects that undermine the review. A new session or unrelated documentation/UI edit does not trigger all three upstream reviews.
 
@@ -100,7 +100,7 @@ or perform real source requests or media downloads; no persisted migration occur
 
 The user approved a local-cover delete action with native confirmation and
 recoverable Windows Recycle Bin semantics. See
-[the batch contract](LIBRARY_BROWSING_FOLLOWUPS_2026-10-01.md#recycle-only-boundary).
+[the batch contract](archive/desktop-development/LIBRARY_BROWSING_FOLLOWUPS_2026-10-01.md#recycle-only-boundary).
 The selected root/generation/item/revision and verified archive identity remain
 authoritative through confirmation. This is not automatic download cleanup,
 replacement, directory deletion, or permission to delete real books for tests.
