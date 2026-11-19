@@ -26,7 +26,7 @@
 | lanyeeee/jmcomic-downloader | `f0cdd724af6892002f2fb7be883b88832cebe7e9` | `download_task.rs` / `download_img_task.rs` 的并行、分块还原、GIF/JPG输出、等待全部图片和临时目录完成语义 |
 | hect0x7/JMComic-Crawler-Python | `9fddb0494caf0cdc812ac6cbfc1c62f4f845b058` | `jm_downloader.py` 的成功/失败计数、完整图片清单与已有文件缓存边界 |
 
-读取了 [thaw gate](DOWNLOAD_EXECUTOR_THAW_GATE.md)、[上游记录](upstream-source-reference.md)、[桌面物化契约](JM_DESKTOP_DOWNLOAD_GATE_2026-09-10.md) 和 [目录兼容说明](UPSTREAM_DIRECTORY_COMPATIBILITY_2026-09-10.md)。本批授权扩展现有桌面单本新增目录流程至 Pica，不改变生产库存、升级替换或覆盖权限。上游的删除既有目录后重命名、仅凭文件存在认定成功不予照搬。
+读取了 [thaw gate](../../DOWNLOAD_EXECUTOR_THAW_GATE.md)、[上游记录](../../upstream-source-reference.md)、[桌面物化契约](JM_DESKTOP_DOWNLOAD_GATE_2026-09-10.md) 和 [目录兼容说明](UPSTREAM_DIRECTORY_COMPATIBILITY_2026-09-10.md)。本批授权扩展现有桌面单本新增目录流程至 Pica，不改变生产库存、升级替换或覆盖权限。上游的删除既有目录后重命名、仅凭文件存在认定成功不予照搬。
 
 ## 实现与兼容边界
 

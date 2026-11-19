@@ -4,7 +4,7 @@
 
 ## 1. [P2] 清理完成历史后，同路径替换文件会造成错误入库身份
 
-主要位置：[presence.rs:71](../crates/workbench-downloads/src/presence.rs#L71)。
+主要位置：[presence.rs:71](../../../crates/workbench-downloads/src/presence.rs#L71)。
 
 **触发过程：**下载作品 A 并入库 → 清理 A 的完成历史 → 在文件管理器中删除 A，把另一份合法 ZIP B 放到原文件名 → 重新读取漫画库 → 查看来源中的 A。
 
@@ -26,7 +26,7 @@
 
 ## 2. [P2] 搜索期间网站分页总量变化，仍可能错误宣称读取完整
 
-主要位置：[source-search.ts:182](../apps/local-workbench/src/source-search.ts#L182)。
+主要位置：[source-search.ts:182](../../../apps/local-workbench/src/source-search.ts#L182)。
 
 **触发过程：**读取第 1 页时网站有 40 条；随后网站删除第 1 页的一条，剩余结果前移；第 2 页报告 39 条。
 
@@ -42,7 +42,7 @@
 
 ## 3. [P2] 纵向阅读的短尾页无法自然触发章节结束提示
 
-主要位置：[ReaderSession.tsx:571](../apps/local-workbench/src/reader/ReaderSession.tsx#L571)。
+主要位置：[ReaderSession.tsx:571](../../../apps/local-workbench/src/reader/ReaderSession.tsx#L571)。
 
 **触发过程：**纵向阅读中，最后一张图片加间距的高度小于视口，滚动到底。手机小窗、横图或缩小显示均可能遇到。
 
@@ -60,7 +60,7 @@
 
 ## 4. [P2] 同批下载的输出文件名冲突没有在确认前发现
 
-主要位置：[service.rs:1252](../crates/workbench-downloads/src/service.rs#L1252)。
+主要位置：[service.rs:1252](../../../crates/workbench-downloads/src/service.rs#L1252)。
 
 **触发过程：**两部不同编号作品经过现有作者／标题命名规则后得到相同 ZIP 文件名；目标文件尚不存在，将两部同时加入确认队列。
 

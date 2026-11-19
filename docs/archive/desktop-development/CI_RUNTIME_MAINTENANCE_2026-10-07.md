@@ -50,7 +50,7 @@ below use JavaScript manifests, and every occurrence is upgraded and pinned.
 | `actions/upload-artifact` | 23 | v6.0.0 | `b7c566a772e6b6bfb58ed0dc250532a479d7789f` |
 | `pnpm/action-setup` | 2 | v5.0.0 | `fc06bc1257f339d1d5d8b3a19a8cae5388b55320` |
 
-The machine-readable inventory is [action-pins.json](../.github/action-pins.json).
+The machine-readable inventory is [action-pins.json](../../../.github/action-pins.json).
 Each workflow retains its readable release comment beside the immutable SHA.
 The CI contract checks every external `uses` reference against that audited
 inventory. It is an offline regression guard; upstream runtime identity was

@@ -28,8 +28,8 @@
 ## 开发与维护
 
 - [当前交接](DEVELOPMENT_HANDOFF.md)：接手开发先读这一份；不必顺序重读所有历史报告。
-- [2026-10-02 合成长回归与实证修复](LONG_REGRESSION_2026-10-02.md)：准确基线、连续时长、性能对比、候选产物和 Windows 待验边界。
-- [2026-09-30 维护审计修复](MAINTENANCE_AUDIT_2026-09-30.md)与 [1.0.2-rc.1 候选说明](RELEASE_NOTES_1.0.2-rc.1.md)：修复范围、格式兼容与待验收边界。
+- [2026-10-02 合成长回归与实证修复](archive/desktop-development/LONG_REGRESSION_2026-10-02.md)：准确基线、连续时长、性能对比、候选产物和 Windows 待验边界。
+- [2026-09-30 维护审计修复](archive/desktop-development/MAINTENANCE_AUDIT_2026-09-30.md)与 [1.0.2-rc.1 候选说明](RELEASE_NOTES_1.0.2-rc.1.md)：修复范围、格式兼容与待验收边界。
 - [贡献和问题反馈](../CONTRIBUTING.md)、[开发规则](../AGENTS.md)、[来源基线与仓库隔离](../SOURCE_BASELINE.md)。
 - [前端说明](../apps/local-workbench/README.md)与[原生桌面说明](../apps/local-workbench/src-tauri/README.md)。
 - [许可](../LICENSE)与[第三方通知](../THIRD_PARTY_NOTICES.md)。
@@ -40,13 +40,13 @@
 
 | 改动范围 | 参考 |
 | --- | --- |
-| 下载执行及权限 | [下载执行解冻审查](DOWNLOAD_EXECUTOR_THAW_GATE.md)、[队列展示](DOWNLOAD_QUEUE_PRESENTATION_2026-09-26.md) |
-| 作者检索与结果 | [查询规则](AUTHOR_QUERY_POLICIES_2026-09-22.md)、[逐条异常隔离](LISTING_ITEM_ISOLATION_2026-09-22.md)、[JM 分页边界](JM_SEARCH_BOUNDARY_2026-09-29.md) |
-| 作者检查摘要 | [检查变化摘要](DISCOVERY_CHANGE_SUMMARY_2026-09-26.md) |
-| 阅读 | [内置阅读器](BUILT_IN_READER_2026-09-26.md)、[独立阅读小窗](READER_WINDOWS_2026-09-27.md) |
-| 账号与外观 | [会话与记住登录](SESSION_RESTORE_2026-09-27.md)、[整体 UI 集成](UI_INTEGRATION_2026-09-27.md) |
-| 时间与语言标记 | [作品时间与排序](WORK_DATES_AND_SORTING_2026-09-20.md)、[来源语言标签](SOURCE_LANGUAGE_BADGES_2026-09-26.md) |
+| 下载执行及权限 | [下载执行解冻审查](DOWNLOAD_EXECUTOR_THAW_GATE.md)、[队列展示](archive/desktop-development/DOWNLOAD_QUEUE_PRESENTATION_2026-09-26.md) |
+| 作者检索与结果 | [查询规则](archive/desktop-development/AUTHOR_QUERY_POLICIES_2026-09-22.md)、[逐条异常隔离](archive/desktop-development/LISTING_ITEM_ISOLATION_2026-09-22.md)、[JM 分页边界](archive/desktop-development/JM_SEARCH_BOUNDARY_2026-09-29.md) |
+| 作者检查摘要 | [检查变化摘要](archive/desktop-development/DISCOVERY_CHANGE_SUMMARY_2026-09-26.md) |
+| 阅读 | [内置阅读器](archive/desktop-development/BUILT_IN_READER_2026-09-26.md)、[独立阅读小窗](archive/desktop-development/READER_WINDOWS_2026-09-27.md) |
+| 账号与外观 | [会话与记住登录](archive/desktop-development/SESSION_RESTORE_2026-09-27.md)、[整体 UI 集成](archive/desktop-development/UI_INTEGRATION_2026-09-27.md) |
+| 时间与语言标记 | [作品时间与排序](archive/desktop-development/WORK_DATES_AND_SORTING_2026-09-20.md)、[来源语言标签](archive/desktop-development/SOURCE_LANGUAGE_BADGES_2026-09-26.md) |
 
 ## 历史资料
 
-[历史索引](archive/README.md)集中收录旧云端／助手／匹配器计划和完整交接快照。其他按日期命名的功能报告仍保留原路径，方便核对已存在的引用；其中过期的“当前”“待验收”“冻结”描述不覆盖现行状态。
+[历史索引](archive/README.md)集中收录旧云端／助手／匹配器计划、完整交接快照，以及 2026-09 至 2026-10 按日期命名的桌面版功能报告（位于 `archive/desktop-development/`）。其中过期的“当前”“待验收”“冻结”描述不覆盖现行状态。
