@@ -1,5 +1,33 @@
 # Current development handoff
 
+## 1.4.1 release preparation (2026-11-18)
+
+1.4.1 ships what main holds after 1.4.0: UI fixes (PR #65: select text
+centred, JM weekly issue labels as "2026 年第 265 期 · 11.06–11.13", wider
+reveal band for the reader window's title bar), stutter fixes (PR #66, #67,
+#69) and the README screenshots retaken in 1.4.0 (PR #68). Functions and data
+formats are unchanged.
+
+- Stutter work, measured in the installed app over the WebView2 debug port:
+  hidden pages skip renders unless their data changes (`dormant.ts`), stable
+  context values (reader access, special follows, tag/author search, card
+  download state), the download inventory keeps its object when unchanged and
+  is no longer re-read on page switches, the recent-updates page asks
+  `discovery_progress` first and skips the full catalog read and rebuild when
+  the revisions match (`holds()`, same-revision skip), the followed-author list
+  is memoized with `content-visibility`, date checks are cached, and
+  `SourceWorkbench` is memoized with stable callbacks (`useLatestCallbacks`).
+  Page switches now mostly show no frame over 50 ms; recent-updates repeat
+  visits 56–66 ms; the first recent-updates visit after launch keeps one
+  ~200 ms frame (one full catalog read).
+- Kept on purpose: frontend DTO validation (field whitelist keeps URLs and
+  credentials out of UI state; UNKNOWN normalisation), the download queue's
+  file recheck on show and focus (tests pin it), mounted idle pages.
+- The user ran builds of #67 and #69 on 2026-11-18 (read-only checks passed).
+- Version 1.4.1 in `package.json`, `src-tauri/Cargo.toml`/`Cargo.lock`,
+  `tauri.conf.json` (bundling `RELEASE_NOTES_1.4.1.md`) and the bug report
+  template; docs index, project status and user guide name 1.4.1.
+
 ## Main window responsiveness (2026-11-17)
 
 The user reported stalls after 1.4.0, worst with several small reader windows

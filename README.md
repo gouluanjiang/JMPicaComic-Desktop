@@ -389,7 +389,7 @@
 - **报告安全问题：** 请按[安全策略](SECURITY.md)私下提交，不要公开发布。
 - **提交代码：** 请先阅读[贡献说明](CONTRIBUTING.md)。
 
-更多资料：[使用指南](docs/USER_GUIDE.md) · [开发约束](AGENTS.md) · [文档导航](docs/README.md) · [项目进度](docs/PROJECT_STATUS.md) · [1.4.0 版本说明](docs/RELEASE_NOTES_1.4.0.md) · [历史文档](docs/archive/README.md)
+更多资料：[使用指南](docs/USER_GUIDE.md) · [开发约束](AGENTS.md) · [文档导航](docs/README.md) · [项目进度](docs/PROJECT_STATUS.md) · [1.4.1 版本说明](docs/RELEASE_NOTES_1.4.1.md) · [历史文档](docs/archive/README.md)
 
 历史文档不代表当前路线；已取消的自动匹配、手机名单和分类书单不会因此恢复。
 
