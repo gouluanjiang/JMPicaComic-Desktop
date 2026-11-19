@@ -1,6 +1,10 @@
 # JMPicaComic-Desktop 项目状态
 
-更新日期：2026-11-17。**当前正式版为 [1.4.0](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.4.0)**。变化见[版本说明](RELEASE_NOTES_1.4.0.md)。
+更新日期：2026-11-18。**当前正式版为 [1.4.1](https://github.com/gouluanjiang/JMPicaComic-Desktop/releases/tag/v1.4.1)**。变化见[版本说明](RELEASE_NOTES_1.4.1.md)。
+
+## 1.4.1 新增
+
+解决用久了切换页面、开着阅读小窗翻页时的卡顿：后台页面只在自己的数据变化时才更新，“最近更新”不再每次都重读和重算作者目录，作者页长列表只在名单变化时重画，切换页面不再重复读取已下载清单。另修正下拉框文字居中、JM 每周必看的期数显示格式，并扩大阅读小窗标题栏的呼出范围。功能和数据格式没有变化。
 
 ## 1.4.0 新增
 
