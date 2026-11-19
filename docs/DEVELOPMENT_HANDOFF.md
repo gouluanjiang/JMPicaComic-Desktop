@@ -2,6 +2,10 @@
 
 ## 1.4.1 release preparation (2026-11-18)
 
+Published 2026-11-19 (UTC 05:13), tag `v1.4.1` on `ffd7872`; the user's
+in-app update from the #69 candidate to 1.4.1 succeeded. Record:
+[RELEASE_1.4.1_2026-11-19.md](RELEASE_1.4.1_2026-11-19.md).
+
 1.4.1 ships what main holds after 1.4.0: UI fixes (PR #65: select text
 centred, JM weekly issue labels as "2026 年第 265 期 · 11.06–11.13", wider
 reveal band for the reader window's title bar), stutter fixes (PR #66, #67,
