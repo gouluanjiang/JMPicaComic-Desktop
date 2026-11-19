@@ -2039,31 +2039,16 @@ async fn follow(service: &TestService, scope: &DiscoveryScope, author: &str, des
         .unwrap();
 }
 
+// Every scan commits each page durably. On shared Windows CI runners several
+// of these tests write at once and the disk can pause for many seconds, so a
+// short fixed deadline fails runs that are only slow. Wait for durable
+// revision progress instead: a scan that stops committing for 30s, or runs
+// past 120s in total, still fails with its last progress in the message.
 async fn finish(service: &TestService, scopes: &[DiscoveryScope]) -> DiscoverySnapshot {
-    tokio::time::timeout(std::time::Duration::from_secs(10), async {
-        loop {
-            if !service.discovery.memory.lock().unwrap().active {
-                break;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(1)).await;
-        }
-    })
-    .await
-    .unwrap();
-    service.discovery_read(scopes.to_vec()).await.unwrap()
-}
-
-// This fixture performs 125 durable page/manifest commits plus a checkpoint.
-// Windows filesystem latency is not the pagination invariant under test: wait
-// for durable revision progress, while bounding both stalls and total duration.
-async fn finish_long_page_chain(
-    service: &TestService,
-    scopes: &[DiscoveryScope],
-) -> DiscoverySnapshot {
     let mut last_revision = 0;
     let mut last_commit_at = tokio::time::Instant::now();
     let mut last_progress = None;
-    let completed = tokio::time::timeout(std::time::Duration::from_secs(60), async {
+    let completed = tokio::time::timeout(std::time::Duration::from_secs(120), async {
         loop {
             // A commit holds this mutex during its atomic filesystem write.
             // Do not block the async timer or compete with that write to poll.
@@ -2085,17 +2070,14 @@ async fn finish_long_page_chain(
                 }
             }
             assert!(
-                last_commit_at.elapsed() < std::time::Duration::from_secs(10),
-                "long page chain made no durable revision progress for 10s: {last_progress:?}"
+                last_commit_at.elapsed() < std::time::Duration::from_secs(30),
+                "scan made no durable revision progress for 30s: {last_progress:?}"
             );
-            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         }
     })
     .await;
-    assert!(
-        completed.is_ok(),
-        "long page chain exceeded 60s: {last_progress:?}"
-    );
+    assert!(completed.is_ok(), "scan exceeded 120s: {last_progress:?}");
     service.discovery_read(scopes.to_vec()).await.unwrap()
 }
 
@@ -2399,7 +2381,8 @@ async fn eligible_author_catalogs_are_not_cut_off_at_a_small_page_limit() {
         .discovery_start(scopes.clone(), vec![])
         .await
         .unwrap();
-    let snapshot = finish_long_page_chain(&service, &scopes).await;
+    // 125 durable page/manifest commits plus a checkpoint.
+    let snapshot = finish(&service, &scopes).await;
     assert_eq!(
         snapshot.run.as_ref().unwrap().phase,
         DiscoveryPhase::Complete
